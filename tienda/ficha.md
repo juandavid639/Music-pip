@@ -182,9 +182,23 @@ anywhere else.
 | Pieza | Estado |
 | --- | --- |
 | Icono de tienda 128×128 | LISTO — `assets/icons/icon128.png` (generado por código) |
-| Capturas (mín. 1, máx. 5) a 1280×800 | PENDIENTE — receta en `capturas-receta.md` |
-| Mosaico promocional 440×280 | PENDIENTE — se puede generar por código como el logo |
+| Capturas (mín. 1, máx. 5) a 1280×800 | LISTO — `capturas-finales/captura-1..5.png` (las crudas quedan en `capturas-crudas/`, que no viaja al repo) |
+| Mosaico promocional 440×280 | LISTO — `mosaico-440x280.png` (generado por `tools/generar-mosaico.js`) |
 | Mosaico marquesina 1400×560 | OPCIONAL |
+
+Ya en el orden de subida (la primera es la que más se ve):
+
+1. `captura-1` — karaoke flotante sobre YouTube Music (la función estrella).
+2. `captura-2` — barras de espectro sobre YouTube.
+3. `captura-3` — Spotify en el escritorio con la ventana abierta.
+4. `captura-4` — YouTube Music en el monitor con la ventana mini.
+5. `captura-5` — la página de Preferencias con su vista previa.
+
+Cómo se hicieron las finales: las dos fotos de monitor van con recorte
+centrado a proporción 1.6 exacta (los bordes eran decorado); las tres
+capturas de página completa van escaladas a lo ancho con bandas del
+color del fondo de la propia página (recortarlas se comía interfaz).
+Todas terminan en 1280×800 clavados con reescalado bicúbico.
 
 ## 8. Alojar la política de privacidad — HECHO CON GITHUB PAGES
 
