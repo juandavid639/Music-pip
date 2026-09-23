@@ -1,0 +1,87 @@
+{
+  "manifest_version": 3,
+  "name": "Music PiP",
+  "version": "1.0.0",
+  "default_locale": "es",
+  "description": "__MSG_extension_descripcion__",
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://music.youtube.com/*",
+    "https://www.youtube.com/*",
+    "https://open.spotify.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://music.youtube.com/*", "https://www.youtube.com/*", "https://open.spotify.com/*"],
+      "js": [
+        "src/shared/constants.js",
+        "src/shared/textos.js",
+        "src/shared/messages.js",
+        "src/shared/ecualizador.js",
+        "src/shared/settings.js",
+        "src/shared/paleta.js",
+        "src/shared/color-fuente.js",
+        "src/shared/iconos.js",
+        "src/shared/state.js",
+        "src/content/adapter-registry.js",
+        "src/content/youtube-music-adapter.js",
+        "src/content/youtube-adapter.js",
+        "src/content/spotify-adapter.js",
+        "src/content/track-timeline.js",
+        "src/content/metadata-reader.js",
+        "src/content/player-controller.js",
+        "src/content/temporizador-apagado.js",
+        "src/content/ecualizador-por-cancion.js",
+        "src/content/lyrics-reader.js",
+        "src/content/audio-grafo.js",
+        "src/content/audio-spectrum.js",
+        "src/content/content-script.js",
+        "src/pip/pip.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/pip/pip.html", "src/pip/pip.css", "assets/placeholders/*"],
+      "matches": ["https://music.youtube.com/*", "https://www.youtube.com/*", "https://open.spotify.com/*"]
+    }
+  ],
+  "commands": {
+    "abrir-ventana": {
+      "suggested_key": { "default": "Alt+Shift+P" },
+      "description": "__MSG_comando_abrir_ventana__"
+    },
+    "reproducir-pausar": {
+      "suggested_key": { "default": "Alt+Shift+K" },
+      "description": "__MSG_comando_reproducir_pausar__"
+    },
+    "cancion-siguiente": {
+      "suggested_key": { "default": "Alt+Shift+L" },
+      "description": "__MSG_comando_cancion_siguiente__"
+    },
+    "cancion-anterior": {
+      "suggested_key": { "default": "Alt+Shift+J" },
+      "description": "__MSG_comando_cancion_anterior__"
+    }
+  },
+  "action": {
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "options_page": "src/options/options.html"
+}

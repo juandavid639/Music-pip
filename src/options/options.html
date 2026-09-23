@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title data-t="opciones_titulo">Preferencias — Music PiP</title>
+    <style>
+      /* ---------- POR QUE ESTA PAGINA SE PARECE AL MENU Y A LA VENTANA ----------
+       *
+       * Los nombres y los valores de aqui abajo son los mismos que los de
+       * popup.css y pip.css a proposito, y por el mismo motivo que alli esta
+       * escrito: las tres superficies se abren desde el mismo icono y quien
+       * las ve seguidas tiene que reconocer que son el mismo programa. Antes
+       * no lo eran: esta pagina usaba #ff0033 y las otras dos #f15a5a, o sea
+       * dos rojos distintos a un clic de distancia.
+       *
+       * Que este CSS viva DENTRO del HTML y no en un archivo aparte es de
+       * antes y se queda: la pagina de opciones no comparte ni una regla con
+       * las otras dos —no hay ventana, ni portada, ni mandos redondos— y un
+       * options.css seria un archivo mas para un unico documento.
+       *
+       * EL SEGUNDO REDISEÑO (la maqueta del usuario). El primero convirtio la
+       * columna de filas identicas en tarjetas con filas nombre-a-la-izquierda
+       * mando-a-la-derecha. Este segundo cambia LOS MANDOS, no el mapa:
+       *
+       *  - Los desplegables pasan a botones-pildora, todos a la vista: un
+       *    <select> esconde sus respuestas detras de un clic, y en esta pagina
+       *    casi todas las preguntas tienen dos o tres. PERO el <select> NO SE
+       *    VA: sigue en el documento (con .ytmpip-select-real, display none)
+       *    como unica fuente de verdad. Las pildoras solo escriben su value y
+       *    disparan change; options.js sigue leyendo y guardando por el
+       *    select, igual que siempre. Quitar el select habria obligado a
+       *    reescribir el guardado y todas sus pruebas por un cambio de piel.
+       *
+       *  - Los campos numericos pasan a deslizadores con el valor vivo al
+       *    lado y las marcas min/recomendado/max debajo, que es lo que el
+       *    usuario señalo de la maqueta («me gustan las barras»): un numero
+       *    entre 1 y 60 se elige mejor arrastrando que tecleando.
+       *
+       *  - La cabecera se pega arriba con anclas a cada tarjeta, y aparecen
+       *    la matriz de sitios y la vista previa incrustada (que es la
+       *    ventana DE VERDAD en un iframe, no un dibujo).
+       */
+      :root {
+        color-scheme: dark;
+        --bg: #0f0f0f;
+        --tarjeta: #171717;
+        --hueco: #101010;
+        --text: #f1f1f1;
+        --text-dim: #a8a8a8;
+        --text-faint: #7a7a7a;
+        --accent: #ff0000;
+        --border: rgba(255, 255, 255, 0.1);
+        --border-fuerte: rgba(255, 255, 255, 0.24);
+        --raya: rgba(255, 255, 255, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Las anclas de la cabecera se deslizan en vez de saltar. Quien pide
+         menos movimiento lo recupera como salto (ver el @media de abajo). */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        /* El hueco de abajo es para el aviso de "Guardado", que va fijo.
+           El relleno lateral vive ahora en la pagina y en la cabecera, no
+           aqui: la cabecera pegada llega de borde a borde. */
+        padding: 0 0 72px;
+      }
+
+      .ytmpip-pagina {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* ---------- La cabecera pegada ----------
+       *
+       * Va fuera de .ytmpip-pagina para poder ocupar todo el ancho; dentro,
+       * .ytmpip-cabecera-contenido repite el max-width de la pagina para que
+       * el logo caiga alineado con las tarjetas.
+       */
+      .ytmpip-cabecera {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(15, 15, 15, 0.92);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .ytmpip-cabecera-contenido {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* El aro degradado alrededor del logo, como en la maqueta pero con
+         los rojos de la casa: del acento (#ff0000, el mismo de pip.css) a
+         un rojo oscuro de adorno. El oscuro NO es el del tema claro
+         (#d32f2f): es sombra del degradado, no un color con significado. */
+      .ytmpip-insignia {
+        flex: 0 0 auto;
+        display: block;
+        padding: 2px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, var(--accent), #8b0000);
+      }
+
+      .ytmpip-logo {
+        display: block;
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        background: var(--bg);
+      }
+
+      h1 {
+        font-size: 16px;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      .ytmpip-lema {
+        margin: 2px 0 0;
+        font-size: 11.5px;
+        color: var(--text-dim);
+      }
+
+      .ytmpip-cabecera-nav {
+        margin-left: auto;
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+      }
+
+      .ytmpip-cabecera-nav a {
+        color: var(--text-dim);
+        text-decoration: none;
+        transition: color 140ms ease;
+      }
+
+      .ytmpip-cabecera-nav a:hover {
+        color: var(--text);
+      }
+
+      /* «Los cambios se guardan solos», ahora siempre a la vista: antes solo
+         lo decia el lema, y el aviso de Guardado dura segundo y medio. */
+      .ytmpip-chip-guardado {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        font-size: 11px;
+        color: var(--text-dim);
+        background: var(--tarjeta);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      .ytmpip-chip-vale {
+        color: #34d399;
+      }
+
+      /* En ventanas estrechas la cabecera se queda con logo y nombre: las
+         anclas y el chip son ayudas, no mandos, y apretados no ayudan. */
+      @media (max-width: 760px) {
+        .ytmpip-cabecera-nav,
+        .ytmpip-chip-guardado {
+          display: none;
+        }
+      }
+
+      /* ---------- Las tarjetas ---------- */
+
+      .ytmpip-tarjeta {
+        background: var(--tarjeta);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px 6px;
+        /* Al llegar por un ancla, que el titulo no quede debajo de la
+           cabecera pegada. */
+        scroll-margin-top: 76px;
+      }
+
+      h2 {
+        font-size: 14px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      /* La marca de color del titulo. Es lo unico que distingue una tarjeta
+         de la siguiente cuando se pasa la pagina de un vistazo. */
+      h2::before {
+        content: "";
+        width: 3px;
+        height: 15px;
+        border-radius: 2px;
+        background: var(--accent);
+        flex: 0 0 auto;
+      }
+
+      .ytmpip-intro {
+        margin: 6px 0 0 12px;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      /* ---------- Cada ajuste es una fila ----------
+       *
+       * Nombre y explicacion a la izquierda, mando a la derecha. Desde el
+       * segundo rediseño el mando es un grupo de pildoras o un deslizador;
+       * las pildoras caen alineadas a la derecha, que es lo que deja ver de
+       * un vistazo cuantas decisiones hay.
+       *
+       * `.ytmpip-fila` esta puesta en <div> y tambien en dos <label>. No es
+       * un descuido: ver el comentario de esos dos en el cuerpo de la pagina.
+       */
+      .ytmpip-fila {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 0;
+        border-top: 1px solid var(--raya);
+        margin-top: 10px;
+      }
+
+      /* La fila que va justo detras de la explicacion de la tarjeta no
+         necesita raya: ya la separa el titulo, y sin esto la raya cae
+         pegadisima al texto.
+         NO se usa `:first-of-type`, que es lo que pedia el cuerpo: en la
+         tarjeta del espectro hay dos filas que son <label> (ver su comentario
+         en el HTML), y para el navegador la PRIMERA de su tipo es una fila de
+         enmedio, que se quedaria sin su separador. */
+      .ytmpip-intro + .ytmpip-fila {
+        border-top: 0;
+      }
+
+      .ytmpip-fila-texto {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .ytmpip-fila-titulo {
+        display: block;
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .ytmpip-ayuda {
+        display: block;
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--text-faint);
+      }
+
+      /* ---------- Los distintivos de sitio ----------
+       *
+       * Desde que la extension habla con tres sitios, no todo funciona en
+       * todos: el ecualizador y las barras necesitan que el audio pase por
+       * la pagina (en Spotify no pasa por ella), el video de Spotify va
+       * cifrado y YouTube no tiene panel de letra. Los chips dicen DONDE
+       * aplica cada cosa; los que no llevan chip valen en los tres sitios.
+       * La matriz del final junta todos estos limites en una tabla.
+       *
+       * Los nombres van escritos tal cual, sin data-t: "Spotify" y
+       * "YouTube" son nombres propios y se llaman igual en todos los
+       * idiomas. Lo traducible es el titulo del grupo (data-t-title).
+       */
+      .ytmpip-sitios {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 10px 0 0 12px;
+      }
+
+      .ytmpip-fila-texto .ytmpip-sitios {
+        margin: 6px 0 0;
+      }
+
+      .ytmpip-sitio {
+        font-size: 10.5px;
+        line-height: 1;
+        padding: 3px 7px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--text-dim);
+        background: var(--hueco);
+        flex: 0 0 auto;
+        display: inline-block;
+      }
+
+      /* La razon medida de por que el chip corta donde corta. Va alineada
+         con la explicacion de la tarjeta, no con las filas. */
+      .ytmpip-nota-sitio {
+        margin: 6px 0 0 12px;
+        font-size: 12px;
+        color: var(--text-faint);
+      }
+
+      /* Mismo trato que `.ytmpip-intro + .ytmpip-fila`: cuando la nota de
+         los chips queda justo encima de la primera fila, la raya sobra.
+         Solo la nota: los chips de tarjeta llevan SIEMPRE su nota debajo
+         (chips sin razon medida serian un adorno), asi que un chip pegado
+         a una fila no existe en esta pagina. */
+      .ytmpip-nota-sitio + .ytmpip-fila {
+        border-top: 0;
+      }
+
+      /* ---------- Las pildoras ----------
+       *
+       * El mando visible de cada desplegable: un boton por respuesta, la
+       * elegida marcada con aria-pressed="true". El estado ES el atributo
+       * aria a proposito —no hay una clase .elegida que pueda desincronizarse
+       * de lo que oye un lector de pantalla—.
+       *
+       * El <select> de verdad sigue al lado con .ytmpip-select-real: las
+       * pruebas y options.js hablan con el, las pildoras solo lo empujan.
+       */
+      .ytmpip-select-real {
+        display: none;
+      }
+
+      .ytmpip-pildoras {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 3px;
+        padding: 3px;
+        background: var(--hueco);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        flex: 0 1 auto;
+      }
+
+      .ytmpip-pildoras button {
+        font: inherit;
+        font-size: 12px;
+        padding: 6px 10px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .ytmpip-pildoras button:hover {
+        color: var(--text);
+      }
+
+      /* La elegida: fondo levantado y el aro del acento. NO texto en rojo
+         puro: #ff0000 sobre estos fondos se queda al borde del contraste
+         AA, y el aro señala igual de bien sin jugarsela. */
+      .ytmpip-pildoras button[aria-pressed="true"] {
+        background: #2c2c2c;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      /* ---------- Los deslizadores ----------
+       *
+       * Las «barras» de la maqueta: valor vivo arriba a la derecha, carril
+       * lleno hasta el valor, y debajo las marcas min · recomendado · max.
+       * Las marcas las escribe options.js leyendo el propio input y
+       * DEFAULT_SETTINGS: escritas aqui serian una copia silenciosa de las
+       * constantes, y a este proyecto las copias le cuestan caras.
+       *
+       * Todo va colgado de .ytmpip-deslizador a proposito: los ranges del
+       * ecualizador (.ytmpip-banda) conservan su pinta nativa con
+       * accent-color, que para cinco bandas comparadas entre si funciona.
+       */
+      .ytmpip-fila-deslizador {
+        flex-wrap: wrap;
+      }
+
+      .ytmpip-valor-vivo {
+        flex: 0 0 auto;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text);
+      }
+
+      .ytmpip-unidad {
+        font-size: 12px;
+        color: var(--text-faint);
+      }
+
+      .ytmpip-deslizador {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+
+      .ytmpip-deslizador input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        display: block;
+        width: 100%;
+        height: 4px;
+        margin: 8px 0 0;
+        border: 0;
+        border-radius: 999px;
+        /* --lleno lo escribe options.js con el porcentaje recorrido; sin
+           el, el carril nace gris entero y el primer pintado lo corrige. */
+        background: linear-gradient(
+          to right,
+          var(--accent) var(--lleno, 0%),
+          #2a2a2a var(--lleno, 0%)
+        );
+        cursor: pointer;
+      }
+
+      .ytmpip-deslizador input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--text);
+        border: 3px solid var(--accent);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      }
+
+      .ytmpip-marcas {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 5px;
+        font-size: 10.5px;
+        color: var(--text-faint);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ---------- La vista previa incrustada ----------
+       *
+       * Un iframe de src/options/vista-previa.html, que carga el pip.css y
+       * el pip.html REALES con una cancion de mentira: no es un dibujo de
+       * la ventana, ES la ventana. Los dos botones la ponen a los dos
+       * tamaños de apertura (PIP_DIMENSIONS, escritos por options.js).
+       */
+      .ytmpip-vista-previa {
+        margin: 12px 0 4px;
+        padding: 14px;
+        background: var(--hueco);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #vistaPrevia {
+        border: 1px solid var(--border-fuerte);
+        border-radius: 10px;
+        background: #000;
+        max-width: 100%;
+      }
+
+      .ytmpip-vista-previa .pista {
+        margin: 0;
+        text-align: center;
+      }
+
+      /* La fila que viene justo despues de la vista previa tampoco lleva
+         raya, por lo mismo que la de detras de la explicacion. */
+      .ytmpip-vista-previa + .ytmpip-fila {
+        border-top: 0;
+      }
+
+      /* ---------- La matriz de sitios ----------
+       *
+       * Los mismos limites que cuentan los chips, juntos en una tabla.
+       * Las columnas reutilizan .ytmpip-sitio a proposito: asi la prueba
+       * que coteja los chips contra los nombres declarados por los
+       * adaptadores vigila tambien estas cabeceras.
+       */
+      .ytmpip-matriz {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0 16px;
+        font-size: 12px;
+      }
+
+      .ytmpip-matriz th,
+      .ytmpip-matriz td {
+        padding: 8px 6px;
+        border-top: 1px solid var(--raya);
+        text-align: center;
+      }
+
+      .ytmpip-matriz thead th {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .ytmpip-matriz tbody th {
+        text-align: left;
+        font-weight: normal;
+        color: var(--text-dim);
+      }
+
+      /* Verde y no rojo para el «si»: el acento de esta extension es rojo,
+         y una columna de ✓ rojos parece una columna de errores. */
+      .ytmpip-si {
+        color: #34d399;
+      }
+
+      .ytmpip-no {
+        color: var(--text-faint);
+      }
+
+      /* Texto solo para lectores de pantalla: la esquina de la matriz. */
+      .ytmpip-oculto {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+
+      /* ---------- Los mandos sueltos ---------- */
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /*
+       * El <input type=color> nativo pinta un recuadro con el color dentro.
+       * Con relleno alrededor el recuadro se encoge hasta ser una raya, asi
+       * que aqui no lleva ninguno.
+       */
+      input[type="color"] {
+        padding: 0;
+        width: 56px;
+        height: 32px;
+        background: var(--hueco);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        flex: 0 0 auto;
+        cursor: pointer;
+      }
+
+      /*
+       * Se ocultan los campos que no toquen segun el modo de color.
+       *
+       * EL `!important` NO SOBRA, y el motivo es fino: `.ytmpip-pista` de
+       * mas abajo pone `display: flex`, y pesa lo mismo que `[hidden]`
+       * —las dos son una clase o un atributo, 0-1-0—. En un empate gana la
+       * ultima escrita, que es la pista, asi que sin esto el aviso de «El
+       * del tema» se veria SIEMPRE, tambien con la paleta elegida. Se paga
+       * un !important por no depender del orden de dos reglas.
+       *
+       * Desde el rediseño hay ademas dos <label class="ytmpip-fila" hidden>,
+       * y `.ytmpip-fila` tambien pone `display: flex`. O sea que el mismo
+       * !important que se puso por una regla vale ya por tres.
+       */
+      [hidden] {
+        display: none !important;
+      }
+
+      /* La muestra de color de «El del tema»: un cuadradito, no un texto. */
+      .ytmpip-pista {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-faint);
+        margin: 0 0 12px;
+        padding-left: 2px;
+      }
+
+      .ytmpip-muestra {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        /*
+         * El borde no es adorno: el acento del tema claro sobre este fondo
+         * casi negro se lee bien, pero un color claro elegido a mano se
+         * confundiria con el papel y el cuadradito pareceria vacio.
+         */
+        border: 1px solid var(--border-fuerte);
+        flex: 0 0 auto;
+      }
+
+      /* ---------- Lo irreversible ----------
+       *
+       * El unico aviso de la pagina que habla de algo que no se puede
+       * deshacer, y estaba pintado igual que la letra pequeña de al lado.
+       * Ahora lleva el color de acento y un marco: no para adornar, sino
+       * porque es lo unico de esta pagina que conviene leer ANTES de tocar
+       * el mando que hay debajo.
+       */
+      .ytmpip-aviso {
+        display: flex;
+        gap: 10px;
+        margin: 12px 0 0;
+        padding: 10px 12px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: #e6cfcf;
+        background: rgba(241, 90, 90, 0.08);
+        border: 1px solid rgba(241, 90, 90, 0.3);
+        border-radius: 8px;
+      }
+
+      .ytmpip-aviso-icono {
+        flex: 0 0 auto;
+        color: var(--accent);
+      }
+
+      /* ---------- La paleta ---------- */
+
+      .ytmpip-paleta,
+      .ytmpip-bandas {
+        margin: 12px 0 16px;
+        padding: 12px 14px 14px;
+        background: var(--hueco);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+
+      .ytmpip-paleta legend,
+      .ytmpip-bandas legend {
+        font-size: 12px;
+        color: var(--text-dim);
+        padding: 0 6px;
+      }
+
+      /* Dentro de un recuadro las filas no llevan raya: el recuadro ya
+         separa, y dos separadores seguidos son ruido. */
+      .ytmpip-paleta .ytmpip-fila {
+        border-top: 0;
+        margin-top: 0;
+        padding: 4px 0 8px;
+      }
+
+      /*
+       * Los cuentagotas en fila y no uno debajo de otro, porque su orden
+       * ES el dato: se leen de izquierda a derecha igual que el degradado
+       * que hay justo debajo. En columna habria que explicar cual es «el
+       * primero».
+       */
+      .ytmpip-paleta-colores {
+        display: flex;
+        gap: 6px;
+      }
+
+      .ytmpip-paleta-colores input[type="color"] {
+        width: auto;
+        flex: 1 1 0;
+      }
+
+      .ytmpip-paleta-vista {
+        display: block;
+        width: 100%;
+        height: 28px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+      }
+
+      /* ---------- El ecualizador ----------
+       *
+       * Cada banda es una FILA: nombre, deslizador, numero.
+       *
+       * En columna —que es lo que salia solo cuando la pagina ponia
+       * `label { display: block }` y `input { width: 100% }`— los cinco
+       * mandos ocupaban pantalla y media y habia que hacer scroll para ver
+       * los agudos mientras se movian los graves. Un ecualizador se lee de un
+       * vistazo o no se lee: la forma del conjunto (que sube y que baja) ES
+       * el dato, y en columna esa forma no existe.
+       */
+      .ytmpip-banda {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      /*
+       * Ancho fijo, no `auto`. Los nombres miden distinto («Aire · 12 kHz»
+       * frente a «Medios · 1 kHz») y con ancho automatico cada deslizador
+       * empezaria en una x diferente: las cinco barras dejarian de ser
+       * comparables entre si, que es justo para lo que estan juntas.
+       */
+      .ytmpip-banda label {
+        flex: 0 0 104px;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      /*
+       * EL CARRIL, que existe solo para poder pintarle la raya del cero.
+       *
+       * Los mandos van de -12 a +12 y el cero esta en el centro exacto, pero
+       * el deslizador nativo no lo marca: con las cinco bandas puestas no
+       * habia forma de ver de un vistazo cuales suben y cuales bajan, que es
+       * literalmente lo que un ecualizador tiene que decir. Se veian cinco
+       * puntos a alturas distintas sin ninguna referencia.
+       *
+       * La raya se pinta con un degradado de fondo y no con un elemento
+       * aparte porque un <div> mas por fila serian cinco nodos vacios en el
+       * HTML que no significan nada; aqui es lo que es, una marca pintada
+       * DEBAJO del mando.
+       */
+      .ytmpip-banda-carril {
+        position: relative;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+      }
+
+      .ytmpip-banda-carril::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 2px;
+        bottom: 2px;
+        width: 1px;
+        background: #3d3d3d;
+        /* Debajo del mando: la raya es la referencia, no un obstaculo. */
+        pointer-events: none;
+      }
+
+      .ytmpip-banda input[type="range"] {
+        flex: 1 1 auto;
+        width: auto;
+        margin: 0;
+        /* El deslizador nativo con nuestro fondo oscuro se pinta invisible. */
+        background: transparent;
+        border: 0;
+        accent-color: var(--accent);
+        /* Por encima de la raya del cero, para que el pulgar no quede partido. */
+        position: relative;
+        cursor: pointer;
+      }
+
+      /*
+       * El numero a la derecha, con ancho fijo y tabular.
+       *
+       * Sin `tabular-nums` los digitos tienen anchos distintos y el valor
+       * BAILA de lado mientras se arrastra el mando, que es exactamente
+       * cuando se le esta mirando.
+       */
+      .ytmpip-banda output {
+        flex: 0 0 52px;
+        text-align: right;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-dim);
+      }
+
+      /*
+       * EL PRECIO, sacado del monton de texto gris.
+       *
+       * Era un `.pista` mas: doce pixeles en gris al final del recuadro, con
+       * el mismo aspecto que los dos parrafos de arriba que nadie relee. Y es
+       * lo unico de esta pagina que CAMBIA al mover un mando —contesta a
+       * «¿esto me va a distorsionar?» y a «¿por que suena mas flojo?»—, asi
+       * que tenerlo pintado igual que la letra pequeña fija era esconder la
+       * unica linea viva del recuadro.
+       *
+       * Se separa con una raya arriba en vez de con un marco propio: ya esta
+       * DENTRO del fieldset de las bandas, y meter un recuadro en otro por
+       * un parrafo seria ruido. La barra de color a la izquierda dice «esto
+       * es consecuencia de lo de arriba», que es exactamente lo que es.
+       */
+      #equalizerPreamp {
+        margin: 14px 0 0;
+        padding: 10px 10px 10px 12px;
+        font-size: 12px;
+        border-top: 1px solid var(--raya);
+        border-left: 2px solid var(--accent);
+        border-radius: 0 4px 4px 0;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-dim);
+        line-height: 1.45;
+      }
+
+      /*
+       * LA EXPLICACION LARGA, plegada.
+       *
+       * Eran dos parrafos seguidos de letra pequeña —once lineas— antes de
+       * llegar al primer mando, y los dos dicen cosas que hay que saber UNA
+       * vez: que la puerta no se deshace y que un ecualizador no sube el
+       * volumen. Quien abre esta pagina por decima vez a mover los graves se
+       * los come enteros cada vez, y el efecto de eso no es que los lea: es
+       * que deje de leer tambien el aviso del precio, que si cambia.
+       *
+       * Plegado, no borrado. La informacion no sobra; lo que sobra es que
+       * ocupe la mitad de la seccion para siempre.
+       */
+      .ytmpip-detalle {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0 12px;
+      }
+
+      .ytmpip-detalle > summary {
+        font-size: 12px;
+        color: var(--text-dim);
+        padding: 9px 0;
+        cursor: pointer;
+      }
+
+      .ytmpip-detalle[open] > summary {
+        border-bottom: 1px solid var(--raya);
+        margin-bottom: 8px;
+      }
+
+      .pista {
+        font-size: 12px;
+        color: var(--text-faint);
+        margin: 0 0 8px;
+        line-height: 1.45;
+      }
+
+      .ytmpip-detalle > .pista:last-child {
+        padding-bottom: 4px;
+      }
+
+      /* ---------- El «Guardado» ----------
+       *
+       * Era un parrafo al final de la pagina, o sea el peor sitio posible:
+       * los ajustes se guardan solos y el aviso duraba segundo y medio, asi
+       * que quien cambiaba el tamaño de la ventana —que esta arriba del
+       * todo— no llegaba a verlo NUNCA. Confirmar algo fuera de la pantalla
+       * es no confirmarlo.
+       *
+       * Fijo abajo y encima de todo, sin tocar options.js: se ve cuando hay
+       * texto y desaparece cuando el temporizador lo vacia, porque el `:empty`
+       * lo apaga solo.
+       */
+      #status {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        margin: 0;
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--text);
+        background: #202020;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        transition: opacity 200ms ease;
+        /* No es pulsable, y flotando encima de la pagina taparia clics. */
+        pointer-events: none;
+      }
+
+      #status:empty {
+        opacity: 0;
+      }
+
+      /* Quien pide menos movimiento se queda sin transiciones ni deslizado
+         de anclas. El color, el foco y el aviso siguen: eso es informacion,
+         no movimiento. */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        #status,
+        .ytmpip-pildoras button,
+        .ytmpip-cabecera-nav a {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      La cabecera pegada, calcada del gesto de la maqueta del usuario pero
+      con las piezas de la casa: el logo real (el de la barra de Chrome, no
+      un dibujo nuevo) dentro del aro degradado, el nombre, las anclas a las
+      tarjetas y el chip que promete lo que el guardado cumple. Las anclas
+      REUTILIZAN las claves de los títulos de tarjeta a propósito: si un
+      título cambia, el ancla cambia con él y no pueden decir cosas
+      distintas.
+    -->
+    <header class="ytmpip-cabecera">
+      <div class="ytmpip-cabecera-contenido">
+        <span class="ytmpip-insignia">
+          <img class="ytmpip-logo" src="../../assets/icons/icon128.png" alt="" />
+        </span>
+        <div>
+          <h1>Music PiP</h1>
+          <p class="ytmpip-lema" data-t="opciones_sublema">Así se ve y se comporta la ventana flotante.</p>
+        </div>
+        <nav class="ytmpip-cabecera-nav">
+          <a href="#seccion-ventana" data-t="tarjeta_ventana">La ventana flotante</a>
+          <a href="#seccion-musica" data-t="tarjeta_musica">Mientras suena la música</a>
+          <a href="#seccion-ecualizador" data-t="ecualizador">Ecualizador</a>
+          <a href="#seccion-barras" data-t="tarjeta_barras">Barras de sonido</a>
+          <a href="#seccion-spotify" data-t="tarjeta_spotify">Sólo en Spotify</a>
+        </nav>
+        <span class="ytmpip-chip-guardado">
+          <span class="ytmpip-chip-vale" aria-hidden="true">✓</span>
+          <span data-t="cambios_se_guardan">Los cambios se guardan solos</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="ytmpip-pagina">
+      <!-- ================= LA VENTANA ================= -->
+      <section id="seccion-ventana" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_ventana">La ventana flotante</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_ventana_intro">
+          La ventanita que se queda encima de todo lo demás mientras escuchas.
+        </p>
+
+        <!--
+          La vista previa honesta: un iframe de vista-previa.html, que carga
+          el pip.css y el pip.html DE VERDAD con una canción de mentira. Los
+          dos botones la ponen a los dos tamaños de apertura —los mismos
+          PIP_DIMENSIONS que usa la ventana, escritos por options.js—, y por
+          eso reutilizan las claves de «Pequeña» y «Grande» del ajuste de
+          abajo: son literalmente eso.
+
+          Los botones NO llevan data-para: no guardan nada, sólo cambian el
+          tamaño del iframe. options.js los distingue de las píldoras de
+          verdad justamente por la ausencia de ese atributo.
+        -->
+        <div class="ytmpip-vista-previa">
+          <iframe
+            id="vistaPrevia"
+            src="vista-previa.html?espectro=1"
+            width="340"
+            height="200"
+            title="Vista previa de la ventana flotante"
+            data-t-title="vista_previa_titulo"
+          ></iframe>
+          <div class="ytmpip-pildoras">
+            <button type="button" id="vistaPreviaPequena" aria-pressed="true" data-t="opcion_pequena">Pequeña (340 × 200)</button>
+            <button type="button" id="vistaPreviaGrande" aria-pressed="false" data-t="opcion_grande">Grande (380 × 560)</button>
+          </div>
+          <p class="pista" data-t="vista_previa_ayuda">
+            Es la ventana de verdad —su mismo HTML y su mismo CSS— sonando una
+            canción de mentira. Los botones la enseñan a sus dos tamaños de
+            apertura; los ajustes de esta página no cambian esta vista.
+          </p>
+        </div>
+
+        <!--
+          "El último" es una tercera opción de la misma pregunta y no una
+          casilla aparte a propósito: "grande + recordar el último" sería una
+          contradicción que la página tendría que explicar. Son tres respuestas
+          excluyentes a una sola pregunta.
+
+          El tamaño se anota solo, cada vez que se suelta el borde de la
+          ventana, sea cual sea la opción elegida aquí; lo único que cambia al
+          elegir "el último" es que se lea al abrir. La primera vez, cuando aún
+          no hay ninguno anotado, se abre pequeña.
+
+          DESDE EL SEGUNDO REDISEÑO cada desplegable va acompañado de sus
+          píldoras: los botones escriben el value del <select> escondido y
+          disparan change, y options.js sigue guardando por el select. El
+          botón de la opción de fábrica nace con aria-pressed="true" para que
+          la página no parpadee antes de que cargue lo guardado; después
+          manda sincronizarPildoras(). Este patrón se repite en todas las
+          filas con píldoras y sólo se comenta aquí.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="pipSize" data-t="fila_tamano">Tamaño al abrirla</label>
+            <span class="ytmpip-ayuda" data-t="fila_tamano_ayuda">
+              Si cambias el tamaño arrastrando un borde, se queda anotado; con
+              «Como la dejé» se abrirá así la próxima vez.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="pipSize" aria-label="Tamaño al abrirla" data-t-aria="fila_tamano">
+            <button type="button" data-valor="compact" aria-pressed="true" data-t="opcion_pequena">Pequeña (340 × 200)</button>
+            <button type="button" data-valor="expanded" aria-pressed="false" data-t="opcion_grande">Grande (380 × 560)</button>
+            <button type="button" data-valor="last" aria-pressed="false" data-t="opcion_ultima">Como la dejé la última vez</button>
+          </div>
+          <select id="pipSize" class="ytmpip-select-real">
+            <option value="compact" data-t="opcion_pequena">Pequeña (340 × 200)</option>
+            <option value="expanded" data-t="opcion_grande">Grande (380 × 560)</option>
+            <option value="last" data-t="opcion_ultima">Como la dejé la última vez</option>
+          </select>
+        </div>
+
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="theme" data-t="fila_colores">Colores</label>
+            <span class="ytmpip-ayuda" data-t="fila_colores_ayuda">
+              El aspecto de la ventana. También decide de qué color salen las
+              barras de sonido si las dejas en «El del tema».
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="theme" aria-label="Colores" data-t-aria="fila_colores">
+            <button type="button" data-valor="dark" aria-pressed="true" data-t="opcion_oscuro">Oscuro</button>
+            <button type="button" data-valor="light" aria-pressed="false" data-t="opcion_claro">Claro</button>
+          </div>
+          <select id="theme" class="ytmpip-select-real">
+            <option value="dark" data-t="opcion_oscuro">Oscuro</option>
+            <option value="light" data-t="opcion_claro">Claro</option>
+          </select>
+        </div>
+
+        <!--
+          El halo de luz del borde. UNA pregunta de tres respuestas y no dos
+          mandos (interruptor + modo), aunque en storage sean DOS claves
+          (haloPreference y haloMode, ver constants.js): para quien lee esta
+          página son tres respuestas excluyentes a «¿cómo quieres el borde?»,
+          igual que el tamaño de arriba. El reparto en dos claves existe por
+          el botón ✨ de la ventana, que sólo enciende y apaga: al elegir
+          «Apagado» aquí se escribe sólo haloPreference y el modo guardado
+          se queda esperando, así que apagar y volver no borra el «Latiendo».
+
+          Va en esta tarjeta y justo debajo de «Colores» porque el halo se
+          pinta CON el color de acento del tema: son la misma decisión de
+          aspecto, contada en el orden en que se nota.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="halo" data-t="fila_halo">Halo de luz</label>
+            <span class="ytmpip-ayuda" data-t="fila_halo_ayuda">
+              Una luz por el borde interior de la ventana. «Latiendo» arranca
+              con el primer clic dentro de la ventana, porque sin un clic el
+              navegador no nos deja escuchar la música. También se enciende y
+              se apaga con el botón ✨ de la ventana.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="halo" aria-label="Halo de luz" data-t-aria="fila_halo">
+            <button type="button" data-valor="off" aria-pressed="false" data-t="opcion_halo_apagado">Apagado</button>
+            <button type="button" data-valor="fixed" aria-pressed="true" data-t="opcion_halo_fijo">Fijo (una luz quieta)</button>
+            <button type="button" data-valor="pulse" aria-pressed="false" data-t="opcion_halo_latido">Latiendo con la música</button>
+          </div>
+          <select id="halo" class="ytmpip-select-real">
+            <option value="off" data-t="opcion_halo_apagado">Apagado</option>
+            <option value="fixed" data-t="opcion_halo_fijo">Fijo (una luz quieta)</option>
+            <option value="pulse" data-t="opcion_halo_latido">Latiendo con la música</option>
+          </select>
+        </div>
+
+        <!--
+          El color del halo, con TRES respuestas y no las cinco del espectro:
+          el halo es una sola luz, así que ni el arcoíris ni la paleta
+          tienen sentido aquí. «Del vídeo o la carátula» sí lo tiene desde
+          la tanda del halo según la carátula —una sola luz puede seguir al
+          color que manda en lo que se ve— y su etiqueta se REUTILIZA del
+          espectro, igual que «El del tema» y «Un color mío» (mismas claves
+          del catálogo) a propósito: son la misma pregunta y deben sonar
+          igual en toda la página. En storage es UNA clave (haloColor) cuyo
+          modo se deduce de la forma, como spectrumColor.
+
+          Esta fila se ve SIEMPRE, también con el halo «Apagado»: el color
+          es «a qué volver al encender», igual que el modo, y esconderla
+          convertiría apagar en perder la elección.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="haloColorMode" data-t="fila_halo_color">Color del halo</label>
+            <span class="ytmpip-ayuda" data-t="fila_halo_color_ayuda">
+              De qué color brilla el borde. «El del tema» cambia solo al
+              pasar entre oscuro y claro.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="haloColorMode" aria-label="Color del halo" data-t-aria="fila_halo_color">
+            <button type="button" data-valor="accent" aria-pressed="true" data-t="opcion_color_tema">El del tema</button>
+            <button type="button" data-valor="custom" aria-pressed="false" data-t="opcion_color_mio">Un color mío</button>
+            <button type="button" data-valor="source" aria-pressed="false" data-t="opcion_color_fuente">Del vídeo o la carátula</button>
+          </div>
+          <select id="haloColorMode" class="ytmpip-select-real">
+            <option value="accent" data-t="opcion_color_tema">El del tema</option>
+            <option value="custom" data-t="opcion_color_mio">Un color mío</option>
+            <option value="source" data-t="opcion_color_fuente">Del vídeo o la carátula</option>
+          </select>
+        </div>
+
+        <!--
+          El aviso del modo fuente del halo, hermano del del espectro y por
+          el mismo motivo (ver el comentario de spectrumSourceHint): es el
+          único modo que a veces no da color, y leído sin aviso eso parece
+          una avería. Clave propia y no la del espectro porque aquella
+          habla de «las barras» y ésta del borde.
+        -->
+        <p id="haloSourceHint" class="ytmpip-pista" hidden data-t="pista_halo_fuente">
+          El borde brilla con el color que más manda en lo que estés viendo,
+          y cambia con el vídeo. Si la imagen no tiene un color claro
+          —blanco y negro, o casi todo oscuro— vuelve al color del tema.
+        </p>
+
+        <!--
+          El cuentagotas del halo: la misma fila-etiqueta que la del color
+          del espectro (ver el comentario de spectrumColorLabel), escondida
+          hasta que se elige «Un color mío».
+        -->
+        <label id="haloColorLabel" class="ytmpip-fila" for="haloColor" hidden>
+          <span class="ytmpip-fila-texto">
+            <span class="ytmpip-fila-titulo" data-t="fila_tu_color">Tu color</span>
+            <span class="ytmpip-ayuda" data-t="fila_halo_tu_color_ayuda">Toda la luz del borde, base y latido, se pinta de este color.</span>
+          </span>
+          <input id="haloColor" type="color" hidden />
+        </label>
+
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="defaultSection" data-t="fila_al_abrir">Al abrirla, mostrar</label>
+            <span class="ytmpip-ayuda" data-t="fila_al_abrir_ayuda">
+              Con cuál de las dos pestañas aparece la ventana. Dentro puedes
+              cambiar de una a otra cuando quieras.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="defaultSection" aria-label="Al abrirla, mostrar" data-t-aria="fila_al_abrir">
+            <button type="button" data-valor="player" aria-pressed="true" data-t="opcion_controles">Los controles</button>
+            <button type="button" data-valor="lyrics" aria-pressed="false" data-t="opcion_letra">La letra</button>
+          </div>
+          <select id="defaultSection" class="ytmpip-select-real">
+            <option value="player" data-t="opcion_controles">Los controles</option>
+            <option value="lyrics" data-t="opcion_letra">La letra</option>
+          </select>
+        </div>
+
+        <!--
+          El atenuado mientras suena. Cero es "nunca", y por eso es el valor de
+          partida: quien no ha pedido nada no espera que la ventana se le
+          desvanezca sola. Pasar el ratón por encima la devuelve entera, y por eso
+          el máximo es 80 y no 100 — ver PIP_LIMITS en shared/constants.js.
+
+          DESDE EL SEGUNDO REDISEÑO los números se eligen con deslizador: el
+          valor vivo arriba, las marcas min/recomendado/max debajo (las
+          escribe options.js leyendo el input y DEFAULT_SETTINGS). Aquí la
+          marca de enmedio queda vacía a propósito: el valor de fábrica es 0,
+          que ya es el extremo izquierdo. Este patrón se repite en todas las
+          filas con deslizador y sólo se comenta aquí.
+        -->
+        <div class="ytmpip-fila ytmpip-fila-deslizador">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="pipTransparency" data-t="fila_difuminar">
+              Difuminarla mientras suena
+            </label>
+            <span class="ytmpip-ayuda" data-t="fila_difuminar_ayuda">
+              Se vuelve transparente para no estorbar y se ve entera otra vez al
+              pasarle el ratón por encima. Con 0 no se difumina nunca; 80 es casi
+              invisible.
+            </span>
+          </div>
+          <output class="ytmpip-valor-vivo" for="pipTransparency"><span id="pipTransparencyVivo"></span> <span class="ytmpip-unidad">%</span></output>
+          <span class="ytmpip-deslizador">
+            <input id="pipTransparency" type="range" min="0" max="80" step="5" />
+            <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
+          </span>
+        </div>
+      </section>
+
+      <!-- ================= LA REPRODUCCION ================= -->
+      <section id="seccion-musica" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_musica">Mientras suena la música</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_musica_intro">Qué se ve dentro de la ventana y qué hacen los botones.</p>
+
+        <!--
+          Con "Mostrar", la ventana flotante toma prestado el <video> real de
+          YouTube Music mientras esta abierta y lo devuelve intacto al cerrarse.
+          Las canciones sin vídeo siguen mostrando la portada.
+
+          Los chips de debajo de la ayuda dicen dónde aplica: en Spotify el
+          vídeo va cifrado (DRM, medido 2026-09-16) y la ventana no puede
+          pintarlo — para eso está el botón 🎬, que abre el vídeo flotante
+          del propio navegador. La ayuda lo cuenta con palabras.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="videoPreference" data-t="fila_video">Vídeo musical</label>
+            <span class="ytmpip-ayuda" data-t="fila_video_ayuda">
+              Cuando la canción tiene vídeo, se ve en la ventana en lugar de la
+              carátula. Las que no tienen siguen enseñando la carátula. El vídeo
+              de Spotify va cifrado y aquí no puede verse: para ése está el
+              botón 🎬 de la ventana.
+            </span>
+            <span class="ytmpip-sitios" title="En qué sitios funciona" data-t-title="donde_funciona">
+              <span class="ytmpip-sitio">YouTube</span>
+              <span class="ytmpip-sitio">YouTube Music</span>
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="videoPreference" aria-label="Vídeo musical" data-t-aria="fila_video">
+            <button type="button" data-valor="shown" aria-pressed="true" data-t="opcion_video_ver">Verlo cuando lo haya</button>
+            <button type="button" data-valor="hidden" aria-pressed="false" data-t="opcion_video_no">No verlo (siempre la carátula)</button>
+          </div>
+          <select id="videoPreference" class="ytmpip-select-real">
+            <option value="shown" data-t="opcion_video_ver">Verlo cuando lo haya</option>
+            <option value="hidden" data-t="opcion_video_no">No verlo (siempre la carátula)</option>
+          </select>
+        </div>
+
+        <!--
+          La letra al revés que el vídeo: YouTube Music y Spotify la enseñan
+          (las dos medidas en vivo), y youtube.com no tiene panel de letra
+          (0 cabeceras .tab-header, medido en la fase del adaptador).
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="lyricsPreference" data-t="fila_letra">Letra de la canción</label>
+            <span class="ytmpip-ayuda" data-t="fila_letra_ayuda">
+              Aparece como una segunda pestaña dentro de la ventana, cuando el
+              sitio tiene la letra de lo que suena.
+            </span>
+            <span class="ytmpip-sitios" title="En qué sitios funciona" data-t-title="donde_funciona">
+              <span class="ytmpip-sitio">YouTube Music</span>
+              <span class="ytmpip-sitio">Spotify</span>
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="lyricsPreference" aria-label="Letra de la canción" data-t-aria="fila_letra">
+            <button type="button" data-valor="shown" aria-pressed="true" data-t="opcion_letra_ver">Mostrarla cuando la haya</button>
+            <button type="button" data-valor="hidden" aria-pressed="false" data-t="opcion_letra_no">No mostrarla nunca</button>
+          </div>
+          <select id="lyricsPreference" class="ytmpip-select-real">
+            <option value="shown" data-t="opcion_letra_ver">Mostrarla cuando la haya</option>
+            <option value="hidden" data-t="opcion_letra_no">No mostrarla nunca</option>
+          </select>
+        </div>
+
+        <div class="ytmpip-fila ytmpip-fila-deslizador">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="seekSeconds" data-t="fila_salto">Salto de los botones</label>
+            <span class="ytmpip-ayuda" data-t="fila_salto_ayuda">
+              Lo que avanza o retrocede la canción al pulsar los botones de
+              adelantar y rebobinar. Entre 1 y 60.
+            </span>
+          </div>
+          <output class="ytmpip-valor-vivo" for="seekSeconds"><span id="seekSecondsVivo"></span> <span class="ytmpip-unidad" data-t="unidad_seg">seg</span></output>
+          <span class="ytmpip-deslizador">
+            <input id="seekSeconds" type="range" min="1" max="60" step="1" />
+            <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
+          </span>
+        </div>
+      </section>
+
+      <!-- ================= EL ECUALIZADOR ================= -->
+      <section id="seccion-ecualizador" class="ytmpip-tarjeta">
+        <h2 data-t="ecualizador">Ecualizador</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_eq_intro">
+          Cambia el equilibrio del sonido: más graves, más voz, menos agudos de
+          noche.
+        </p>
+
+        <!--
+          Sin Spotify, y no por dejadez: para ecualizar hay que meter el audio
+          de la página en un grafo (createMediaElementSource), y en Spotify el
+          sonido no está en el DOM — cero <audio> y cero <video> con audio,
+          medido dos veces (capacidades.audioGrafo=false del adaptador). No
+          hay nada que conectar.
+        -->
+        <p class="ytmpip-sitios" title="En qué sitios funciona" data-t-title="donde_funciona">
+          <span class="ytmpip-sitio">YouTube</span>
+          <span class="ytmpip-sitio">YouTube Music</span>
+        </p>
+        <p class="ytmpip-nota-sitio" data-t="nota_sin_audio">
+          En Spotify esto no funciona: su sonido no está al alcance de la
+          página, así que no hay nada que tocar ni medir.
+        </p>
+
+        <!--
+          «Apagado» NO es lo mismo que «Plano», por mucho que suenen igual.
+
+          Para meter el audio en un ecualizador hay que llamar a
+          createMediaElementSource, y esa llamada NO SE DESHACE: a partir de ahí
+          el sonido de la pestaña sale por el ecualizador y por ningún otro
+          sitio hasta que se recargue. «Plano» cruza esa puerta y deja las cinco
+          bandas a cero; «Apagado» no la cruza.
+
+          Por eso el valor de fábrica es «Apagado» y por eso esta explicación
+          está aquí abajo, donde se elige, y no sólo en el código.
+
+          La línea que SÍ se lee siempre. Es la única de las tres que avisa de
+          algo irreversible, así que es la única que no se pliega — y desde el
+          rediseño, la única con marco de color.
+        -->
+        <p class="ytmpip-aviso">
+          <span class="ytmpip-aviso-icono" aria-hidden="true">⚠</span>
+          <!--
+            El aviso va en TRES tramos marcados por separado porque data-t
+            escribe textContent y eso arrasaría el <strong> de enmedio, que es
+            justo la mitad de la frase que conviene que grite. Tres claves para
+            una frase es el precio de conservar la negrita.
+          -->
+          <span>
+            <span data-t="eq_aviso_1">Con «Apagado» el sonido no se toca. En cuanto elijas cualquier otra
+            opción, el audio de la pestaña empieza a pasar por el ecualizador, y</span>
+            <strong data-t="eq_aviso_2">sigue pasando por él aunque lo vuelvas a apagar</strong><span data-t="eq_aviso_3">,
+            hasta que recargues la pestaña de la música.</span>
+          </span>
+        </p>
+
+        <!--
+          LO DEMÁS, PLEGADO. Ver el comentario de `.ytmpip-detalle` en el <style>:
+          son dos cosas que hay que saber una vez y que estaban cobrando peaje
+          cada vez que se abría la página, hasta el punto de tapar el único aviso
+          que cambia (el del precio, abajo del todo).
+
+          El segundo párrafo es la consecuencia audible de una medición, no una
+          advertencia de manual: tools/diagnostico-limitador.js encontró que la
+          música de esta plataforma llega sin ninguna holgura, y de ahí sale que
+          subir una banda tenga que bajar el resto. Sin decirlo en algún sitio, lo
+          primero que pasa al elegir «Más graves» es que suena más flojo y parece
+          un fallo.
+
+          Nace CERRADO y sin `open` a propósito: quien viene a mover un mando no
+          ha venido a leer, y quien se pregunta por qué suena distinto encuentra
+          la pregunta escrita en el resumen.
+        -->
+        <details class="ytmpip-detalle">
+          <summary data-t="eq_pregunta">¿Por qué al subir una banda suena más flojo?</summary>
+          <!-- Mismo troceado que el aviso de arriba, y por el mismo <strong>. -->
+          <p class="pista">
+            <span data-t="eq_pista_1a">Porque</span> <strong data-t="eq_pista_1b">un ecualizador reparte el sonido, no lo sube</strong><span data-t="eq_pista_1c">. La
+            música de YouTube Music llega ya al máximo, así que para que quepan más
+            graves hay que bajar un poco todo lo demás: cuanto más subas una banda,
+            más flojo se oirá el conjunto. Justo debajo de los mandos te decimos
+            cuánto cuesta el ajuste que tengas puesto.</span>
+          </p>
+          <p class="pista" data-t="eq_pista_2">
+            Truco: bajar sale gratis. Si quieres oír más los graves, baja las otras
+            bandas en vez de subir la de graves — sólo se paga por subir.
+          </p>
+          <p class="pista" data-t="eq_pista_3">
+            Y sobre «Apagado»: deja el sonido tal cual, pero si ya lo habías
+            encendido alguna vez, el desvío sigue montado por dentro hasta que
+            recargues la pestaña.
+          </p>
+        </details>
+
+        <!--
+          Los `value` son los nombres de EQUALIZER_PRESETS en shared/constants.js
+          y «off»; el texto visible es de aquí. Si allí se añade o se renombra un
+          preset y aquí no, options.js avisa por consola: un desplegable al que le
+          falta una opción no da ningún error, simplemente no la ofrece nunca.
+
+          «A mi gusto» no tiene equivalente en las constantes a propósito: no es
+          un preset, es la AUSENCIA de preset —lo que devuelve `presetDe` cuando
+          lo guardado son cinco números sueltos—. Se llega a ella sola al mover
+          cualquier deslizador, y se puede elegir a mano para volver a los
+          números propios después de haber probado un preset.
+
+          LOS CUATRO PRESETS VAN SIN TEXTO y lo escribe options.js desde
+          EQUALIZER_PRESET_LABELS, igual que ya pasaba con el nombre de cada
+          banda. No es simetría por gusto: el botón del ecualizador de la ventana
+          flotante quiere decir CUÁL está puesto, y mientras el nombre viviera
+          aquí sólo podía decir «encendido». Los `value` sí se quedan escritos,
+          porque son lo que se guarda y lo que comprueba options.js —una opción
+          de menos no da ningún error, simplemente no se puede elegir nunca—.
+
+          «Apagado» y «A mi gusto» conservan su texto porque no son presets y no
+          hay ninguna otra página que necesite nombrarlos.
+
+          LAS PÍLDORAS de los cuatro presets también nacen vacías, por lo
+          mismo: options.js copia en cada una el texto que acaba de escribir
+          en su <option>, así el nombre sigue viviendo en un solo sitio.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="equalizerPreset" data-t="fila_ajuste">Ajuste</label>
+            <span class="ytmpip-ayuda" data-t="fila_ajuste_ayuda">
+              Elige uno hecho o mueve las bandas tú mismo, que es lo que significa
+              «A mi gusto».
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="equalizerPreset" aria-label="Ajuste" data-t-aria="fila_ajuste">
+            <button type="button" data-valor="off" aria-pressed="true" data-t="opcion_eq_apagado">Apagado (no tocar el sonido)</button>
+            <button type="button" data-valor="plano" aria-pressed="false"></button>
+            <button type="button" data-valor="graves" aria-pressed="false"></button>
+            <button type="button" data-valor="voz" aria-pressed="false"></button>
+            <button type="button" data-valor="nocturno" aria-pressed="false"></button>
+            <button type="button" data-valor="__manual" aria-pressed="false" data-t="opcion_a_mi_gusto">A mi gusto</button>
+          </div>
+          <!--
+            Los cuatro presets sin texto tampoco llevan data-t: su nombre lo
+            escribe options.js pasando por el catálogo, con la constante de
+            respaldo. Marcarlos aquí sería una segunda escritura de lo mismo.
+          -->
+          <select id="equalizerPreset" class="ytmpip-select-real">
+            <option value="off" data-t="opcion_eq_apagado">Apagado (no tocar el sonido)</option>
+            <option value="plano"></option>
+            <option value="graves"></option>
+            <option value="voz"></option>
+            <option value="nocturno"></option>
+            <option value="__manual" data-t="opcion_a_mi_gusto">A mi gusto</option>
+          </select>
+        </div>
+
+        <!--
+          Los cinco deslizadores, escritos a mano por lo mismo que los
+          cuentagotas de la paleta: así el número de bandas se ve leyendo el
+          archivo y cada <label> puede apuntar a un id de verdad.
+
+          El TEXTO de cada etiqueta lo escribe options.js desde EQUALIZER_BANDS.
+          Las frecuencias no se copian aquí: son la definición del ecualizador y
+          viven en shared/constants.js. Escritas en los dos sitios, cambiarlas
+          allí dejaría esta página mintiendo sobre lo que hace cada mando.
+        -->
+        <fieldset id="equalizerBands" class="ytmpip-bandas">
+          <legend data-t="bandas_legend">Las bandas, de graves a agudos</legend>
+
+          <div class="ytmpip-banda">
+            <label id="equalizerBand0Label" for="equalizerBand0"></label>
+            <span class="ytmpip-banda-carril"><input id="equalizerBand0" type="range" /></span>
+            <output id="equalizerBand0Value" for="equalizerBand0"></output>
+          </div>
+          <div class="ytmpip-banda">
+            <label id="equalizerBand1Label" for="equalizerBand1"></label>
+            <span class="ytmpip-banda-carril"><input id="equalizerBand1" type="range" /></span>
+            <output id="equalizerBand1Value" for="equalizerBand1"></output>
+          </div>
+          <div class="ytmpip-banda">
+            <label id="equalizerBand2Label" for="equalizerBand2"></label>
+            <span class="ytmpip-banda-carril"><input id="equalizerBand2" type="range" /></span>
+            <output id="equalizerBand2Value" for="equalizerBand2"></output>
+          </div>
+          <div class="ytmpip-banda">
+            <label id="equalizerBand3Label" for="equalizerBand3"></label>
+            <span class="ytmpip-banda-carril"><input id="equalizerBand3" type="range" /></span>
+            <output id="equalizerBand3Value" for="equalizerBand3"></output>
+          </div>
+          <div class="ytmpip-banda">
+            <label id="equalizerBand4Label" for="equalizerBand4"></label>
+            <span class="ytmpip-banda-carril"><input id="equalizerBand4" type="range" /></span>
+            <output id="equalizerBand4Value" for="equalizerBand4"></output>
+          </div>
+
+          <!--
+            La preamplificación no es un mando: es una consecuencia. Se enseña
+            porque contesta a la pregunta que se hace todo el mundo al mover una
+            banda: «¿y esto me va a distorsionar?».
+
+            Durante un tiempo dijo otra cosa. Decía que subir los graves BAJA el
+            volumen general, y era cierto: la entrada bajaba tanto como se subía,
+            así que la banda más alta acababa siempre 3 dB por debajo de donde
+            estaba con el ecualizador apagado. El texto lo presentaba como algo
+            normal que había que explicar, y por eso el fallo aguantó tanto: el
+            aviso lo estaba justificando en vez de delatarlo. Lo encontró el
+            usuario, escuchando.
+
+            Después dijo lo contrario —que la entrada no se toca porque de los
+            picos se encarga un limitador que «sólo actúa cuando hace falta»— y
+            también era mentira, sólo que hizo falta medirla: el limitador actuaba
+            el 100 % del tiempo. Lo curioso es que el fallo se descubrió igual, y
+            con las mismas palabras: el usuario dijo que no sonaba más fuerte.
+
+            Moraleja de las dos veces: este párrafo no puede prometer volumen.
+            Sólo puede decir lo que cuesta.
+          -->
+          <p id="equalizerPreamp"></p>
+        </fieldset>
+      </section>
+
+      <!-- ================= EL ESPECTRO ================= -->
+      <section id="seccion-barras" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_barras">Barras de sonido</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_barras_intro">
+          Las barras que se mueven con la música detrás de la carátula. Se
+          encienden y se apagan con el botón 📊 de la ventana; aquí eliges cómo
+          se ven.
+        </p>
+
+        <!--
+          Mismos chips y misma nota que el ecualizador, porque es el MISMO
+          límite: las barras se dibujan con un AnalyserNode colgado del audio
+          de la página, y en Spotify ese audio no está en el DOM
+          (capacidades.audioGrafo=false, medido dos veces).
+        -->
+        <p class="ytmpip-sitios" title="En qué sitios funciona" data-t-title="donde_funciona">
+          <span class="ytmpip-sitio">YouTube</span>
+          <span class="ytmpip-sitio">YouTube Music</span>
+        </p>
+        <p class="ytmpip-nota-sitio" data-t="nota_sin_audio">
+          En Spotify esto no funciona: su sonido no está al alcance de la
+          página, así que no hay nada que tocar ni medir.
+        </p>
+
+        <!--
+          Número de barras. Dos campos y no uno porque son dos decisiones
+          distintas: primero si manda el ancho de la ventana o mandas tú, y sólo
+          después cuántas. Un único desplegable con "auto" y luego 8, 9, 10...
+          hasta 40 serían treinta y cuatro opciones para una pregunta de sí o no.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="spectrumBarsMode" data-t="fila_cuantas_barras">Cuántas barras</label>
+            <span class="ytmpip-ayuda" data-t="fila_cuantas_barras_ayuda">
+              «Las que quepan» pone más o menos según lo ancha que tengas la
+              ventana.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="spectrumBarsMode" aria-label="Cuántas barras" data-t-aria="fila_cuantas_barras">
+            <button type="button" data-valor="auto" aria-pressed="true" data-t="opcion_barras_auto">Las que quepan</button>
+            <button type="button" data-valor="fixed" aria-pressed="false" data-t="opcion_barras_fijo">Un número fijo</button>
+          </div>
+          <select id="spectrumBarsMode" class="ytmpip-select-real">
+            <option value="auto" data-t="opcion_barras_auto">Las que quepan</option>
+            <option value="fixed" data-t="opcion_barras_fijo">Un número fijo</option>
+          </select>
+        </div>
+
+        <!--
+          ESTA FILA ES UN <label> Y NO UN <div>, y las dos que hay así en la
+          página lo son por lo mismo: options.js las esconde poniendo `hidden`
+          sobre el <label> y sobre el campo, que son los dos únicos elementos
+          que conoce. Con la fila envolviéndolos, esconderlos dejaba la fila
+          vacía: una raya y su hueco separando nada.
+
+          Un <label> puede contener su propio campo, así que la fila es la
+          etiqueta y se esconde entera. El `for` se queda aunque sobre: hace
+          falta si algún día el campo sale de dentro.
+
+          Sin marca de «recomendado» en el deslizador a propósito: este ajuste
+          no tiene valor de fábrica (DEFAULT_SETTINGS guarda spectrumBars, la
+          clave conjunta), y options.js deja la marca de enmedio vacía cuando
+          no encuentra un número que enseñar.
+        -->
+        <label id="spectrumBarsCountLabel" class="ytmpip-fila ytmpip-fila-deslizador" for="spectrumBarsCount" hidden>
+          <span class="ytmpip-fila-texto">
+            <span class="ytmpip-fila-titulo" data-t="fila_numero_barras">Número de barras</span>
+            <span class="ytmpip-ayuda" data-t="fila_numero_barras_ayuda">Entre 8 y 40.</span>
+          </span>
+          <output class="ytmpip-valor-vivo" for="spectrumBarsCount"><span id="spectrumBarsCountVivo"></span></output>
+          <span class="ytmpip-deslizador">
+            <input id="spectrumBarsCount" type="range" min="8" max="40" step="1" hidden />
+            <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
+          </span>
+        </label>
+
+        <div class="ytmpip-fila ytmpip-fila-deslizador">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="spectrumFall" data-t="fila_caida">Cómo bajan las barras</label>
+            <span class="ytmpip-ayuda" data-t="fila_caida_ayuda">
+              Con 1 caen despacio y se ven suaves; con 60 se desploman a cada
+              golpe de la música.
+            </span>
+          </div>
+          <output class="ytmpip-valor-vivo" for="spectrumFall"><span id="spectrumFallVivo"></span></output>
+          <span class="ytmpip-deslizador">
+            <input id="spectrumFall" type="range" min="1" max="60" step="1" />
+            <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
+          </span>
+        </div>
+
+        <div class="ytmpip-fila ytmpip-fila-deslizador">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="spectrumHeight" data-t="fila_altura">Altura de las barras</label>
+            <span class="ytmpip-ayuda" data-t="fila_altura_ayuda">
+              Cuánto ocupan de alto dentro de la ventana.
+            </span>
+          </div>
+          <output class="ytmpip-valor-vivo" for="spectrumHeight"><span id="spectrumHeightVivo"></span> <span class="ytmpip-unidad">%</span></output>
+          <span class="ytmpip-deslizador">
+            <input id="spectrumHeight" type="range" min="10" max="100" step="1" />
+            <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
+          </span>
+        </div>
+
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="spectrumColorMode" data-t="fila_color">Color</label>
+            <span class="ytmpip-ayuda" data-t="fila_color_ayuda">
+              De qué color se pintan. Con una paleta tuya, las barras van del
+              primer color al último.
+            </span>
+          </div>
+          <!--
+            Cinco respuestas y aun así píldoras, no desplegable: es la fila
+            con más personalidad de la página y la maqueta la enseñaba
+            entera. Con este ancho caben en dos líneas del grupo.
+          -->
+          <div class="ytmpip-pildoras" role="group" data-para="spectrumColorMode" aria-label="Color" data-t-aria="fila_color">
+            <button type="button" data-valor="accent" aria-pressed="true" data-t="opcion_color_tema">El del tema</button>
+            <button type="button" data-valor="custom" aria-pressed="false" data-t="opcion_color_mio">Un color mío</button>
+            <button type="button" data-valor="rgb" aria-pressed="false" data-t="opcion_color_rgb">Arcoíris (va cambiando solo)</button>
+            <button type="button" data-valor="palette" aria-pressed="false" data-t="opcion_color_paleta">Una paleta mía</button>
+            <button type="button" data-valor="source" aria-pressed="false" data-t="opcion_color_fuente">Del vídeo o la carátula</button>
+          </div>
+          <select id="spectrumColorMode" class="ytmpip-select-real">
+            <option value="accent" data-t="opcion_color_tema">El del tema</option>
+            <option value="custom" data-t="opcion_color_mio">Un color mío</option>
+            <!--
+              El arcoíris girando, como los ventiladores de un ordenador gamer.
+              No abre el cuentagotas porque no hay ningún color que elegir: los
+              recorre todos.
+            -->
+            <option value="rgb" data-t="opcion_color_rgb">Arcoíris (va cambiando solo)</option>
+            <!--
+              Una paleta propia: el degradado va a lo ancho, del color de la
+              primera barra al de la última. Está QUIETO, a diferencia del RGB de
+              arriba, y no por descuido: se pidió "empezar con un rojo y terminar
+              con un azul", y un degradado que gira no empieza en ningún sitio.
+            -->
+            <option value="palette" data-t="opcion_color_paleta">Una paleta mía</option>
+            <!--
+              El color que manda en lo que se está viendo. No abre ningún
+              campo, igual que el arcoíris y por el mismo motivo: no hay nada
+              que elegir, lo elige la canción.
+
+              PUEDE NO DAR NINGÚN COLOR, y eso es parte de lo que hace. Una
+              portada en blanco y negro no tiene un color que mande, así que
+              en esas canciones las barras vuelven al color del tema en vez de
+              inventarse uno. Lo cuenta la ayuda de abajo, porque un usuario
+              que no lo sepa lo leerá como un fallo.
+            -->
+            <option value="source" data-t="opcion_color_fuente">Del vídeo o la carátula</option>
+          </select>
+        </div>
+
+        <!--
+          «El del tema» era la opción que menos se entendía, y con razón: con
+          «Un color mío» ves el color en el cuentagotas, pero con esta no veías
+          nada y había que elegirla para averiguar qué hacía. La muestra de al
+          lado enseña de qué color estamos hablando ANTES de aplicarlo. Su color
+          lo escribe options.js leyendo la misma constante que usa el espectro.
+        -->
+        <p id="spectrumAccentHint" class="ytmpip-pista" hidden>
+          <span id="spectrumAccentSwatch" class="ytmpip-muestra" aria-hidden="true"></span>
+          <span data-t="pista_color_tema">Éste es el color: cambia solo si pasas la ventana al tema claro.</span>
+        </p>
+
+        <!--
+          Aquí NO hay muestra de color, a diferencia de la pista de arriba, y
+          no es un descuido: el color de esta opción no existe hasta que suena
+          algo. Una muestra tendría que enseñar el de la canción de turno, que
+          esta página no conoce —es otro documento, sin acceso al reproductor—,
+          así que sería un cuadrito inventado justo en la opción cuya gracia es
+          que el color NO se lo inventa nadie.
+
+          Lo que sí se cuenta es cuándo no va a haber color, porque leído sin
+          aviso eso parece una avería.
+        -->
+        <p id="spectrumSourceHint" class="ytmpip-pista" hidden data-t="pista_color_fuente">
+          Las barras toman el color que más manda en lo que estés viendo, y
+          cambian con el vídeo. Si la imagen no tiene un color claro —blanco y
+          negro, o casi todo oscuro— vuelven al color del tema.
+        </p>
+
+        <!-- La otra fila-etiqueta; ver el comentario de la de arriba. -->
+        <label id="spectrumColorLabel" class="ytmpip-fila" for="spectrumColor" hidden>
+          <span class="ytmpip-fila-texto">
+            <span class="ytmpip-fila-titulo" data-t="fila_tu_color">Tu color</span>
+            <span class="ytmpip-ayuda" data-t="fila_tu_color_ayuda">Todas las barras se pintan de este color.</span>
+          </span>
+          <input id="spectrumColor" type="color" hidden />
+        </label>
+
+        <!--
+          Los cuentagotas de la paleta. Están los cinco escritos en el HTML y
+          options.js enseña los que hagan falta, en vez de crearlos con
+          createElement: así el número máximo se ve leyendo el archivo, y el
+          `for` de cada etiqueta puede apuntar a un id de verdad. Cinco es
+          PALETTE_MAX en shared/constants.js; si allí sube, aquí hay que añadir
+          más, y por eso options.js avisa por consola si no cuadran.
+        -->
+        <fieldset id="spectrumPaletteBox" class="ytmpip-paleta" hidden>
+          <legend data-t="paleta_legend">Los colores, de la primera barra a la última</legend>
+
+          <div class="ytmpip-fila">
+            <div class="ytmpip-fila-texto">
+              <label class="ytmpip-fila-titulo" for="spectrumPaletteCount" data-t="fila_cuantos_colores">Cuántos colores</label>
+            </div>
+            <!-- Números sin data-t: 2, 3, 4 y 5 se dicen igual en todos los idiomas. -->
+            <div class="ytmpip-pildoras" role="group" data-para="spectrumPaletteCount" aria-label="Cuántos colores" data-t-aria="fila_cuantos_colores">
+              <button type="button" data-valor="2" aria-pressed="false">2</button>
+              <button type="button" data-valor="3" aria-pressed="true">3</button>
+              <button type="button" data-valor="4" aria-pressed="false">4</button>
+              <button type="button" data-valor="5" aria-pressed="false">5</button>
+            </div>
+            <select id="spectrumPaletteCount" class="ytmpip-select-real">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
+          <div class="ytmpip-paleta-colores">
+            <input id="spectrumPalette0" type="color" aria-label="Color 1" />
+            <input id="spectrumPalette1" type="color" aria-label="Color 2" />
+            <input id="spectrumPalette2" type="color" aria-label="Color 3" />
+            <input id="spectrumPalette3" type="color" aria-label="Color 4" />
+            <input id="spectrumPalette4" type="color" aria-label="Color 5" />
+          </div>
+
+          <!--
+            El degradado de verdad, no una aproximación: options.js lo pinta
+            llamando a la MISMA función que pinta las barras, barra por barra.
+            Un `linear-gradient` de CSS habría sido una línea, pero interpola en
+            otro espacio de color y la vista previa mentiría justo en lo que se
+            está eligiendo.
+          -->
+          <canvas id="spectrumPalettePreview" class="ytmpip-paleta-vista" width="240" height="28"></canvas>
+        </fieldset>
+      </section>
+
+      <!-- ================= SOLO EN SPOTIFY ================= -->
+      <!--
+        La tarjeta existe porque Spotify trae dos cosas que los otros sitios
+        no tienen, y una de ellas —el fondo Canvas— sólo se podía apagar
+        desde el botón 🌌 de la ventana: la preferencia se guardaba
+        (canvasPreference, en storage desde la tanda D) pero esta página no
+        la enseñaba. Un ajuste guardado que no aparece en Preferencias es un
+        ajuste escondido.
+
+        El título ya dice «Sólo en Spotify», así que aquí no hay chips: serían
+        el título repetido en pequeño.
+      -->
+      <section id="seccion-spotify" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_spotify">Sólo en Spotify</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_spotify_intro">
+          Lo que Spotify tiene y los demás sitios no. Estos ajustes sólo actúan
+          en una pestaña de Spotify.
+        </p>
+
+        <!--
+          El Canvas: un vídeo corto en bucle, sin sonido y SIN cifrar (medido
+          2026-09-16: mediaKeys null), que la ventana captura y pone de fondo.
+          Las píldoras guardan lo mismo que alterna el botón 🌌 de la
+          ventana: shown/hidden en canvasPreference. Misma pareja de valores
+          que el vídeo y la letra, misma pregunta de dos respuestas.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="canvasPreference" data-t="fondo_visual">Fondo visual</label>
+            <span class="ytmpip-ayuda" data-t="fila_canvas_ayuda">
+              El vídeo corto que Spotify pone a algunas canciones, de fondo en
+              la ventana. También se enciende y se apaga con el botón 🌌 de la
+              ventana.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="canvasPreference" aria-label="Fondo visual" data-t-aria="fondo_visual">
+            <button type="button" data-valor="shown" aria-pressed="true" data-t="opcion_video_ver">Verlo cuando lo haya</button>
+            <button type="button" data-valor="hidden" aria-pressed="false" data-t="opcion_canvas_no">No verlo (el fondo de siempre)</button>
+          </div>
+          <select id="canvasPreference" class="ytmpip-select-real">
+            <option value="shown" data-t="opcion_video_ver">Verlo cuando lo haya</option>
+            <option value="hidden" data-t="opcion_canvas_no">No verlo (el fondo de siempre)</option>
+          </select>
+        </div>
+
+        <!--
+          El vídeo flotante del navegador no es un ajuste —no guarda nada—,
+          pero se cuenta aquí porque es la respuesta a «¿y el vídeo de
+          Spotify?»: cifrado, la ventana no puede pintarlo (por eso el chip
+          de arriba dice YouTube · YouTube Music), y el botón 🎬 lo saca en
+          la ventanita nativa del navegador, que compone él solo y a la que
+          el cifrado no le afecta. Medido en vivo el 2026-09-16: la ventanita
+          se abrió con el vídeo DRM dentro.
+        -->
+        <p class="pista" data-t="nota_pip_nativo">
+          El vídeo de Spotify va cifrado y la ventana no puede pintarlo; el
+          botón 🎬 lo abre en el vídeo flotante del propio navegador, al que
+          el cifrado no le afecta.
+        </p>
+      </section>
+
+      <!-- ================= LA MATRIZ DE SITIOS ================= -->
+      <!--
+        Los límites que los chips cuentan repartidos por la página, juntos en
+        una tabla. Cada celda sale de una medición ya contada arriba o en los
+        adaptadores; aquí no se decide nada, sólo se resume, y por eso la
+        tarjeta va al final y sin mandos.
+
+        Las cabeceras de columna reutilizan .ytmpip-sitio a propósito: la
+        prueba que coteja los chips contra los nombres declarados por los
+        tres adaptadores vigila también esta tabla, así que una errata tipo
+        «Youtube» no viviría en silencio.
+
+        Las cabeceras de fila reutilizan las claves de los títulos y filas
+        que ya nombran cada cosa (tarjeta_ventana, fila_video, fila_letra,
+        ecualizador, tarjeta_barras, fondo_visual): si arriba se renombra
+        algo, la matriz se renombra sola. La única clave propia es la del
+        vídeo flotante del navegador, que arriba es una nota y no un título.
+      -->
+      <section class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_matriz">Qué funciona en cada sitio</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_matriz_intro">
+          Todo lo de arriba, resumido: qué ofrece cada sitio y qué no. Los
+          límites están medidos, no supuestos.
+        </p>
+
+        <table class="ytmpip-matriz">
+          <thead>
+            <tr>
+              <th scope="col"><span class="ytmpip-oculto" data-t="matriz_funcion">Función</span></th>
+              <th scope="col"><span class="ytmpip-sitio">YouTube</span></th>
+              <th scope="col"><span class="ytmpip-sitio">YouTube Music</span></th>
+              <th scope="col"><span class="ytmpip-sitio">Spotify</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" data-t="tarjeta_ventana">La ventana flotante</th>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="fila_video">Vídeo musical</th>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-no">—</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="fila_letra">Letra de la canción</th>
+              <td class="ytmpip-no">—</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="ecualizador">Ecualizador</th>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-no">—</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="tarjeta_barras">Barras de sonido</th>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-no">—</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="fondo_visual">Fondo visual</th>
+              <td class="ytmpip-no">—</td>
+              <td class="ytmpip-no">—</td>
+              <td class="ytmpip-si">✓</td>
+            </tr>
+            <tr>
+              <th scope="row" data-t="matriz_pip_nativo">Vídeo flotante del navegador (🎬)</th>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+              <td class="ytmpip-si">✓</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="pista" data-t="matriz_leyenda">
+          Lo que falta no es dejadez: el vídeo de Spotify va cifrado, su sonido
+          no pasa por la página y YouTube no tiene panel de letra.
+        </p>
+      </section>
+    </div>
+
+    <p id="status"></p>
+
+    <!--
+      settings.js se carga por sus funciones PURAS (partir/unir barras y
+      color), no por su cache: aqui `YTMPip.isContextValid` no existe, asi
+      que su load() se corta solo y no lee nada. La alternativa era copiar
+      a options.js el formato de lo que se guarda, y entonces cambiarlo
+      obligaria a acordarse de dos archivos.
+    -->
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/textos.js"></script>
+    <script src="../shared/ecualizador.js"></script>
+    <script src="../shared/settings.js"></script>
+    <script src="../shared/paleta.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

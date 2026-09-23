@@ -1,0 +1,74 @@
+<!doctype html>
+<!--
+  La cola ("A continuación") con la canción sonando EN MEDIO: hay una
+  anterior, la marcada con `selected`, y seis por venir. Seis y no cinco a
+  propósito: una más que QUEUE_MAX_ITEMS, para que el corte tenga algo que
+  cortar.
+
+  AVISO: esta estructura es la que los selectores del adaptador ESPERAN,
+  no una copiada de la página real (tools/diagnostico-cola.js existe para
+  compararlas). Estas pruebas fijan el contrato del lector con su
+  adaptador; la verdad del DOM de Google se comprueba en el navegador.
+
+  El byline de la primera trae el formato completo "Artista • Álbum • Año"
+  para probar que sólo sobrevive el artista, igual que en la barra.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <yt-formatted-string class="title ytmusic-player-bar">La Que Suena</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">Cantante Actual</yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player-queue>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Ya Sonó</yt-formatted-string>
+          <span class="byline">Alguien De Antes</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item selected>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">La Que Suena</yt-formatted-string>
+          <span class="byline">Cantante Actual</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Primera Siguiente</yt-formatted-string>
+          <span class="byline">Ana Torroja • Álbum Uno • 1988</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Segunda Siguiente</yt-formatted-string>
+          <span class="byline">Radio Futura</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Tercera Siguiente</yt-formatted-string>
+          <span class="byline">Los Piratas</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Cuarta Siguiente</yt-formatted-string>
+          <span class="byline">Vetusta Morla</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Quinta Siguiente</yt-formatted-string>
+          <span class="byline">Zahara</span>
+        </div>
+      </ytmusic-player-queue-item>
+      <ytmusic-player-queue-item>
+        <div class="song-info">
+          <yt-formatted-string class="song-title">Sexta Siguiente</yt-formatted-string>
+          <span class="byline">Iván Ferreiro</span>
+        </div>
+      </ytmusic-player-queue-item>
+    </ytmusic-player-queue>
+  </body>
+</html>

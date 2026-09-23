@@ -1,0 +1,2258 @@
+:root {
+  color-scheme: dark;
+  --ytmpip-bg: #0f0f0f;
+  --ytmpip-surface: rgba(255, 255, 255, 0.09);
+  --ytmpip-surface-hover: rgba(255, 255, 255, 0.18);
+  --ytmpip-text: #f1f1f1;
+  --ytmpip-text-dim: #b3b3b3;
+  /* El rojo 255 puro, pedido así («un rojo 255»). El tema claro NO lo
+     copia: sobre blanco pierde contraste y conserva su rojo oscuro. */
+  --ytmpip-accent: #ff0000;
+  --ytmpip-border: rgba(255, 255, 255, 0.12);
+  --ytmpip-track: rgba(255, 255, 255, 0.22);
+  --ytmpip-scrim: linear-gradient(180deg, rgba(15, 15, 15, 0.55) 0%, rgba(15, 15, 15, 0.88) 100%);
+  /*
+   * El velo LOCAL de la cabecera. El velo general es debil arriba a
+   * proposito (la letra en grande quiere ver la caratula), pero con una
+   * caratula extrema el estado se quedaba en 4.20:1 en reposo y 2.76:1 con
+   * la letra en el escenario (AA pide 4.5). Este degradado es solido
+   * mientras hay texto y solo se desvanece en la cola de 12px que asoma por
+   * debajo: asi las cuentas del contraste valen con el alfa entero, y la
+   * caratula sigue viendose desde el titulo hacia abajo.
+   *
+   * El alfa era 0.78, el mínimo que dejaba al acento VIEJO (#f15a5a) por
+   * encima de 4.5 con margen. El rojo 255 es más oscuro y pide 0.94 en el
+   * mismo peor caso medido (carátula blanca pura, fondo 0.8): da 4.60, y
+   * más margen no existe — el techo del #ff0000 sobre este fondo, con el
+   * velo opaco del todo, es 4.79. La prueba de accesibilidad hace estas
+   * cuentas sola, con los valores leídos de aquí.
+   */
+  --ytmpip-velo-cabecera: linear-gradient(
+    180deg,
+    rgba(15, 15, 15, 0.94) 0,
+    rgba(15, 15, 15, 0.94) calc(100% - 12px),
+    rgba(15, 15, 15, 0) 100%
+  );
+  /*
+   * El relleno del contenido, en variables porque el velo de la cabecera lo
+   * RESTA para llegar a los bordes de la ventana: si fuera un numero suelto
+   * en cada sitio, cambiar el relleno dejaria una tira sin velo.
+   */
+  --ytmpip-relleno-arriba: 8px;
+  --ytmpip-relleno-lado: 10px;
+  /*
+   * Cuanto se ve la caratula difuminada del fondo CUANDO NO HAY ATENUADO.
+   * Es variable y no un numero suelto porque tres sitios lo cambian (video,
+   * letra en el escenario, y el propio atenuado) y antes lo cambiaban
+   * pisandose la regla unos a otros: el ultimo que ganaba se llevaba por
+   * delante lo que hubiera decidido el anterior.
+   */
+  --ytmpip-fondo: 0.55;
+}
+
+/*
+ * El tema se aplica sobre <html> (no sobre #ytmpip-root) porque el fondo
+ * de la ventana lo pintan html/body: unas variables redefinidas en un div
+ * interno nunca las alcanzarian.
+ */
+html.ytmpip-theme-light {
+  color-scheme: light;
+  --ytmpip-bg: #ffffff;
+  --ytmpip-surface: rgba(0, 0, 0, 0.07);
+  --ytmpip-surface-hover: rgba(0, 0, 0, 0.14);
+  --ytmpip-text: #0f0f0f;
+  --ytmpip-text-dim: #5b5b5b;
+  --ytmpip-accent: #d32f2f;
+  --ytmpip-border: rgba(0, 0, 0, 0.12);
+  --ytmpip-track: rgba(0, 0, 0, 0.18);
+  --ytmpip-scrim: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.92) 100%);
+  /* 0.85 y no 0.78: el gris claro parte con menos contraste y pide mas velo. */
+  --ytmpip-velo-cabecera: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.85) 0,
+    rgba(255, 255, 255, 0.85) calc(100% - 12px),
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ytmpip-bg);
+  color: var(--ytmpip-text);
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 13px;
+}
+
+#ytmpip-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  isolation: isolate;
+}
+
+/*
+ * Oculto para la vista, presente para el lector de pantalla. Es la receta
+ * clásica del "visually hidden": NO puede ser display:none ni
+ * visibility:hidden porque eso también silencia al lector, que es
+ * exactamente el único público de la región aria-live que lleva esta
+ * clase. El clip-path y el 1×1 la sacan de la vista sin sacarla del árbol
+ * de accesibilidad.
+ */
+.ytmpip-solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * QUE SE ATENUA Y HACIA QUE.
+ *
+ * La variable --ytmpip-opacidad la escribe pip.js con lo que digan las
+ * preferencias Y si hay reproduccion; aqui solo se aplica. El valor de
+ * reserva es 1 —la ventana entera— porque mientras pip.js no la haya
+ * escrito no hay nada que atenuar.
+ *
+ * ATENCION AL SITIO EN QUE SE APLICA, que es lo que se arreglo aqui.
+ * Estuvo puesta en #ytmpip-root, que es el padre de TODO: del texto, del
+ * velo y tambien de la caratula difuminada. Atenuar el padre atenuaba
+ * tambien la caratula, asi que al 80 no quedaba una ventana translucida
+ * sino un rectangulo negro —el color plano de html/body asomando por
+ * debajo—. El usuario lo describio tal cual: "aun no se ve el fondo".
+ *
+ * La ventana flotante se compone OPACA (medido, no supuesto: quitar los
+ * fondos no deja ver el escritorio), asi que no hay ningun fondo al que
+ * atenuarse. El unico fondo que existe es la caratula, y ya estaba ahi.
+ * Por eso ahora la opacidad baja solo el CONTENIDO y el VELO, y la
+ * caratula, en vez de irse con ellos, sube. Atenuado = cristal ahumado
+ * sobre la portada, no agujero.
+ */
+.ytmpip-content,
+.ytmpip-scrim {
+  opacity: var(--ytmpip-opacidad, 1);
+  transition: opacity 320ms ease;
+}
+
+/*
+ * Acercarse la devuelve entera. Sin esto el atenuado seria una trampa: los
+ * botones estarian medio borrados justo cuando se van a usar.
+ *
+ * A diferencia de los mandos superpuestos, esto NO va dentro de
+ * `@media (hover: hover)`. Alli el autoocultado lo decide la extension y
+ * sin raton no habria forma de recuperar los controles; aqui lo ha pedido
+ * el usuario a proposito y ademas queda el `:focus-within`, que en tactil
+ * salta al tocar cualquier boton.
+ */
+#ytmpip-root:hover .ytmpip-content,
+#ytmpip-root:focus-within .ytmpip-content,
+#ytmpip-root:hover .ytmpip-scrim,
+#ytmpip-root:focus-within .ytmpip-scrim {
+  opacity: 1;
+}
+
+/* ---------- Fondo difuminado ---------- */
+
+/*
+ * scale(1.25) evita que el desenfoque deje los bordes transparentes: el
+ * blur difumina tambien el limite de la imagen, asi que se agranda para
+ * que ese borde caiga fuera de la ventana.
+ */
+.ytmpip-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-position: center;
+  background-size: cover;
+  filter: blur(28px) saturate(1.5);
+  transform: scale(1.25);
+  opacity: 0;
+  transition: opacity 420ms ease, background-image 420ms ease;
+}
+
+/*
+ * La caratula CRECE segun se atenua lo demas. Es la otra mitad del arreglo:
+ * si se quedara fija, el atenuado seguiria yendo hacia el gris plano de
+ * html/body, solo que mas despacio. Atenuado del todo, la portada queda
+ * casi limpia, y eso es lo que se ve por debajo del texto apagado.
+ *
+ * La cuenta es "recorrer lo que falta hasta 1": partiendo de --ytmpip-fondo,
+ * el atenuado (1 - opacidad) dice que parte de ese hueco se recorre. Asi
+ * vale igual para el 0.55 de siempre, el 0.3 del video y el 0.8 de la letra
+ * sin repetir el numero tres veces.
+ *
+ * Todo el calc es sin unidades a proposito: --ytmpip-opacidad es un numero
+ * suelto (lo escribe pip.js con String(0.2)), no un porcentaje.
+ */
+.ytmpip-backdrop.ytmpip-has-art {
+  opacity: calc(
+    var(--ytmpip-fondo) + (1 - var(--ytmpip-fondo)) * (1 - var(--ytmpip-opacidad, 1))
+  );
+}
+
+/* Acercarse devuelve la ventana entera, y eso incluye devolver el fondo a
+   su sitio: si la portada se quedara crecida, el texto que vuelve a plena
+   opacidad tendria que leerse sobre una imagen mas fuerte de lo normal. */
+#ytmpip-root:hover .ytmpip-backdrop.ytmpip-has-art,
+#ytmpip-root:focus-within .ytmpip-backdrop.ytmpip-has-art {
+  opacity: var(--ytmpip-fondo);
+}
+
+/*
+ * El Canvas de Spotify de fondo. MISMA capa que el backdrop (-2): al ir
+ * despues en el documento se pinta encima de la portada difuminada sin
+ * necesitar un numero propio, y el velo de siempre (-1) le pone el mismo
+ * oscurecido que ya garantiza la legibilidad del texto. object-fit cover
+ * porque el Canvas es vertical (321x574 medido) y la ventana apaisada:
+ * mejor recortar arriba y abajo que dejar franjas vacias a los lados.
+ */
+.ytmpip-canvas-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ytmpip-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ytmpip-scrim);
+}
+
+.ytmpip-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--ytmpip-relleno-arriba) var(--ytmpip-relleno-lado) 10px;
+  gap: 8px;
+}
+
+/* ---------- Cabecera ---------- */
+
+.ytmpip-header {
+  /* Ancla del velo local (el ::before de aqui abajo). */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/*
+ * El velo local: un suelo estable para la cabecera, decidido con las
+ * cuentas hechas (tools/comparacion-cabecera.html). Vive como ::before y no
+ * como fondo del header para poder desbordarse hasta los bordes de la
+ * ventana restando el relleno del contenido.
+ *
+ * Dos contratos que hereda gratis por estar dentro de .ytmpip-content:
+ * el atenuado (baja y vuelve con el mismo opacity que el texto que
+ * protege, nunca uno sin el otro) y el orden de pintado (con z-index -1
+ * queda detras del texto pero, por orden de documento, encima del velo
+ * general y de la caratula).
+ */
+.ytmpip-header::before {
+  content: "";
+  position: absolute;
+  top: calc(-1 * var(--ytmpip-relleno-arriba));
+  left: calc(-1 * var(--ytmpip-relleno-lado));
+  right: calc(-1 * var(--ytmpip-relleno-lado));
+  bottom: -12px;
+  z-index: -1;
+  background: var(--ytmpip-velo-cabecera);
+  pointer-events: none;
+}
+
+.ytmpip-status {
+  font-size: 11px;
+  color: var(--ytmpip-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ytmpip-status.disconnected {
+  color: var(--ytmpip-accent);
+}
+
+.ytmpip-header-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ---------- Botones ---------- */
+
+button {
+  border: none;
+  border-radius: 999px;
+  background: var(--ytmpip-surface);
+  color: var(--ytmpip-text);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+button:hover {
+  background: var(--ytmpip-surface-hover);
+}
+
+button:active {
+  transform: scale(0.93);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--ytmpip-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Los iconos ----------
+ *
+ * ESTA ES LA UNICA REGLA QUE DA TAMAÑO A LOS DIBUJOS, y lo da en `em`. El
+ * alto de los botones esta repartido por una docena de reglas de
+ * `font-size` de mas abajo, una por densidad (mini, ajustado,
+ * superpuesto...). Midiendo en `em`, esas reglas siguen mandando igual que
+ * cuando los botones llevaban emoji: no hay que tocar ni una.
+ *
+ * POR QUE 1.25 Y NO 1. Un emoji se dibuja ocupando casi toda su caja; un
+ * SVG de 24x24 gasta unas dos unidades de margen por lado, asi que a 1em
+ * su tinta sale a un 0,83em escaso y todos los botones habrian encogido de
+ * golpe respecto a lo que ya estaba ajustado. Con 1.25 el dibujo queda
+ * entre la mitad y el 57 % del ancho del boton en todas las densidades.
+ *
+ * Si al mirarlo se ven grandes o pequeños, ESTE numero es el que hay que
+ * mover, y sube o baja todo a la vez.
+ */
+.ytmpip-ico {
+  width: 1.25em;
+  height: 1.25em;
+  /* Lo que hacia falta y con los emoji era imposible: el dibujo se pinta
+     del color del boton, asi que `:hover` y `[aria-pressed="true"]` —que
+     llevan ahi desde el principio— por fin se ven. */
+  fill: currentColor;
+  display: block;
+  flex-shrink: 0;
+  /* El clic es del boton. Sin esto, `event.target` seria a veces el <svg>
+     y a veces un <path>, segun donde cayera el raton. */
+  pointer-events: none;
+}
+
+/* Centrado, solo en los botones que llevan dibujo. Con `:has` y no
+   poniendo `display: flex` a todos los botones porque los que llevan texto
+   —"Aa", "Letras", "Volver a YouTube Music"— ya se centran solos y no hay
+   por que cambiarles la caja. */
+button:has(.ytmpip-ico) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ytmpip-header-actions button {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--ytmpip-text-dim);
+}
+
+.ytmpip-header-actions button:hover {
+  background: var(--ytmpip-surface);
+  color: var(--ytmpip-text);
+}
+
+/* AQUI HABIA UN `font-size: 14px` para este boton, y otro de 13px en el
+   bloque de mini. Estaban porque su glifo era un emoji a color, que a
+   11px quedaba en una mancha mientras que ⤢ y ✕ se leian bien; era una
+   excepcion para compensar el emoji. Ahora los tres son dibujos del mismo
+   juego y con el mismo peso, asi que la excepcion sobra: el boton mide lo
+   que miden sus vecinos. */
+
+/* Alternar video/caratula esta pulsado cuando se esta viendo la caratula
+   teniendo video disponible: es un estado que el usuario eligio y que no
+   se deduce de nada mas en pantalla, asi que se marca. Los toggles de la
+   fila de extras quedan neutros por el motivo contrario (ver mas abajo:
+   YouTube Music no expone su estado de forma fiable).
+
+   LLEVA `color` DESDE QUE HAY ICONOS. Antes solo fondo: el glifo era un
+   emoji, se pintaba con su propia paleta y la regla de color no llegaba a
+   verse, asi que la señal la tenia que dar el propio emoji cambiando de
+   dibujo. Con `fill: currentColor` el acento si tiñe, y el estado se marca
+   como en el resto de la ventana. */
+#ytmpip-video-toggle[aria-pressed="true"] {
+  background: var(--ytmpip-surface);
+  color: var(--ytmpip-accent);
+}
+
+/* El microfono de emergencia de la cabecera marca "panel abierto" con
+   aria-expanded, como «Letras» y «Siguientes» (es un mando del MISMO
+   panel), no con aria-pressed como sus vecinos de cabecera. El resalte
+   es el de la cabecera y no el gris de la fila de extras: el boton vive
+   aqui arriba y debe encenderse como los de su fila. */
+#ytmpip-mic-toggle[aria-expanded="true"] {
+  background: var(--ytmpip-surface);
+  color: var(--ytmpip-accent);
+}
+
+/* ---------- Cuerpo: escenario + informacion ---------- */
+
+.ytmpip-body {
+  display: flex;
+  gap: 10px;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  /*
+   * AQUI HUBO UN `position: relative` y ya no hace falta. Estaba puesto
+   * para que el canvas del espectro se posicionara contra el cuerpo, y su
+   * comentario decia que sin el "taparia tambien los controles". Eso, que
+   * se escribio como el motivo de la regla, resulto ser el fallo: el
+   * espectro tenia que llegar al fondo de la ventana, y este `relative` era
+   * lo unico que se lo impedia.
+   *
+   * Se ha comprobado antes de quitarlo que el espectro era el UNICO
+   * descendiente del cuerpo posicionado en absoluto; el escenario trae su
+   * propio `position: relative`.
+   */
+}
+
+.ytmpip-stage {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.ytmpip-artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- LO QUE OCUPE EL ESCENARIO PULSA CON LOS GRAVES ----------
+ *
+ * JavaScript publica UN número entre 0 y 1 en `--ytmpip-pulse`: "cuánto
+ * golpe hay ahora mismo". Cuánto crece la imagen con ese golpe lo decide
+ * AQUÍ, con `--ytmpip-pulse-strength`, y ese reparto es deliberado. El
+ * módulo de audio mide y la hoja de estilos decide cómo se ve; si el 10 %
+ * viviera en pip.js habría que tocar JavaScript para ajustar un efecto
+ * visual, y este proyecto ya sabe cómo acaba una decisión repartida entre
+ * dos archivos.
+ *
+ * ---------- POR QUÉ UN SELECTOR CON DOS COSAS Y NO DOS REGLAS ----------
+ *
+ * El escenario aloja la portada o el vídeo, nunca los dos. Cuando el pulso
+ * pasó a valer también para el vídeo, lo fácil era copiar el `transform` a
+ * `.ytmpip-video-slot` y cambiarle el número. Serían dos copias del mismo
+ * `calc`, y este proyecto tiene escrito lo que pasa con eso: el día que
+ * alguien cambie la curva en un sitio, el otro seguiría latiendo con la
+ * vieja y ninguna prueba se enteraría. La CURVA es una; lo único que
+ * cambia entre los dos es CUÁNTO, y para eso está la variable.
+ *
+ * `transform` y NO `width`/`height`: escalar con transform no rehace la
+ * maquetación, así que la imagen puede crecer sesenta veces por segundo
+ * sin mover un píxel del título, los controles ni la letra. Con un tamaño
+ * de verdad, cada golpe de bombo reflowaría la ventana entera. En el vídeo
+ * esto importa todavía más: es el elemento REAL de YouTube Music, prestado,
+ * y tocarle el tamaño de verdad sería pelearse con los estilos en línea que
+ * trae puestos. Por eso además se escala el HUECO (`.ytmpip-video-slot`),
+ * que es un div nuestro, y no el `<video>`: al elemento prestado no se le
+ * toca nada que haya que devolver.
+ *
+ * Sin `transition`: el número ya llega suavizado del analizador (sube de
+ * golpe, baja en 250 ms). Una transición encima llegaría tarde a cada
+ * golpe, que es exactamente lo que se nota como desincronizado con la
+ * música.
+ *
+ * El escenario tiene `overflow: hidden`, así que la imagen crece hacia
+ * dentro del marco: late, no empuja.
+ *
+ * ---------- POR QUÉ EL NÚMERO SE MULTIPLICA POR SÍ MISMO ----------
+ *
+ * Esto no es adorno, es la diferencia entre un latido y un temblor, y lo
+ * dijo una medición en la página real (`tools/diagnostico-pulso.js`, una
+ * salsa con el bombo marcado):
+ *
+ *     0,0-0,2: 30,5 %   0,2-0,4: 20,6 %   0,4-0,6: 22,7 %
+ *     0,6-0,8: 15,1 %   0,8-1,0: 11,1 %      valor medio: 0,41
+ *
+ * O sea que la carátula pasaba el 70 % del tiempo por encima de 0,2: nunca
+ * estaba quieta, siempre a un tamaño intermedio. Eso se ve como una
+ * vibración continua, no como un golpe. Y el arreglo intuitivo —subir la
+ * amplitud— sólo daba un temblor más grande.
+ *
+ * Al elevar al cuadrado, la parte baja del recorrido se aplasta y la alta
+ * se queda entera: 0,3 pasa a 0,09 (reposo) y 1 sigue siendo 1 (golpe).
+ * Con el reparto de arriba, la mitad del tiempo queda por debajo del 2 %
+ * de crecimiento —invisible, que es lo que debe ser el reposo— y el 11 %
+ * de los fotogramas conserva el golpe entero.
+ *
+ * Va aquí y no en el analizador por lo mismo de siempre: el módulo de
+ * audio contesta "cuánto golpe hay" y esa respuesta es verdad tal cual.
+ * Cómo de brusca se quiere la respuesta es una decisión de aspecto, y las
+ * decisiones de aspecto viven en la hoja de estilos.
+ */
+.ytmpip-artwork,
+.ytmpip-video-slot {
+  --ytmpip-pulse-strength: 0.1;
+  transform: scale(
+    calc(1 + var(--ytmpip-pulse, 0) * var(--ytmpip-pulse, 0) * var(--ytmpip-pulse-strength, 0.1))
+  );
+  will-change: transform;
+}
+
+/*
+ * EL VÍDEO LATE MENOS, y no es capricho de números redondos.
+ *
+ * La portada es un cuadrado recortado con `object-fit: cover`: crecer un
+ * 10 % se come 10 % de una imagen que ya venía recortada, y lo que se pierde
+ * es borde de portada. El vídeo NO: entra con `object-fit: contain`, o sea
+ * que se ve ENTERO, y en modo superpuesto ocupa además la ventana de lado a
+ * lado. Ahí el mismo 10 % recorta 10 % de un fotograma en el que puede haber
+ * cara, letra sobreimpresa o créditos —cosas que sí se estaban mirando—.
+ *
+ * ESTO ES UN JUICIO, NO UNA MEDICIÓN, y conviene decirlo: el 0,1 de la
+ * portada salió del reparto que midió `tools/diagnostico-pulso.js`, pero
+ * eso midió la SEÑAL, que es la misma para los dos. Cuánto recorte tolera
+ * un vídeo no lo mide esa herramienta ni ninguna otra de aquí. Si al usarlo
+ * se queda corto o largo, el número a mover es éste y sólo éste.
+ */
+.ytmpip-video-slot {
+  --ytmpip-pulse-strength: 0.06;
+}
+
+/*
+ * Quien pide menos movimiento no quiere que la portada le respire en la
+ * cara. Se anula AQUÍ y no en JavaScript: así el botón sigue funcionando y
+ * el analizador sigue conectado —el espectro puede estar encendido a la vez—
+ * y lo único que desaparece es el movimiento, que es lo que se pidió.
+ *
+ * Los DOS, y por eso el selector repite la pareja de arriba: dejar fuera el
+ * vídeo convertiría «menos movimiento» en «menos movimiento salvo en los
+ * videoclips», que es justo donde más se nota.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ytmpip-artwork,
+  .ytmpip-video-slot {
+    --ytmpip-pulse-strength: 0;
+  }
+}
+
+/* ---------- EL HALO DE LUZ DEL BORDE ----------
+ *
+ * HACIA DENTRO, no hacia fuera, y no es elección estética: la ventana
+ * Document PiP es un rectángulo opaco del sistema operativo. Fuera de sus
+ * bordes no existe lienzo donde pintar, así que el resplandor exterior de
+ * la imagen de inspiración es físicamente imposible; lo alcanzable es un
+ * borde de luz por la cara interior, y eso es esta capa.
+ *
+ * `inset` en las DOS sombras: una fina y nítida que dibuja la línea del
+ * borde y una ancha y difusa que hace de resplandor. El color es
+ * `--ytmpip-halo-color` con el acento del tema de respaldo: si el usuario
+ * eligió un color suyo en Preferencias, la ventana escribe la variable en
+ * línea sobre esta capa; si eligió «el del tema», la variable NO existe y
+ * la cadena cae a `--ytmpip-accent`, que sigue al tema sola. Un solo color
+ * para las dos sombras: el halo es una sola luz, base y latido incluidos.
+ *
+ * EL LATIDO SÓLO MUEVE LA OPACIDAD. Recalcular un box-shadow sesenta veces
+ * por segundo repinta; la opacidad la compone el compositor sin repintar
+ * nada. JavaScript publica el golpe (0..1) en `--ytmpip-halo-golpe` —su
+ * variable PROPIA, no `--ytmpip-pulse`: encender el halo jamás debe hacer
+ * bailar la carátula ni al revés— y aquí se decide cuánto brilla, con el
+ * mismo reparto de siempre: el audio mide, la hoja de estilos opina.
+ *
+ * El golpe se multiplica por sí mismo POR LO MISMO que la carátula (la
+ * medición está en el comentario del pulso, ahí arriba): la señal pasa el
+ * 70 % del tiempo por encima de 0,2, y en lineal eso es un borde siempre a
+ * media luz —un parpadeo nervioso—, no un latido. Al cuadrado, el reposo
+ * casi no brilla y el golpe entero brilla entero.
+ *
+ * En modo fijo `--ytmpip-halo-golpe` vale 0 y queda la luz de base, que es
+ * exactamente el aspecto pedido: una línea de acento serena. `pointer-events:
+ * none` porque es pura luz: debajo están los mandos y la letra, y esta capa
+ * no puede robarles ni un clic. z-index 3, por encima de todo lo demás (el
+ * máximo del resto de la ventana es 2): la luz del borde baña también la
+ * cabecera y los mandos, como haría un marco de verdad.
+ */
+#ytmpip-halo {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  --ytmpip-halo-base: 0.35;
+  --ytmpip-halo-fuerza: 0.65;
+  box-shadow:
+    inset 0 0 2px 1px var(--ytmpip-halo-color, var(--ytmpip-accent)),
+    inset 0 0 24px 2px var(--ytmpip-halo-color, var(--ytmpip-accent));
+  /*
+   * El suavizado del modo «según la carátula»: la ventana escribe el color
+   * MUESTREADO de golpe (una vez por canción, o a cada tic en modo vídeo) y
+   * este fundido es lo que evita el cambiazo. Es transición y no bucle de
+   * fotogramas a propósito —el motivo largo está en el pintor, en pip.js— y
+   * NO contradice al comentario de arriba sobre recalcular box-shadow: aquello
+   * era sesenta veces por segundo cada segundo; esto, un fundido puntual
+   * cuando cambia el color, que con «el del tema» o un hex fijo es nunca.
+   */
+  transition: box-shadow 600ms ease;
+  opacity: calc(
+    var(--ytmpip-halo-base) +
+      var(--ytmpip-halo-golpe, 0) * var(--ytmpip-halo-golpe, 0) * var(--ytmpip-halo-fuerza)
+  );
+}
+
+/*
+ * Menos movimiento también aquí, por la misma vía que la carátula: se
+ * anula la FUERZA, no la capa. El halo fijo se queda —una luz quieta no es
+ * movimiento— y lo único que desaparece es el latido.
+ */
+@media (prefers-reduced-motion: reduce) {
+  #ytmpip-halo {
+    --ytmpip-halo-fuerza: 0;
+  }
+}
+
+.ytmpip-video-slot {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * El <video> es el elemento REAL de YouTube Music, prestado. Se le fuerza
+ * un tamaño porque llega con los estilos en linea que YTM le habia puesto
+ * para su propio reproductor. Al devolverlo se le restaura el atributo
+ * style original (ver pip.js).
+ */
+.ytmpip-video-slot video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  left: auto !important;
+  top: auto !important;
+  position: static !important;
+  object-fit: contain;
+  /* Transparente, no negro: las bandas del formato dejan ver el fondo
+     difuminado en lugar de un marco negro que parte la ventana. */
+  background: transparent;
+}
+
+/*
+ * El espectro. Va encima del CUERPO sin ocupar sitio en la columna:
+ * `position: absolute` es aqui una decision de maquetacion, no un atajo.
+ * Cualquier alto fijo en el flujo acaba empujando los controles fuera de la
+ * ventana, que es el error que este archivo ya ha corregido dos veces.
+ *
+ * Que cuelgue del cuerpo y no del escenario es lo que hace que mida igual
+ * con carátula que con vídeo. Colgado del escenario heredaba su tamaño, y
+ * el escenario mide la ventana entera con vídeo pero 96 px con carátula:
+ * el mismo espectro salía de 420×102 o de 96×33 según lo que sonara.
+ *
+ * Crece desde abajo porque ahi tapa la parte de la portada que menos
+ * informacion lleva. `pointer-events: none` para no robarle el clic a nada
+ * de lo que haya debajo.
+ *
+ * El ALTO y el COLOR llegan por variable desde pip.js, que las escribe con
+ * lo que digan las preferencias. Aqui NO se les pone valor de reserva a
+ * proposito: el valor por defecto ya vive en DEFAULT_SETTINGS, y repetirlo
+ * aqui haria que cambiarlo en un sitio no lo cambiara en el otro. Mientras
+ * pip.js no las haya escrito el canvas esta `hidden`, asi que no hay nada
+ * que ver.
+ */
+.ytmpip-spectrum {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--ytmpip-spectrum-height);
+  width: 100%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/*
+ * Los controles POR ENCIMA del espectro.
+ *
+ * Hace falta decirlo porque el canvas es un elemento posicionado y estos no
+ * lo son: sin esto se pintaria encima de ellos por mucho que vaya antes en
+ * el HTML. Con `position: relative` y un z-index entran en la misma capa y
+ * gana el numero.
+ *
+ * El 1 es suficiente: el canvas se queda en el 0 (auto) y no hay nada mas
+ * compitiendo. Un numero grande aqui solo serviria para tener que subirlo
+ * mas la proxima vez.
+ */
+.ytmpip-header,
+.ytmpip-progress-row,
+.ytmpip-controls,
+.ytmpip-extras,
+.ytmpip-secondary-actions,
+.ytmpip-lyrics-panel,
+.ytmpip-queue-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * ---------- Los mandos se quitan de en medio ----------
+ *
+ * Tras unos segundos sin tocar nada, todo lo que es mando se desvanece y
+ * queda la carátula (o el vídeo) con el espectro. Cualquier movimiento del
+ * ratón o cualquier tecla los devuelve.
+ *
+ * QUIEN CUENTA EL TIEMPO ES pip.js, no el CSS: aquí sólo se dice qué
+ * aspecto tiene "quieto". Un `:hover` haciendo de temporizador habría sido
+ * más corto, pero entonces dejar el ratón parado ENCIMA de la ventana no
+ * ocultaría nada, y lo que se pidió es que se oculten siempre.
+ *
+ * La LETRA no está en la lista a propósito: quien abre el panel de letra lo
+ * ha abierto para leerlo, y hacerlo desaparecer a los tres segundos sería
+ * quitarle justo lo que acaba de pedir. Se van los mandos, no el contenido.
+ *
+ * `:focus-within` gana siempre, y no es un adorno de accesibilidad: sin él,
+ * quien se mueve con el tabulador vería desaparecer el botón que tiene
+ * enfocado y se quedaría pulsando a ciegas. Por eso va como regla aparte y
+ * más específica, no como una condición dentro de la de arriba.
+ */
+.ytmpip-header,
+.ytmpip-progress-row,
+.ytmpip-controls,
+.ytmpip-extras,
+.ytmpip-secondary-actions {
+  transition: opacity 260ms ease;
+}
+
+#ytmpip-root.ytmpip-quieto .ytmpip-header,
+#ytmpip-root.ytmpip-quieto .ytmpip-progress-row,
+#ytmpip-root.ytmpip-quieto .ytmpip-controls,
+#ytmpip-root.ytmpip-quieto .ytmpip-extras,
+#ytmpip-root.ytmpip-quieto .ytmpip-secondary-actions {
+  opacity: 0;
+}
+
+#ytmpip-root.ytmpip-quieto:focus-within .ytmpip-header,
+#ytmpip-root.ytmpip-quieto:focus-within .ytmpip-progress-row,
+#ytmpip-root.ytmpip-quieto:focus-within .ytmpip-controls,
+#ytmpip-root.ytmpip-quieto:focus-within .ytmpip-extras,
+#ytmpip-root.ytmpip-quieto:focus-within .ytmpip-secondary-actions {
+  opacity: 1;
+}
+
+/*
+ * Quien haya pedido menos animación al sistema no quiere un desvanecido de
+ * cuarto de segundo cada vez que mueve el ratón: aparecen y desaparecen sin
+ * transición. Se sigue ocultando, que es lo pedido; lo que se quita es el
+ * movimiento, que es lo que molesta.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ytmpip-header,
+  .ytmpip-progress-row,
+  .ytmpip-controls,
+  .ytmpip-extras,
+  .ytmpip-secondary-actions {
+    transition: none;
+  }
+}
+
+/*
+ * "Sólo carátula": el modo limpio. Se esconde el bloque de texto ENTERO —
+ * título, artista, álbum, la línea que suena y su adelanto— y el escenario
+ * se queda con la ventana.
+ *
+ * Una sola regla y ningún caso especial: vale igual con vídeo (queda sólo
+ * el vídeo) que con carátula. Enumerar aquí qué textos se van sería escribir
+ * por segunda vez una lista que ya existe en el HTML, y este proyecto ya
+ * sabe cómo acaba eso.
+ */
+#ytmpip-root.ytmpip-sin-texto .ytmpip-info {
+  display: none;
+}
+
+/*
+ * El texto se levanta un piso para que el espectro le pase por DEBAJO.
+ *
+ * El canvas cuelga del cuerpo y va despues en el HTML, asi que sin esto
+ * pintaria encima del titulo. Que las barras crucen por detras del texto y
+ * por encima de la caratula es exactamente lo que ya se veia en modo video,
+ * y es lo que se pidio: que la caratula se comporte igual.
+ */
+.ytmpip-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.ytmpip-title,
+.ytmpip-artist,
+.ytmpip-album {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ytmpip-title {
+  font-weight: 650;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.ytmpip-artist {
+  color: var(--ytmpip-text);
+  opacity: 0.82;
+  font-size: 12px;
+}
+
+.ytmpip-album {
+  color: var(--ytmpip-text-dim);
+  font-size: 11px;
+}
+
+/* Transicion suave al cambiar de cancion */
+.ytmpip-info.ytmpip-changing {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.ytmpip-info {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+/* ---------- Barra de progreso arrastrable ---------- */
+
+.ytmpip-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ytmpip-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ytmpip-text-dim);
+  font-size: 11px;
+  flex-shrink: 0;
+  min-width: 30px;
+}
+
+.ytmpip-time:last-of-type {
+  text-align: right;
+}
+
+.ytmpip-seek-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * El relleno de la parte ya reproducida se pinta con un degradado sobre
+ * la propia pista, controlado desde JS con la variable --ytmpip-played.
+ * Es la unica forma de teñir un input[type=range] nativo sin sustituirlo
+ * por divs (y perder el teclado y la semantica que trae de fabrica).
+ */
+.ytmpip-seek,
+.ytmpip-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ytmpip-seek::-webkit-slider-runnable-track,
+.ytmpip-volume-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--ytmpip-accent) 0%,
+    var(--ytmpip-accent) var(--ytmpip-played, 0%),
+    var(--ytmpip-track) var(--ytmpip-played, 0%),
+    var(--ytmpip-track) 100%
+  );
+}
+
+.ytmpip-seek::-webkit-slider-thumb,
+.ytmpip-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: var(--ytmpip-text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: transform 120ms ease;
+}
+
+.ytmpip-seek:hover::-webkit-slider-thumb,
+.ytmpip-seek:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+.ytmpip-seek:focus-visible,
+.ytmpip-volume-slider:focus-visible {
+  outline: 2px solid var(--ytmpip-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Pista deshabilitada cuando no hay duracion conocida (directos) */
+.ytmpip-seek:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.ytmpip-seek-preview {
+  position: absolute;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ---------- Controles principales ---------- */
+
+.ytmpip-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ytmpip-controls button {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+}
+
+.ytmpip-controls button:hover {
+  background: var(--ytmpip-surface);
+}
+
+#ytmpip-play-pause {
+  width: 42px;
+  height: 42px;
+  font-size: 17px;
+  background: var(--ytmpip-accent);
+  /* Fijo en blanco: en tema claro el acento es rojo oscuro y heredar
+     --ytmpip-text dejaria texto casi negro sobre rojo. */
+  color: #ffffff;
+}
+
+#ytmpip-play-pause:hover {
+  background: var(--ytmpip-accent);
+  filter: brightness(1.12);
+}
+
+/* ---------- Fila de extras: me gusta, volumen, aleatorio, repetir,
+              velocidad, ecualizador ---------- */
+
+/*
+ * SE PARTE EN DOS LÍNEAS ANTES QUE APLASTAR EL VOLUMEN.
+ *
+ * Aquí hay seis piezas y sólo una es elástica: el volumen, que además tenía
+ * `min-width: 0`. O sea que todo lo que faltara de ancho salía de la barra
+ * del volumen, hasta dejarla en un hilo de unos pocos píxeles. Con cinco
+ * botones ya iba justo en una ventana estrecha; el del ecualizador es el
+ * sexto y lo dejaba inservible.
+ *
+ * `wrap` + un suelo para el volumen convierten eso en una segunda fila. No
+ * se pierde ningún mando —que es lo que habría pasado escondiendo el
+ * volumen o la velocidad en `ytmpip-narrow`— y sólo salta cuando de verdad
+ * no cabe: con el suelo puesto, por debajo de unos 275 px de ancho, que ya
+ * está por debajo del umbral de «estrecha» (290).
+ *
+ * ESTO NO ESTÁ MEDIDO EN NINGUNA PRUEBA y no puede estarlo: jsdom no
+ * maqueta, así que cualquier assert sobre píxeles aquí sería inventado.
+ * Se mira en tools/vista-previa.html, igual que el tamaño de los iconos.
+ */
+.ytmpip-extras {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ytmpip-icon-button {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  background: transparent;
+  color: var(--ytmpip-text-dim);
+  flex-shrink: 0;
+}
+
+.ytmpip-icon-button:hover {
+  background: var(--ytmpip-surface);
+  color: var(--ytmpip-text);
+}
+
+/* Estado activo. Solo se aplica cuando de verdad lo sabemos: para repetir
+   y aleatorio, YouTube Music no expone el estado de forma independiente
+   del idioma, asi que casi siempre quedan neutros a proposito. */
+.ytmpip-icon-button[aria-pressed="true"] {
+  color: var(--ytmpip-accent);
+  background: var(--ytmpip-surface);
+}
+
+/*
+ * Los botones cuyo contenido es (o puede ser) texto: la velocidad siempre,
+ * y el temporizador de apagado cuando tiene plazo puesto ("29′"). Comparten
+ * regla porque comparten problema, y una regla en dos sitios son dos reglas.
+ *
+ * ANCHO AUTOMÁTICO, y por eso llevan regla propia. Los demás son cuadrados de
+ * 28 px porque dentro llevan un dibujo, que siempre ocupa lo mismo. Aquí no:
+ * "1×" y "0,75×" no miden igual, y forzarlos al cuadrado recortaría el
+ * segundo o dejaría el primero nadando. El `min-width` conserva el cuadrado
+ * como suelo para que la fila no dé un salto al pasar de "1×" a "1,25×".
+ *
+ * `tabular-nums` es lo que impide que el botón tiemble: sin cifras de ancho
+ * fijo, un "1,25×" y un "1,50×" miden distinto y el resto de la fila se
+ * desplaza cada vez que se pulsa. Al temporizador le pasa lo mismo cada vez
+ * que cae un minuto.
+ */
+.ytmpip-speed,
+.ytmpip-sleep {
+  width: auto;
+  min-width: 28px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/*
+ * ---------- Las barritas del ecualizador ----------
+ *
+ * Un dibujo de estado, no un mando: no se pulsa, no se arrastra y no tiene
+ * `tabindex`. Enseña la forma del ajuste que hay puesto —qué sube, qué baja
+ * y cuánto— porque el nombre solo («Más graves») no dice nada a quien no se
+ * sepa los presets, y ese preset en concreto es el caso extremo: tiene la
+ * banda de 60 Hz EN CERO y suena a más graves bajando las de al lado. El
+ * nombre lo cuenta al revés; el dibujo lo cuenta bien.
+ *
+ * LA RAYA DEL CERO NO ES ADORNO. Sin ella cinco barras a alturas distintas
+ * son cinco alturas; con ella son subidas y bajadas, que es el dato. Es la
+ * misma raya que se le puso a cada deslizador en options.html, y a propósito:
+ * las dos superficies enseñan la misma cosa y conviene que se parezcan.
+ *
+ * TAMAÑO EN `em`, como los iconos: quien tenga la ventana en grande no
+ * quiere el único elemento de la fila que no crece.
+ */
+.ytmpip-eq-bandas {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  width: 2.6em;
+  height: 1.4em;
+  flex-shrink: 0;
+  color: var(--ytmpip-accent);
+}
+
+/* La raya del cero, por el centro exacto. */
+.ytmpip-eq-bandas::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/*
+ * Dos elementos por banda y no uno, y el motivo es que cada mitad la decide
+ * quien sabe: el CUÁNTO SE DESPLAZA a lo ancho lo reparte el flex (una
+ * columna por banda, todas iguales, sin que pip.js tenga que saber cuántas
+ * caben), y el CUÁNTO SUBE O BAJA lo escribe pip.js en `top` y `height`,
+ * que es lo único que depende de los decibelios.
+ */
+.ytmpip-eq-banda {
+  position: relative;
+  flex: 1 1 0;
+}
+
+/*
+ * `min-height` es lo que hace que una banda a cero SIGA VIÉNDOSE, pegada a
+ * la raya. Sin él, «Más graves» —cuyos 60 Hz valen 0— dibujaría un hueco
+ * donde debería verse una banda que existe y está plana, y un hueco se lee
+ * como «aquí no hay nada», que es otra cosa.
+ */
+.ytmpip-eq-banda > i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.ytmpip-volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  /*
+   * El suelo que hace saltar el `wrap` de arriba. 110 px es el botón de
+   * silencio (28) más una barra en la que todavía se puede apuntar a un
+   * volumen concreto; por debajo de eso la barra existe pero no sirve, que
+   * es peor que ponerla en la línea siguiente entera.
+   */
+  min-width: 110px;
+}
+
+.ytmpip-volume-slider {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Acciones secundarias ---------- */
+
+.ytmpip-secondary-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ytmpip-secondary-actions button {
+  flex: 1;
+  min-height: 30px;
+  border-radius: 8px;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#ytmpip-lyrics-toggle[aria-expanded="true"],
+#ytmpip-queue-toggle[aria-expanded="true"] {
+  background: var(--ytmpip-surface-hover);
+  color: var(--ytmpip-text);
+}
+
+/* ---------- Cola ("Siguientes") ----------
+ *
+ * El panel calca el esqueleto del de letras (borde arriba, scroll, el
+ * hueco elástico) porque ocupan el MISMO sitio y se comportan igual; lo
+ * que no comparte es tipografía, porque aquí no se lee un texto corrido
+ * sino una lista de pares título/artista.
+ *
+ * No está en la lista de mandos que se desvanecen con la quietud, por lo
+ * mismo que la letra: quien lo abrió lo abrió para mirarlo.
+ */
+
+.ytmpip-queue-panel {
+  border-top: 1px solid var(--ytmpip-border);
+  padding-top: 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/*
+ * <ol> por el significado —la cola es una lista donde el orden ES la
+ * información— pero sin números pintados: "lo tercero de la lista" ya se
+ * ve, y en 340 px cada carácter de ancho cuenta.
+ */
+.ytmpip-queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ytmpip-queue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* Una fila por dato y puntos suspensivos: un título kilométrico no puede
+   empujar a los demás fuera del panel. */
+.ytmpip-queue-title {
+  color: var(--ytmpip-text);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ytmpip-queue-artist {
+  color: var(--ytmpip-text-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ytmpip-queue-empty {
+  margin: 0;
+  color: var(--ytmpip-text-dim);
+}
+
+/* ---------- Letras ---------- */
+
+.ytmpip-lyrics-panel {
+  border-top: 1px solid var(--ytmpip-border);
+  padding-top: 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.ytmpip-lyrics-text {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.55;
+  color: var(--ytmpip-text);
+}
+
+/* ---------- Letra linea a linea (sincronizada si hay señal) ----------
+ *
+ * El patron visual es el de cualquier karaoke: todas las lineas presentes
+ * pero apagadas, y la que suena encendida. El enfasis va SOLO por color,
+ * y es una decision medida, no un gusto: en Spotify (2026-09-16) la linea
+ * activa y sus vecinas pesan exactamente igual (font-weight 700 las dos)
+ * y se distinguen unicamente por color. Copiarlo aqui tiene ademas un
+ * premio tecnico: con el mismo peso en todas, mover el resalte no cambia
+ * ni un pixel la maquetacion —antes la activa engordaba a 650 y el
+ * reflujo podia mover el scroll un pelo con cada verso—.
+ *
+ * El modo escenario es la excepción deliberada a esta regla (la activa
+ * crece y las vecinas se apagan): está razonada en su bloque, al final
+ * del archivo, donde no se dan los dos motivos de aquí.
+ */
+
+.ytmpip-lyrics-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  /* Aire al final para que las ultimas lineas puedan quedar centradas. */
+  padding-bottom: 40%;
+}
+
+.ytmpip-lyric-line {
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ytmpip-text-dim);
+  border-radius: 6px;
+  padding: 2px 6px;
+  transition: color 200ms ease, background 140ms ease;
+}
+
+.ytmpip-lyric-clickable {
+  cursor: pointer;
+}
+
+.ytmpip-lyric-clickable:hover,
+.ytmpip-lyric-clickable:focus-visible {
+  color: var(--ytmpip-text);
+  background: var(--ytmpip-surface);
+}
+
+.ytmpip-lyric-clickable:focus-visible {
+  outline: 2px solid var(--ytmpip-accent);
+  outline-offset: -2px;
+}
+
+/* Solo color: el peso ya lo llevan todas por igual (ver el cartel de la
+   seccion). */
+.ytmpip-lyric-line.ytmpip-lyric-active {
+  color: var(--ytmpip-text);
+}
+
+/* ---------- Linea actual bajo el titulo (ventana compacta) ----------
+ *
+ * En una ventana pequeña esta linea ES la letra: el panel completo esta
+ * oculto y no hay mas. La primera version la trataba como un subtitulo
+ * (12px, cursiva, un solo renglon con puntos suspensivos) y el usuario
+ * señalo el resultado: "Sin ti ya no podre escu…". La mitad de cada verso
+ * se perdia.
+ *
+ * Ahora es la protagonista: mas grande que el artista, en negrita media,
+ * y con DOS renglones antes de recortar (line-clamp), que caben porque en
+ * modo karaoke el titulo y el artista se comprimen (mas abajo, junto a
+ * las reglas de densidad). Un verso de cancion casi nunca necesita mas de
+ * dos renglones a este ancho.
+ */
+.ytmpip-now-line {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ytmpip-text);
+  opacity: 0.95;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/*
+ * El adelanto de lo que viene. Todo esta pensado para que NO compita con la
+ * linea que suena: mas pequeño, sin negrita, apagado, y cada linea mas
+ * apagada que la anterior, que es lo que hace que se lea como una cola y no
+ * como cuatro frases del mismo rango. Un solo renglon cada una: si un verso
+ * largo se corta no pasa nada, porque en un segundo sera la linea actual y
+ * entonces se vera entero.
+ */
+.ytmpip-next-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 3px;
+}
+
+.ytmpip-next-line {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--ytmpip-text);
+  opacity: 0.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ytmpip-next-line:nth-child(2) {
+  opacity: 0.3;
+}
+
+.ytmpip-next-line:nth-child(3) {
+  opacity: 0.18;
+}
+
+/*
+ * Cuantas caben. Se preparan tres siempre (LINEAS_SIGUIENTES en pip.js) y
+ * aqui se recortan por altura, que es el mismo criterio con el que
+ * desaparecen el album, los extras y las acciones. En mini apenas hay dos
+ * renglones libres bajo el titulo, asi que solo una.
+ */
+#ytmpip-root.ytmpip-tight .ytmpip-next-line:nth-child(n + 3),
+#ytmpip-root.ytmpip-mini .ytmpip-next-line:nth-child(n + 2) {
+  display: none;
+}
+
+@keyframes ytmpip-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 0.95;
+    transform: none;
+  }
+}
+
+.ytmpip-now-line.ytmpip-line-swap {
+  animation: ytmpip-line-in 220ms ease;
+}
+
+/*
+ * La otra mitad de la prioridad: si la letra crece, algo tiene que ceder,
+ * y el usuario mismo sugirio que fueran el titulo y el artista ("puede
+ * ser subiendo el titulo y el artista"). Solo se comprimen cuando la
+ * linea actual esta de verdad a la vista: en modo karaoke Y con el panel
+ * de letras oculto por el tamaño (compact o mini). En una ventana grande
+ * con panel propio el titulo no tiene por que encogerse.
+ */
+#ytmpip-root.ytmpip-karaoke.compact .ytmpip-title,
+#ytmpip-root.ytmpip-karaoke.ytmpip-mini .ytmpip-title {
+  font-size: 12px;
+}
+
+#ytmpip-root.ytmpip-karaoke.compact .ytmpip-artist,
+#ytmpip-root.ytmpip-karaoke.ytmpip-mini .ytmpip-artist {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+#ytmpip-root.ytmpip-karaoke.compact .ytmpip-info,
+#ytmpip-root.ytmpip-karaoke.ytmpip-mini .ytmpip-info {
+  gap: 1px;
+}
+
+/*
+ * EL FALLO REPORTADO: "aparece el conectado sobre el pip y los controles
+ * tambien". En karaoke y ventana baja el bloque de texto pedia mas alto del
+ * que le quedaba (medido: 69 px de contenido en un hueco de 53), y como el
+ * cuerpo lo centra con `align-items: center`, lo que sobraba se salia por
+ * los DOS lados: por arriba encima de la cabecera —de ahi el "Conectado"
+ * pisando el titulo— y por abajo encima de la barra y del transporte.
+ *
+ * No se arregla a base de restar pixeles: cualquier presupuesto ajustado a
+ * mano se rompe con la primera linea larga. Se arregla diciendo QUE cede.
+ * El bloque se estira al hueco (`align-self: stretch`) en vez de crecer
+ * fuera de el, y el adelanto —lo mas subordinado que hay, ya apagado y sin
+ * negrita— pasa a poder encogerse (`min-height: 0` desactiva el minimo
+ * automatico de flex, que es lo que impedia que se comprimiera). Asi el
+ * orden en el que las cosas ceden sigue siendo el mismo que el del resto
+ * del archivo, y el recorte cae dentro del propio bloque, nunca sobre el
+ * vecino. El `overflow: hidden` es la red por si algun dia ni con eso basta.
+ */
+#ytmpip-root.ytmpip-karaoke .ytmpip-info {
+  align-self: stretch;
+  min-height: 0;
+  overflow: hidden;
+  /* `safe` es lo que impide que, cuando ni encogiendo el adelanto quepa
+     todo, el centrado empuje el titulo por encima del borde superior y lo
+     recorte por arriba. Con `safe center` se centra mientras cabe y se
+     pega al principio en cuanto no cabe. */
+  justify-content: safe center;
+}
+
+/*
+ * Y quien NO cede. Sin esto ceden todos a la vez —flex reparte el
+ * encogimiento entre todos los hijos— y el resultado medido a 385x130 era
+ * un titulo de 8 px de alto con las letras cortadas por la mitad. Ceden
+ * solo por tener `overflow: hidden` para los puntos suspensivos, que anula
+ * el minimo automatico de flex sin que se note hasta que falta sitio.
+ */
+#ytmpip-root.ytmpip-karaoke .ytmpip-title,
+#ytmpip-root.ytmpip-karaoke .ytmpip-artist,
+#ytmpip-root.ytmpip-karaoke .ytmpip-now-line {
+  flex-shrink: 0;
+}
+
+#ytmpip-root.ytmpip-karaoke .ytmpip-next-lines {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Atribucion de la fuente (p. ej. LyricFind). Se muestra siempre que
+   YouTube Music la proporcione: es la licencia bajo la que se ve el
+   texto, no un adorno. */
+.ytmpip-lyrics-source {
+  margin: 10px 0 0;
+  font-size: 10px;
+  color: var(--ytmpip-text-dim);
+  font-style: italic;
+}
+
+.ytmpip-lyrics-text.ytmpip-placeholder {
+  color: var(--ytmpip-text-dim);
+  font-style: italic;
+}
+
+/* ---------- LA REGLA QUE HACE QUE `hidden` FUNCIONE ----------
+ *
+ * No es una redundancia con la hoja del navegador y conviene que esté
+ * explicado, porque la falta de este comentario ya costó una regla de más.
+ *
+ * El atributo `hidden` esconde porque la hoja del navegador trae
+ * `[hidden] { display: none }`. Pero esa regla pesa lo mismo que cualquier
+ * selector de clase de autor, y en este archivo hay un montón que declaran
+ * `display: flex` sobre elementos que además se ocultan con el atributo
+ * (`.ytmpip-video-slot`, `.ytmpip-eq-bandas`, las filas de mandos…). La de
+ * autor viene después, así que gana, y `hidden` deja de esconder EN SILENCIO:
+ * ningún error, ninguna prueba en rojo, sólo un elemento puesto que debería
+ * estar quitado.
+ *
+ * `!important` y un selector para todos: así la respuesta es UNA. Ponerlo
+ * elemento por elemento —`.lo-que-sea[hidden] { display: none }`— es la
+ * versión que parece más limpia y es la que se rompe, porque hay que
+ * acordarse cada vez que se añade algo ocultable, y olvidarse no avisa.
+ *
+ * PASÓ, y por eso está escrito: al añadir las barritas del ecualizador se
+ * puso aquí abajo un `.ytmpip-eq-bandas[hidden]` con un comentario largo
+ * explicando la trampa, sin ver que la trampa ya estaba desactivada desde
+ * aquí para todo el archivo. La regla no hacía nada —esta otra la pisa con
+ * `!important` pase lo que pase— y encima afirmaba lo contrario de la
+ * verdad: que sin ella las barras se quedarían puestas.
+ */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Modo compacto (~340x200) ----------
+ *
+ * La fila tenia el mismo vicio que tuvo la columna, en pequeño: la portada
+ * media 56 px clavados y el cuerpo era `flex: 0 0 auto`, o sea que NADA
+ * cedia. Por debajo de unos 154 px de alto el sobrante salia por el unico
+ * sitio posible, el de abajo, y lo que se cortaba era la fila de controles:
+ * justo lo que nunca se puede perder.
+ *
+ * Ahora la portada esta atada al alto disponible (cuadrada via aspect-ratio)
+ * en vez de a un numero fijo: encoge cuando falta sitio y crece un poco
+ * cuando sobra, que es lo que pasa en la franja alta del nivel mini.
+ */
+
+#ytmpip-root.compact .ytmpip-stage {
+  flex: 0 1 auto;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  /* Sin tope, en una ventana baja pero alta la portada se comeria la fila. */
+  max-height: 96px;
+  min-height: 0;
+}
+
+#ytmpip-root.compact .ytmpip-lyrics-panel,
+#ytmpip-root.compact .ytmpip-queue-panel,
+#ytmpip-root.compact .ytmpip-extras {
+  display: none;
+}
+
+#ytmpip-root.compact .ytmpip-body {
+  /* Es el unico bloque elastico de la fila: el hueco que sobra (o el que
+     falta) lo absorbe aqui, y los controles se quedan quietos. */
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* ---------- Modos en columna: ampliado y video ----------
+ *
+ * AQUI ESTABA EL FALLO. El escenario tenia `width: 100%` + `aspect-ratio`,
+ * asi que su ALTO lo dictaba el ANCHO. Al encoger la ventana en vertical
+ * el escenario no se enteraba, seguia igual de alto y empujaba los
+ * controles fuera de un body con `overflow: hidden`: desaparecian.
+ *
+ * Ahora es al reves. El escenario se queda con el alto SOBRANTE
+ * (`flex: 1 1 0` + `min-height: 0`) y el contenido se ajusta dentro con
+ * object-fit. Cualquier alto de ventana es valido: lo que se encoge es la
+ * imagen, nunca los controles.
+ */
+
+#ytmpip-root.expanded .ytmpip-body,
+#ytmpip-root.ytmpip-video-mode .ytmpip-body {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#ytmpip-root.expanded .ytmpip-stage,
+#ytmpip-root.ytmpip-video-mode .ytmpip-stage {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* El "marco" pasa a la propia imagen: el escenario ya no es una caja
+     visible, solo el hueco disponible. */
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#ytmpip-root.expanded .ytmpip-artwork {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+#ytmpip-root.expanded .ytmpip-info,
+#ytmpip-root.ytmpip-video-mode .ytmpip-info {
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+#ytmpip-root.expanded .ytmpip-lyrics-panel:not([hidden]),
+#ytmpip-root.expanded .ytmpip-queue-panel:not([hidden]) {
+  display: block;
+}
+
+#ytmpip-root.ytmpip-video-mode .ytmpip-artwork {
+  display: none;
+}
+
+/* En video, el fondo difuminado compite con la imagen: se atenua.
+ *
+ * Cambia la VARIABLE, no la opacidad. Escribiendo `opacity: 0.3` aqui se
+ * pisaba la regla que hace crecer la portada con el atenuado, y en modo
+ * video el atenuado volvia a ser un agujero negro. */
+#ytmpip-root.ytmpip-video-mode {
+  --ytmpip-fondo: 0.3;
+}
+
+/* ---------- Autoajuste al tamaño REAL de la ventana ----------
+ *
+ * Estas clases las pone un ResizeObserver a partir del alto y el ancho
+ * medidos en vivo (ver applyDensity() en pip.js), no de la preferencia de
+ * tamaño. Antes la maquetacion se decidia solo con la preferencia, asi que
+ * redimensionar la ventana a mano no cambiaba absolutamente nada.
+ *
+ * El orden en que desaparecen las cosas es deliberado: primero lo
+ * prescindible (el album, que casi siempre repite informacion del titulo),
+ * luego los controles secundarios, y solo al final las acciones de texto.
+ * Portada/video, titulo, barra y transporte no se ocultan nunca: son la
+ * razon de ser de la ventana.
+ */
+
+#ytmpip-root.ytmpip-tight .ytmpip-album,
+#ytmpip-root.ytmpip-mini .ytmpip-album,
+#ytmpip-root.ytmpip-tight .ytmpip-extras,
+#ytmpip-root.ytmpip-mini .ytmpip-extras {
+  display: none;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-secondary-actions,
+#ytmpip-root.ytmpip-mini .ytmpip-lyrics-panel,
+#ytmpip-root.ytmpip-mini .ytmpip-queue-panel {
+  display: none;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-content {
+  --ytmpip-relleno-arriba: 5px;
+  --ytmpip-relleno-lado: 8px;
+  padding: var(--ytmpip-relleno-arriba) var(--ytmpip-relleno-lado) 6px;
+  gap: 5px;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-body {
+  gap: 8px;
+}
+
+/* La cabecera y el transporte son los dos unicos bloques de alto fijo que
+   quedan en mini, asi que cada pixel que se les quita es un pixel que gana
+   el texto. Encogen ellos y no la letra porque un boton de 22 px sigue
+   siendo pulsable y un verso a medias no se lee. */
+#ytmpip-root.ytmpip-mini .ytmpip-header-actions button {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-status {
+  font-size: 10px;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-controls {
+  gap: 3px;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-controls button {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+#ytmpip-root.ytmpip-mini #ytmpip-play-pause {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+/*
+ * En una ventana de bolsillo lo que se mira es la cancion, no los mandos.
+ * Se atenuan para que el ojo vaya al texto, pero solo eso: siguen ahi,
+ * siguen pulsables y vuelven a plena opacidad en cuanto el raton entra o
+ * algo recibe el foco (`:focus-within` cubre el teclado, que de otro modo
+ * navegaria a ciegas por unos botones a medio ver).
+ */
+#ytmpip-root.ytmpip-mini .ytmpip-controls,
+#ytmpip-root.ytmpip-mini .ytmpip-status,
+#ytmpip-root.ytmpip-mini .ytmpip-header-actions {
+  opacity: 0.7;
+  transition: opacity 160ms ease;
+}
+
+#ytmpip-root.ytmpip-mini:hover .ytmpip-controls,
+#ytmpip-root.ytmpip-mini:hover .ytmpip-status,
+#ytmpip-root.ytmpip-mini:hover .ytmpip-header-actions,
+#ytmpip-root.ytmpip-mini:focus-within .ytmpip-controls,
+#ytmpip-root.ytmpip-mini:focus-within .ytmpip-status,
+#ytmpip-root.ytmpip-mini:focus-within .ytmpip-header-actions {
+  opacity: 1;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-title {
+  font-size: 13px;
+}
+
+#ytmpip-root.ytmpip-mini .ytmpip-artist {
+  font-size: 11px;
+}
+
+/* Muy estrecha: las etiquetas de tiempo se comen el ancho util de la
+   barra, que es justo lo que hay que preservar para poder arrastrarla. */
+#ytmpip-root.ytmpip-narrow .ytmpip-time {
+  display: none;
+}
+
+#ytmpip-root.ytmpip-narrow .ytmpip-controls {
+  gap: 2px;
+}
+
+/* ---------- Con video, manda el video ----------
+ *
+ * En modo portada el texto es lo que identifica la cancion. En un videoclip
+ * no: la imagen ya esta dando esa informacion, y el titulo compite con ella
+ * por un alto que escasea. Asi que aqui el orden se invierte y **el texto
+ * cede antes que el video**. El album ya se fue con .ytmpip-tight; ahora se
+ * va tambien el artista y el titulo se queda en una sola linea.
+ *
+ * Ojo: no se le pone `min-height` al escenario. Seria la forma obvia de
+ * "reservarle sitio al video", y es justo el error que ya se corrigio dos
+ * veces: cualquier altura rigida acaba empujando los controles fuera. El
+ * escenario sigue siendo `flex: 1 1 0`, asi que al ocultar texto se queda
+ * con el hueco liberado sin necesidad de reservarlo.
+ */
+
+#ytmpip-root.ytmpip-video-mode.ytmpip-tight .ytmpip-artist {
+  display: none;
+}
+
+#ytmpip-root.ytmpip-video-mode.ytmpip-tight .ytmpip-title {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Video en ventana pequeña: controles superpuestos ----------
+ *
+ * Por debajo del nivel mini, repartir el alto entre video y controles deja
+ * las dos cosas inservibles. Se apilan: el video ocupa la ventana entera y
+ * los controles flotan encima sobre un degradado, como en cualquier
+ * reproductor a pantalla completa.
+ *
+ * El degradado va en pseudoelementos y no como fondo de las propias filas
+ * para que no se vea la costura entre la barra y el transporte, y lleva
+ * `pointer-events: none` para no robarle los clics a los botones.
+ */
+
+#ytmpip-root.ytmpip-overlay .ytmpip-content {
+  position: relative;
+  padding: 0;
+  gap: 0;
+}
+
+/* El video sale del flujo y ocupa el fondo; el resto se apila encima. */
+#ytmpip-root.ytmpip-overlay .ytmpip-body {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-info {
+  display: none;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-header,
+#ytmpip-root.ytmpip-overlay .ytmpip-progress-row,
+#ytmpip-root.ytmpip-overlay .ytmpip-controls {
+  position: relative;
+  z-index: 2;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-header {
+  padding: 4px 6px;
+}
+
+/* Sobre el video, el gris apagado de la cabecera no se lee. */
+#ytmpip-root.ytmpip-overlay .ytmpip-header-actions button {
+  color: var(--ytmpip-text);
+}
+
+/*
+ * El superpuesto ya tenia su propio velo de cabecera antes de que existiera
+ * el general (el ::before de .ytmpip-content, la banda de 42px). Aqui el
+ * local se apaga para no poner banda sobre banda.
+ */
+#ytmpip-root.ytmpip-overlay .ytmpip-header::before {
+  display: none;
+}
+
+
+/* `margin-top: auto` empuja barra + transporte al borde inferior. */
+#ytmpip-root.ytmpip-overlay .ytmpip-progress-row {
+  margin-top: auto;
+  padding: 0 8px;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-controls {
+  padding: 2px 8px 6px;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-content::before,
+#ytmpip-root.ytmpip-overlay .ytmpip-content::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-content::before {
+  top: 0;
+  height: 42px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
+}
+
+#ytmpip-root.ytmpip-overlay .ytmpip-content::after {
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.6) 55%,
+    transparent 100%
+  );
+}
+
+/* ---------- Superpuesto: los controles se apartan solos ----------
+ *
+ * En modo superpuesto la ventana ES el video, y una barra de transporte
+ * permanente encima tapa justo lo que se ha venido a ver. Se desvanecen
+ * cuando el cursor no esta encima y vuelven al entrar.
+ *
+ * Tres salvaguardas, y ninguna es opcional:
+ *
+ * 1. `@media (hover: hover)`. En una pantalla tactil no hay "pasar el
+ *    cursor por encima": los controles se esconderian y NO habria forma de
+ *    recuperarlos. Sin esta condicion el modo superpuesto quedaria
+ *    inutilizable en tactil.
+ *
+ * 2. `:focus-within`. Quien navega con el teclado tabula hasta el boton de
+ *    play sin mover el raton; sin esto tendria el foco en un control
+ *    invisible, que es peor que no tenerlo.
+ *
+ * 3. `visibility` NO se toca, y `pointer-events` tampoco. Solo se baja la
+ *    opacidad. Al entrar el cursor la transicion ya ha empezado, asi que un
+ *    clic inmediato aterriza en un boton que esta ahi de verdad; con
+ *    `pointer-events: none` se perderia el primer clic, que es
+ *    exactamente el que el usuario tenia intencion de dar.
+ *
+ * Los degradados se van con ellos: dejarlos seria pintar dos bandas negras
+ * sobre el video sin nada dentro.
+ */
+/*
+ * La lista de lo que se aparta se escribe UNA vez, con `:is()`, y no cinco
+ * veces por bloque. Antes estaba repetida tres veces (apagado, encendido al
+ * acercarse y movimiento reducido) y añadir la fila del volumen habria
+ * significado acordarse de las tres; olvidar una sola habria dejado el
+ * volumen encendido sobre una letra que se supone despejada. `:is()` no
+ * cambia el peso del selector —todos los argumentos son clases— asi que los
+ * empates con las reglas de densidad siguen resolviendose igual que antes.
+ *
+ * El cuerpo entra solo con la letra en grande. Con video ES el video, y
+ * apartarlo seria apagar justo lo que se ha venido a ver.
+ */
+@media (hover: hover) {
+  #ytmpip-root.ytmpip-overlay
+    :is(.ytmpip-header, .ytmpip-progress-row, .ytmpip-controls, .ytmpip-extras, .ytmpip-secondary-actions),
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-body,
+  #ytmpip-root.ytmpip-overlay .ytmpip-content::before,
+  #ytmpip-root.ytmpip-overlay .ytmpip-content::after {
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  #ytmpip-root.ytmpip-overlay:is(:hover, :focus-within)
+    :is(.ytmpip-header, .ytmpip-progress-row, .ytmpip-controls, .ytmpip-extras, .ytmpip-secondary-actions),
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage:is(:hover, :focus-within) .ytmpip-body,
+  #ytmpip-root.ytmpip-overlay:is(:hover, :focus-within) .ytmpip-content::before,
+  #ytmpip-root.ytmpip-overlay:is(:hover, :focus-within) .ytmpip-content::after {
+    opacity: 1;
+  }
+
+  /*
+   * "O LEES, O MANDAS". Los mandos vuelven al acercar el cursor, pero
+   * volvían ENCIMA de la letra: cinco filas flotantes con el texto pasando
+   * por detrás del deslizador, que es el desorden del pantallazo que
+   * motivó esta regla. Cuando los mandos entran, la letra se aparta: 0.25
+   * y no 0 porque sigue siendo el contenido de la ventana —desaparecer del
+   * todo desorientaría—, pero ya no compite por el mismo píxel.
+   *
+   * La excepción es el cursor sobre la PROPIA letra: las líneas son
+   * pulsables (saltan a su verso) y atenuar justo lo que se está apuntando
+   * sería esconder el blanco. El reparto lo hace la prueba del impacto:
+   * los mandos flotan por encima (z 2) y NO son hijos del panel, así que
+   * el cursor sobre un botón no enciende el `:hover` del panel; en el
+   * centro de la ventana, donde solo hay letra, sí. Las dos reglas empatan
+   * en peso y gana la que va después: el orden atenuar→devolver no es
+   * decorativo. `:focus-within` va en las dos por el mismo criterio del
+   * cartel de arriba: con el foco en un mando, mandos (y letra apartada);
+   * con el foco en una línea de la letra, letra entera.
+   *
+   * Va dentro de `@media (hover: hover)` con el resto: en táctil no hay
+   * cursor que acercar y la letra debe quedarse siempre entera.
+   */
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyrics-panel:not([hidden]) {
+    transition: opacity 180ms ease;
+  }
+
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage:is(:hover, :focus-within)
+    .ytmpip-lyrics-panel:not([hidden]) {
+    opacity: 0.25;
+  }
+
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage
+    .ytmpip-lyrics-panel:not([hidden]):is(:hover, :focus-within) {
+    opacity: 1;
+  }
+}
+
+#ytmpip-root.ytmpip-narrow .ytmpip-status {
+  display: none;
+}
+
+/* ---------- La letra ocupa el escenario ----------
+ *
+ * En una cancion sin video el boton de la cabecera pregunta que ocupa el
+ * escenario: la portada o la letra. Esto es la segunda respuesta.
+ *
+ * La portada no desaparece, cambia de papel: se queda como el fondo
+ * difuminado que ya se pintaba con esa misma imagen (no hay descarga nueva)
+ * y el texto se lee encima. Por eso sube la opacidad respecto al 0.55 de
+ * siempre: ahi competia con la miniatura, y aqui es el unico dibujo.
+ *
+ * Estas reglas van al final del archivo a proposito. Empatan en peso de
+ * selector con las de densidad que esconden el panel en mini y en compacto,
+ * y tienen que ganarlas: si el usuario ha pedido la letra a proposito, el
+ * tamaño de la ventana ya no decide por el.
+ */
+
+#ytmpip-root.ytmpip-lyrics-stage .ytmpip-stage {
+  display: none;
+}
+
+/* Por lo mismo que en modo video: la variable, no la opacidad. */
+#ytmpip-root.ytmpip-lyrics-stage {
+  --ytmpip-fondo: 0.8;
+}
+
+/* Sin escenario, el cuerpo es solo el titulo: deja de ser elastico para que
+   todo el hueco que sobra se lo quede la letra. */
+#ytmpip-root.ytmpip-lyrics-stage .ytmpip-body {
+  flex: 0 0 auto;
+}
+
+#ytmpip-root.ytmpip-lyrics-stage .ytmpip-lyrics-panel:not([hidden]) {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  /* La linea de arriba separaba el panel del reproductor cuando era un
+     añadido. Ahora es el contenido principal y no separa nada. */
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ---------- La letra en grande, con los mandos flotando encima ----------
+ *
+ * EL SINTOMA: "la barra cubre la letra". Era verdad y no era cuestion de
+ * tamaño. Con la letra en el escenario, el panel se quedaba con el hueco
+ * SOBRANTE de la columna, y todo lo demas —cabecera, barra de tiempo,
+ * transporte, extras— seguia siendo una fila que le comia sitio por arriba
+ * y por abajo. En una ventana baja el sobrante era una rendija.
+ *
+ * La solucion ya existia en este archivo para otro caso: es exactamente lo
+ * que se hace con el videoclip en ventana pequeña. La letra pasa a ocupar
+ * la ventana entera y los mandos flotan encima, translucidos, y se apartan
+ * solos cuando el cursor no esta cerca. Por eso `layoutFor` da la MISMA
+ * clase `.ytmpip-overlay` en los dos casos en vez de inventar una segunda
+ * familia de reglas que acabaria discrepando de la primera.
+ *
+ * Lo unico que cambia entre los dos es QUE hay debajo: alli el video, aqui
+ * el panel de letra. De ahi este bloque, que solo mueve el fondo de sitio.
+ *
+ * Los dos huecos —arriba y abajo— son la altura que ocupan los mandos, y
+ * viven en una variable porque los usan tres reglas: el relleno del panel,
+ * el desplazamiento automatico y el degradado. Escritos a mano en cada una,
+ * la primera vez que alguien tocara la fila de extras se separarian.
+ */
+
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage {
+  --ytmpip-mandos-arriba: 86px;
+  --ytmpip-mandos-abajo: 148px;
+  /*
+   * La franja que se reserva DENTRO del hueco de abajo para la atribucion
+   * de la licencia. No es un cuarto numero suelto: el hueco de abajo ya la
+   * incluia sin saberlo (los mandos de verdad ocupan 130 px de los 148, y
+   * 78 de los 96 en mini), asi que esto solo le pone nombre al sobrante y
+   * lo hace utilizable.
+   */
+  --ytmpip-atribucion: 16px;
+}
+
+/* En mini no hay fila de acciones secundarias y el transporte es mas bajo:
+   el mismo hueco dejaria la letra apretada en una franja central. */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage.ytmpip-mini {
+  --ytmpip-mandos-arriba: 62px;
+  --ytmpip-mandos-abajo: 96px;
+}
+
+/*
+ * LA ATRIBUCION DE LA LICENCIA, que es lo unico que este arreglo rompio.
+ *
+ * Es el ultimo hijo del panel, y el panel termina con un 40 % de aire para
+ * poder centrar las ultimas lineas. Con el panel ocupando la ventana entera
+ * eso la mandaba a la banda de los mandos: medido en la vista previa salia
+ * en y=341..354 con la barra de progreso empezando en 350, o sea partida por
+ * la mitad; en mini se iba directamente fuera de la ventana (y=335 en una
+ * ventana de 268).
+ *
+ * No se puede esconder —es la licencia bajo la que se ve el texto, no un
+ * adorno—, asi que se saca del texto que se desplaza y se ancla a la MISMA
+ * variable que reserva el hueco. Anclarla ahi y no a un numero propio es lo
+ * que garantiza que no se vuelva a solapar: el dia que el transporte cambie
+ * de alto, la atribucion se mueve con el.
+ */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyrics-source {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--ytmpip-mandos-abajo) - var(--ytmpip-atribucion));
+  margin: 0;
+  z-index: 2;
+  /* Se apoya sobre el degradado de los mandos, que ya empieza justo aqui. */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* El panel deja de ser una fila de la columna y pasa a ser el fondo. */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyrics-panel:not([hidden]) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /*
+   * El relleno va en el PANEL y no en la lista de lineas porque el panel es
+   * quien se desplaza: asi la primera y la ultima linea pueden subir por
+   * encima de los mandos al hacer scroll en vez de quedarse atrapadas
+   * debajo para siempre. `scroll-padding` es la otra mitad: sin el, el
+   * desplazamiento automatico deja la linea que suena justo debajo del
+   * transporte, que es el fallo que se venia a arreglar.
+   */
+  padding: var(--ytmpip-mandos-arriba) 12px var(--ytmpip-mandos-abajo);
+  scroll-padding-top: var(--ytmpip-mandos-arriba);
+  scroll-padding-bottom: var(--ytmpip-mandos-abajo);
+}
+
+/*
+ * El cuerpo NO es el fondo en este modo: aqui solo lleva el titulo y el
+ * artista (el escenario esta en display:none), asi que vuelve al flujo y se
+ * apila con el resto de los mandos. Sin esto heredaria el `inset: 0` del
+ * superpuesto con video y taparia la letra entera con una caja invisible
+ * que ademas le robaria los clics a las lineas.
+ */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-body {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  flex: 0 0 auto;
+  padding: 0 2px;
+}
+
+/* Y el texto vuelve, que en el superpuesto con video estaba escondido: alli
+   el titulo es informacion que la propia imagen ya da, y aqui no hay
+   ninguna imagen que lo diga. */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-info {
+  display: flex;
+}
+
+/*
+ * LA FILA DEL VOLUMEN, que es la otra mitad de lo que se pidio ("y la barra
+ * de sonido en la parte inferior"). La escondian las reglas de densidad
+ * —.ytmpip-tight y .ytmpip-mini— y con razon: mientras era una fila mas de
+ * la columna, era la primera candidata a ceder su sitio. Flotando ya no le
+ * quita alto a nadie, asi que ese motivo desaparece y vuelve.
+ *
+ * Las acciones secundarias, en cambio, NO están en el escenario a NINGÚN
+ * tamaño (antes solo faltaban en mini). El motivo de mini valía en
+ * realidad para todos: al acercar el cursor se acumulaban cinco filas
+ * flotantes y apenas quedaba letra a la vista. Y ninguna de sus tres
+ * acciones se queda sin salida: «Letras» tiene su gemelo en la cabecera
+ * (el botón de escenario, que en modo letra ofrece volver a la portada),
+ * y «Siguientes» y «Volver a…» abren cosas que sacan del modo letra de
+ * todas formas — se llega a ellas saliendo del escenario, que es un clic.
+ * La banda de abajo no hay que retocarla: pip.js la MIDE, y una fila con
+ * display:none mide cero.
+ */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-extras {
+  display: flex;
+  position: relative;
+  z-index: 2;
+  padding: 0 8px 4px;
+}
+
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-secondary-actions {
+  display: none;
+}
+
+/* El transporte deja de ser la ultima fila: el aire de abajo lo pone ahora
+   quien de verdad va el ultimo. */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-controls {
+  padding: 2px 8px;
+}
+
+/* El degradado de abajo tiene que cubrir lo que de verdad hay debajo, que
+   aqui son dos filas mas que con video. */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-content::after {
+  height: var(--ytmpip-mandos-abajo);
+}
+
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-content::before {
+  height: var(--ytmpip-mandos-arriba);
+}
+
+/*
+ * LA JERARQUÍA DEL ESCENARIO. La regla base del karaoke es "énfasis SOLO
+ * por color", y en el panel pequeño sigue siendo la buena: allí mover el
+ * resalte sin reflujo evita que el scroll baile con cada verso (el cartel
+ * de la sección de letras cuenta la medición). El escenario es la
+ * excepción DELIBERADA, por dos motivos que allí no se dan:
+ *
+ *  - aquí la letra es el ÚNICO dibujo de la ventana, y a los 13 px
+ *    heredados con un blanco de diferencia todas las líneas se leían del
+ *    mismo rango — justo lo que el usuario señaló con el pantallazo de
+ *    referencia (la que suena grande y entera, las vecinas apagadas);
+ *  - el reflujo que la regla base evita aquí no duele: en el escenario el
+ *    desplazamiento automático vuelve a centrar la línea activa con cada
+ *    cambio, así que el pelo que mueve la maquetación lo corrige el mismo
+ *    movimiento que lo causa.
+ *
+ * Las vecinas se apagan por opacidad y no oscureciendo el color: el fondo
+ * es la portada difuminada, que cambia con cada canción, y un gris fijo
+ * legible sobre una portada clara desaparece sobre una oscura; la
+ * opacidad se apoya en el color del tema, que ya resolvió ese contraste.
+ */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyric-line {
+  font-size: 16px;
+  opacity: 0.5;
+  /* La lista entera otra vez: `transition` se pisa completa, no por
+     partes, y perder la de color devolvería el salto seco del resalte. */
+  transition: color 200ms ease, background 140ms ease, opacity 200ms ease,
+    font-size 200ms ease;
+}
+
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyric-line.ytmpip-lyric-active {
+  font-size: 19px;
+  opacity: 1;
+}
+
+/* ---------- Sólo carátula ----------
+ *
+ * Aquí abajo por el mismo motivo que el bloque anterior, y conviene decirlo
+ * porque no se ve leyendo la regla: empata en peso de selector con
+ * `#ytmpip-root.compact .ytmpip-stage`, que le pone un tope de 96 px y una
+ * proporción cuadrada para que la miniatura no se coma la fila del texto.
+ * Cuando el texto ya no está, ese tope no protege nada y sólo deja la imagen
+ * pequeña en mitad de una ventana vacía. Al empatar, gana el que va después.
+ */
+
+#ytmpip-root.ytmpip-sin-texto .ytmpip-stage {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+/* Sin texto no hay dos columnas que separar. */
+#ytmpip-root.ytmpip-sin-texto .ytmpip-body {
+  gap: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ytmpip-backdrop,
+  .ytmpip-info,
+  button,
+  .ytmpip-seek::-webkit-slider-thumb,
+  .ytmpip-lyric-line {
+    transition: none;
+  }
+
+  /* La linea sigue cambiando (es informacion), pero sin animar la entrada.
+   * El autodesplazamiento de la letra ya respeta esta preferencia desde
+   * JS: usa scroll instantaneo en vez de suave. */
+  .ytmpip-now-line.ytmpip-line-swap {
+    animation: none;
+  }
+
+  /* El autoocultado se conserva; lo que se quita es el desvanecido. Quien
+   * pide menos movimiento quiere menos animacion, no una barra de
+   * transporte permanente encima del video. Mismo criterio con el atenuado
+   * de la ventana: se conserva la opacidad, se quita el fundido.
+   *
+   * Los dos selectores del escenario van aparte de la lista y con su peso
+   * completo a propósito: sus reglas de transición pesan más que las
+   * clases sueltas de esta lista (llevan el id), y una entrada más floja
+   * aquí no las ganaría — el fundido seguiría vivo justo para quien pidió
+   * que no lo hubiera. Cubren el atenuado de la letra y la jerarquía de
+   * líneas: el apagado y el tamaño se conservan, el fundido no. */
+  .ytmpip-content,
+  .ytmpip-scrim,
+  #ytmpip-root.ytmpip-overlay
+    :is(.ytmpip-header, .ytmpip-progress-row, .ytmpip-controls, .ytmpip-extras, .ytmpip-secondary-actions),
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-body,
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyrics-panel:not([hidden]),
+  #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyric-line,
+  #ytmpip-root.ytmpip-overlay .ytmpip-content::before,
+  #ytmpip-root.ytmpip-overlay .ytmpip-content::after {
+    transition: none;
+  }
+
+  /* Mismo criterio con los mandos atenuados de mini: se conserva la
+     atenuacion, que es contraste y no movimiento; se quita el fundido. */
+  #ytmpip-root.ytmpip-mini .ytmpip-controls,
+  #ytmpip-root.ytmpip-mini .ytmpip-status,
+  #ytmpip-root.ytmpip-mini .ytmpip-header-actions {
+    transition: none;
+  }
+}

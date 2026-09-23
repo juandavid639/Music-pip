@@ -1,0 +1,644 @@
+{
+  "abrir_letra_completa": {
+    "message": "Abrir la letra completa"
+  },
+  "abrir_ventana_flotante": {
+    "message": "Abrir ventana flotante"
+  },
+  "abrir_ventana_music_pip": {
+    "message": "Abrir ventana flotante de Music PiP"
+  },
+  "abrir_ventana_music_pip_title": {
+    "message": "Abrir ventana flotante (Music PiP)"
+  },
+  "abrir_video_navegador": {
+    "message": "Abrir el vídeo en la ventana flotante del navegador"
+  },
+  "adelantar_s": {
+    "message": "Adelantar $1 s"
+  },
+  "adelantar_segundos": {
+    "message": "Adelantar $1 segundos"
+  },
+  "ahora_suena": {
+    "message": "Ahora suena $1"
+  },
+  "ahora_suena_de": {
+    "message": "Ahora suena $1, de $2"
+  },
+  "aleatorio": {
+    "message": "Aleatorio"
+  },
+  "banda_aire": {
+    "message": "Aire"
+  },
+  "banda_claridad": {
+    "message": "Claridad"
+  },
+  "banda_cuerpo": {
+    "message": "Cuerpo"
+  },
+  "banda_graves": {
+    "message": "Graves"
+  },
+  "banda_medios": {
+    "message": "Medios"
+  },
+  "bandas_legend": {
+    "message": "Las bandas, de graves a agudos"
+  },
+  "buscando_musica": {
+    "message": "Buscando la música…"
+  },
+  "cambiar_tamano": {
+    "message": "Cambiar tamaño"
+  },
+  "cambiar_tamano_ventana": {
+    "message": "Cambiar tamaño de la ventana"
+  },
+  "cambios_se_guardan": {
+    "message": "Los cambios se guardan solos"
+  },
+  "cancion_anterior": {
+    "message": "Canción anterior"
+  },
+  "cancion_siguiente": {
+    "message": "Siguiente canción"
+  },
+  "cargando_letras": {
+    "message": "Cargando letras…"
+  },
+  "cerrar": {
+    "message": "Cerrar"
+  },
+  "cerrar_ventana": {
+    "message": "Cerrar ventana flotante"
+  },
+  "cola_no_a_la_vista": {
+    "message": "La cola no está a la vista en la página"
+  },
+  "comando_abrir_ventana": {
+    "message": "Abrir la ventana flotante (si Chrome lo niega, destaca el botón PiP de la página)"
+  },
+  "comando_cancion_anterior": {
+    "message": "Canción anterior"
+  },
+  "comando_cancion_siguiente": {
+    "message": "Canción siguiente"
+  },
+  "comando_reproducir_pausar": {
+    "message": "Reproducir o pausar"
+  },
+  "conectado": {
+    "message": "Conectado"
+  },
+  "conectado_a_sitio": {
+    "message": "Conectado a $1"
+  },
+  "conectando": {
+    "message": "Conectando…"
+  },
+  "desconectado": {
+    "message": "Desconectado"
+  },
+  "donde_funciona": {
+    "message": "En qué sitios funciona"
+  },
+  "ecualizador": {
+    "message": "Ecualizador"
+  },
+  "ecualizador_apagado": {
+    "message": "Ecualizador: apagado"
+  },
+  "ecualizador_estado": {
+    "message": "Ecualizador: $1"
+  },
+  "eq_ajuste_propio": {
+    "message": "ajuste propio"
+  },
+  "eq_apagado": {
+    "message": "apagado"
+  },
+  "eq_aviso_1": {
+    "message": "Con «Apagado» el sonido no se toca. En cuanto elijas cualquier otra opción, el audio de la pestaña empieza a pasar por el ecualizador, y"
+  },
+  "eq_aviso_2": {
+    "message": "sigue pasando por él aunque lo vuelvas a apagar"
+  },
+  "eq_aviso_3": {
+    "message": ", hasta que recargues la pestaña de la música."
+  },
+  "eq_pista_1a": {
+    "message": "Porque"
+  },
+  "eq_pista_1b": {
+    "message": "un ecualizador reparte el sonido, no lo sube"
+  },
+  "eq_pista_1c": {
+    "message": ". La música de YouTube Music llega ya al máximo, así que para que quepan más graves hay que bajar un poco todo lo demás: cuanto más subas una banda, más flojo se oirá el conjunto. Justo debajo de los mandos te decimos cuánto cuesta el ajuste que tengas puesto."
+  },
+  "eq_pista_2": {
+    "message": "Truco: bajar sale gratis. Si quieres oír más los graves, baja las otras bandas en vez de subir la de graves — sólo se paga por subir."
+  },
+  "eq_pista_3": {
+    "message": "Y sobre «Apagado»: deja el sonido tal cual, pero si ya lo habías encendido alguna vez, el desvío sigue montado por dentro hasta que recargues la pestaña."
+  },
+  "eq_pregunta": {
+    "message": "¿Por qué al subir una banda suena más flojo?"
+  },
+  "error_letras": {
+    "message": "No se pudieron leer las letras"
+  },
+  "extension_descripcion": {
+    "message": "Ventana flotante para YouTube Music, YouTube y Spotify: portada, letra, ecualizador y atajos. No oficial ni afiliado."
+  },
+  "extension_recargada": {
+    "message": "Extensión recargada · pulsa F5 en la pestaña"
+  },
+  "fijado_a_cancion": {
+    "message": "Fijado a esta canción: $1. Pulsa para olvidarlo"
+  },
+  "fijar_ecualizador": {
+    "message": "Fijar el ecualizador a esta canción"
+  },
+  "fila_ajuste": {
+    "message": "Ajuste"
+  },
+  "fila_ajuste_ayuda": {
+    "message": "Elige uno hecho o mueve las bandas tú mismo, que es lo que significa «A mi gusto»."
+  },
+  "fila_al_abrir": {
+    "message": "Al abrirla, mostrar"
+  },
+  "fila_al_abrir_ayuda": {
+    "message": "Con cuál de las dos pestañas aparece la ventana. Dentro puedes cambiar de una a otra cuando quieras."
+  },
+  "fila_altura": {
+    "message": "Altura de las barras"
+  },
+  "fila_altura_ayuda": {
+    "message": "Cuánto ocupan de alto dentro de la ventana."
+  },
+  "fila_caida": {
+    "message": "Cómo bajan las barras"
+  },
+  "fila_caida_ayuda": {
+    "message": "Con 1 caen despacio y se ven suaves; con 60 se desploman a cada golpe de la música."
+  },
+  "fila_canvas_ayuda": {
+    "message": "El vídeo corto que Spotify pone a algunas canciones, de fondo en la ventana. También se enciende y se apaga con el botón 🌌 de la ventana."
+  },
+  "fila_color": {
+    "message": "Color"
+  },
+  "fila_color_ayuda": {
+    "message": "De qué color se pintan. Con una paleta tuya, las barras van del primer color al último."
+  },
+  "fila_colores": {
+    "message": "Colores"
+  },
+  "fila_colores_ayuda": {
+    "message": "El aspecto de la ventana. También decide de qué color salen las barras de sonido si las dejas en «El del tema»."
+  },
+  "fila_cuantas_barras": {
+    "message": "Cuántas barras"
+  },
+  "fila_cuantas_barras_ayuda": {
+    "message": "«Las que quepan» pone más o menos según lo ancha que tengas la ventana."
+  },
+  "fila_cuantos_colores": {
+    "message": "Cuántos colores"
+  },
+  "fila_difuminar": {
+    "message": "Difuminarla mientras suena"
+  },
+  "fila_difuminar_ayuda": {
+    "message": "Se vuelve transparente para no estorbar y se ve entera otra vez al pasarle el ratón por encima. Con 0 no se difumina nunca; 80 es casi invisible."
+  },
+  "fila_halo": {
+    "message": "Halo de luz"
+  },
+  "fila_halo_ayuda": {
+    "message": "Una luz por el borde interior de la ventana. «Latiendo» arranca con el primer clic dentro de la ventana, porque sin un clic el navegador no nos deja escuchar la música. También se enciende y se apaga con el botón ✨ de la ventana."
+  },
+  "fila_halo_color": {
+    "message": "Color del halo"
+  },
+  "fila_halo_color_ayuda": {
+    "message": "De qué color brilla el borde. «El del tema» cambia solo al pasar entre oscuro y claro."
+  },
+  "fila_halo_tu_color_ayuda": {
+    "message": "Toda la luz del borde, base y latido, se pinta de este color."
+  },
+  "fila_letra": {
+    "message": "Letra de la canción"
+  },
+  "fila_letra_ayuda": {
+    "message": "Aparece como una segunda pestaña dentro de la ventana, cuando el sitio tiene la letra de lo que suena."
+  },
+  "fila_numero_barras": {
+    "message": "Número de barras"
+  },
+  "fila_numero_barras_ayuda": {
+    "message": "Entre 8 y 40."
+  },
+  "fila_salto": {
+    "message": "Salto de los botones"
+  },
+  "fila_salto_ayuda": {
+    "message": "Lo que avanza o retrocede la canción al pulsar los botones de adelantar y rebobinar. Entre 1 y 60."
+  },
+  "fila_tamano": {
+    "message": "Tamaño al abrirla"
+  },
+  "fila_tamano_ayuda": {
+    "message": "Si cambias el tamaño arrastrando un borde, se queda anotado; con «Como la dejé» se abrirá así la próxima vez."
+  },
+  "fila_tu_color": {
+    "message": "Tu color"
+  },
+  "fila_tu_color_ayuda": {
+    "message": "Todas las barras se pintan de este color."
+  },
+  "fila_video": {
+    "message": "Vídeo musical"
+  },
+  "fila_video_ayuda": {
+    "message": "Cuando la canción tiene vídeo, se ve en la ventana en lugar de la carátula. Las que no tienen siguen enseñando la carátula. El vídeo de Spotify va cifrado y aquí no puede verse: para ése está el botón 🎬 de la ventana."
+  },
+  "fondo_visual": {
+    "message": "Fondo visual"
+  },
+  "fuente": {
+    "message": "Fuente: $1"
+  },
+  "guardado": {
+    "message": "Guardado."
+  },
+  "imagen_lata": {
+    "message": "Hacer que la imagen lata con los graves"
+  },
+  "imagen_quieta": {
+    "message": "Dejar quieta la imagen"
+  },
+  "ir_a": {
+    "message": "Ir a $1: $2"
+  },
+  "letras": {
+    "message": "Letras"
+  },
+  "letras_cancion": {
+    "message": "Letras de la canción"
+  },
+  "letras_no_disponibles": {
+    "message": "Letras no disponibles"
+  },
+  "marca_recomendado": {
+    "message": "recomendado"
+  },
+  "matriz_funcion": {
+    "message": "Función"
+  },
+  "matriz_leyenda": {
+    "message": "Lo que falta no es dejadez: el vídeo de Spotify va cifrado, su sonido no pasa por la página y YouTube no tiene panel de letra."
+  },
+  "matriz_pip_nativo": {
+    "message": "Vídeo flotante del navegador (🎬)"
+  },
+  "me_gusta": {
+    "message": "Me gusta"
+  },
+  "mostrar_caratula_letra": {
+    "message": "Mostrar la carátula en vez de la letra"
+  },
+  "mostrar_caratula_video": {
+    "message": "Mostrar la carátula en vez del vídeo"
+  },
+  "mostrar_espectro_musica": {
+    "message": "Mostrar el espectro de la música"
+  },
+  "mostrar_fondo_visual": {
+    "message": "Mostrar el fondo visual de la canción"
+  },
+  "mostrar_halo_luz": {
+    "message": "Mostrar el halo de luz del borde"
+  },
+  "mostrar_letra": {
+    "message": "Mostrar la letra en vez de la carátula"
+  },
+  "mostrar_ocultar_cola": {
+    "message": "Mostrar u ocultar la cola de reproducción"
+  },
+  "mostrar_ocultar_letras": {
+    "message": "Mostrar u ocultar letras"
+  },
+  "mostrar_titulo_artista": {
+    "message": "Mostrar el título y el artista"
+  },
+  "mostrar_video": {
+    "message": "Mostrar el vídeo en vez de la carátula"
+  },
+  "musica_no_encontrada": {
+    "message": "Sitio de música no encontrado"
+  },
+  "no_se_pudo_volver": {
+    "message": "No se pudo volver a la pestaña"
+  },
+  "nota_pip_nativo": {
+    "message": "El vídeo de Spotify va cifrado y la ventana no puede pintarlo; el botón 🎬 lo abre en el vídeo flotante del propio navegador, al que el cifrado no le afecta."
+  },
+  "nota_sin_audio": {
+    "message": "En Spotify esto no funciona: su sonido no está al alcance de la página, así que no hay nada que tocar ni medir."
+  },
+  "ocultar_espectro": {
+    "message": "Ocultar el espectro"
+  },
+  "ocultar_espectro_musica": {
+    "message": "Ocultar el espectro de la música"
+  },
+  "ocultar_halo_luz": {
+    "message": "Ocultar el halo de luz del borde"
+  },
+  "ocultar_titulo_artista": {
+    "message": "Ocultar el título y el artista"
+  },
+  "opcion_a_mi_gusto": {
+    "message": "A mi gusto"
+  },
+  "opcion_barras_auto": {
+    "message": "Las que quepan"
+  },
+  "opcion_barras_fijo": {
+    "message": "Un número fijo"
+  },
+  "opcion_canvas_no": {
+    "message": "No verlo (el fondo de siempre)"
+  },
+  "opcion_claro": {
+    "message": "Claro"
+  },
+  "opcion_color_fuente": {
+    "message": "Del vídeo o la carátula"
+  },
+  "opcion_color_mio": {
+    "message": "Un color mío"
+  },
+  "opcion_color_paleta": {
+    "message": "Una paleta mía"
+  },
+  "opcion_color_rgb": {
+    "message": "Arcoíris (va cambiando solo)"
+  },
+  "opcion_color_tema": {
+    "message": "El del tema"
+  },
+  "opcion_controles": {
+    "message": "Los controles"
+  },
+  "opcion_eq_apagado": {
+    "message": "Apagado (no tocar el sonido)"
+  },
+  "opcion_grande": {
+    "message": "Grande (380 × 560)"
+  },
+  "opcion_halo_apagado": {
+    "message": "Apagado"
+  },
+  "opcion_halo_fijo": {
+    "message": "Fijo (una luz quieta)"
+  },
+  "opcion_halo_latido": {
+    "message": "Latiendo con la música"
+  },
+  "opcion_letra": {
+    "message": "La letra"
+  },
+  "opcion_letra_no": {
+    "message": "No mostrarla nunca"
+  },
+  "opcion_letra_ver": {
+    "message": "Mostrarla cuando la haya"
+  },
+  "opcion_oscuro": {
+    "message": "Oscuro"
+  },
+  "opcion_pequena": {
+    "message": "Pequeña (340 × 200)"
+  },
+  "opcion_ultima": {
+    "message": "Como la dejé la última vez"
+  },
+  "opcion_video_no": {
+    "message": "No verlo (siempre la carátula)"
+  },
+  "opcion_video_ver": {
+    "message": "Verlo cuando lo haya"
+  },
+  "opciones_sublema": {
+    "message": "Así se ve y se comporta la ventana flotante."
+  },
+  "opciones_titulo": {
+    "message": "Preferencias — Music PiP"
+  },
+  "paleta_legend": {
+    "message": "Los colores, de la primera barra a la última"
+  },
+  "pausar": {
+    "message": "Pausar"
+  },
+  "pista_color_fuente": {
+    "message": "Las barras toman el color que más manda en lo que estés viendo, y cambian con el vídeo. Si la imagen no tiene un color claro —blanco y negro, o casi todo oscuro— vuelven al color del tema."
+  },
+  "pista_color_tema": {
+    "message": "Éste es el color: cambia solo si pasas la ventana al tema claro."
+  },
+  "pista_halo_fuente": {
+    "message": "El borde brilla con el color que más manda en lo que estés viendo, y cambia con el vídeo. Si la imagen no tiene un color claro —blanco y negro, o casi todo oscuro— vuelve al color del tema."
+  },
+  "pip_nativo_rechazado": {
+    "message": "El navegador pidió un clic en la página para abrir su vídeo flotante"
+  },
+  "portada_de": {
+    "message": "Portada de $1"
+  },
+  "posicion_cancion": {
+    "message": "Posición de la canción"
+  },
+  "preamp_baja": {
+    "message": "Todo el sonido baja $1 dB para dejar sitio a lo que has subido: eso es lo que cuesta. Un ecualizador reparte el sonido, no lo sube; para subir el volumen, el control del sistema."
+  },
+  "preamp_cabe": {
+    "message": "No hay que bajar nada: lo que has subido cabe sin quitarle sitio al resto."
+  },
+  "preamp_nada": {
+    "message": "No hay nada que compensar: no hay ninguna banda subida."
+  },
+  "preferencias": {
+    "message": "Preferencias"
+  },
+  "preset_graves": {
+    "message": "Más graves"
+  },
+  "preset_nocturno": {
+    "message": "Nocturno"
+  },
+  "preset_plano": {
+    "message": "Plano"
+  },
+  "preset_voz": {
+    "message": "Voz"
+  },
+  "proximas_canciones": {
+    "message": "Próximas canciones"
+  },
+  "pulso_graves": {
+    "message": "Pulso con los graves"
+  },
+  "quitar_halo": {
+    "message": "Quitar el halo"
+  },
+  "quitar_me_gusta": {
+    "message": "Quitar me gusta"
+  },
+  "quitar_pulso": {
+    "message": "Quitar el pulso"
+  },
+  "quitar_silencio": {
+    "message": "Quitar silencio"
+  },
+  "repetir": {
+    "message": "Repetir"
+  },
+  "repetir_cancion": {
+    "message": "Repetir: esta canción"
+  },
+  "repetir_desactivado": {
+    "message": "Repetir: desactivado"
+  },
+  "repetir_lista": {
+    "message": "Repetir: toda la lista"
+  },
+  "reproduccion_aleatoria": {
+    "message": "Reproducción aleatoria"
+  },
+  "reproducir": {
+    "message": "Reproducir"
+  },
+  "retroceder_s": {
+    "message": "Retroceder $1 s"
+  },
+  "retroceder_segundos": {
+    "message": "Retroceder $1 segundos"
+  },
+  "separador_decimal": {
+    "message": ","
+  },
+  "siguientes": {
+    "message": "Siguientes"
+  },
+  "silenciar": {
+    "message": "Silenciar"
+  },
+  "sin_letra": {
+    "message": "El sitio no tiene la letra de esta canción"
+  },
+  "sin_portada": {
+    "message": "Sin portada"
+  },
+  "sin_reproduccion": {
+    "message": "Sin reproducción"
+  },
+  "solo_caratula": {
+    "message": "Sólo carátula"
+  },
+  "tarjeta_barras": {
+    "message": "Barras de sonido"
+  },
+  "tarjeta_barras_intro": {
+    "message": "Las barras que se mueven con la música detrás de la carátula. Se encienden y se apagan con el botón 📊 de la ventana; aquí eliges cómo se ven."
+  },
+  "tarjeta_eq_intro": {
+    "message": "Cambia el equilibrio del sonido: más graves, más voz, menos agudos de noche."
+  },
+  "tarjeta_matriz": {
+    "message": "Qué funciona en cada sitio"
+  },
+  "tarjeta_matriz_intro": {
+    "message": "Todo lo de arriba, resumido: qué ofrece cada sitio y qué no. Los límites están medidos, no supuestos."
+  },
+  "tarjeta_musica": {
+    "message": "Mientras suena la música"
+  },
+  "tarjeta_musica_intro": {
+    "message": "Qué se ve dentro de la ventana y qué hacen los botones."
+  },
+  "tarjeta_spotify": {
+    "message": "Sólo en Spotify"
+  },
+  "tarjeta_spotify_intro": {
+    "message": "Lo que Spotify tiene y los demás sitios no. Estos ajustes sólo actúan en una pestaña de Spotify."
+  },
+  "tarjeta_ventana": {
+    "message": "La ventana flotante"
+  },
+  "tarjeta_ventana_intro": {
+    "message": "La ventanita que se queda encima de todo lo demás mientras escuchas."
+  },
+  "temporizador": {
+    "message": "Temporizador de apagado"
+  },
+  "temporizador_apagado": {
+    "message": "Temporizador de apagado: apagado"
+  },
+  "temporizador_menos_minuto": {
+    "message": "Temporizador de apagado: la música se pausará en menos de un minuto"
+  },
+  "temporizador_minutos": {
+    "message": "Temporizador de apagado: la música se pausará en $1 minutos"
+  },
+  "unidad_seg": {
+    "message": "seg"
+  },
+  "velocidad": {
+    "message": "Velocidad de reproducción"
+  },
+  "velocidad_normal": {
+    "message": "Velocidad de reproducción: normal"
+  },
+  "velocidad_valor": {
+    "message": "Velocidad de reproducción: $1"
+  },
+  "ver_caratula": {
+    "message": "Ver carátula"
+  },
+  "ver_espectro": {
+    "message": "Ver el espectro"
+  },
+  "ver_halo": {
+    "message": "Ver el halo"
+  },
+  "ver_letra_grande": {
+    "message": "Ver la letra en grande"
+  },
+  "ver_titulo_artista": {
+    "message": "Ver el título y el artista"
+  },
+  "ver_video": {
+    "message": "Ver vídeo"
+  },
+  "video_flotante_navegador": {
+    "message": "Vídeo flotante del navegador"
+  },
+  "vista_previa_ayuda": {
+    "message": "Es la ventana de verdad —su mismo HTML y su mismo CSS— sonando una canción de mentira. Los botones la enseñan a sus dos tamaños de apertura; los ajustes de esta página no cambian esta vista."
+  },
+  "vista_previa_titulo": {
+    "message": "Vista previa de la ventana flotante"
+  },
+  "volumen": {
+    "message": "Volumen"
+  },
+  "volver_al_sitio": {
+    "message": "Volver a $1"
+  }
+}

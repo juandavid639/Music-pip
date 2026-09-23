@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  Barra del reproductor con TODOS los controles secundarios presentes:
+  me gusta / no me gusta, repetir y aleatorio.
+
+  Detalles que importan y que estan aqui a proposito:
+
+  - ytmusic-like-button-renderer trae `like-status="LIKE"`. Es el unico
+    estado de toda la barra que YouTube Music expone en un atributo y no
+    en una etiqueta traducida.
+  - El boton de repetir trae `aria-pressed="true"`; el de aleatorio NO
+    trae aria-pressed. Esa asimetria es justo el caso que el adaptador
+    tiene que distinguir: "apagado" y "no se sabe" no son lo mismo.
+  - El <video> vive dentro de <ytmusic-player>, con un padre real, para
+    poder comprobar el prestamo del elemento a la ventana flotante.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar repeat-mode="ONE">
+      <img class="image ytmusic-player-bar" src="https://lh3.googleusercontent.com/xyz=w60-h60-l90-rj" />
+      <yt-formatted-string class="title ytmusic-player-bar">Take On Me</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">a-ha • Hunting High and Low • 1985</yt-formatted-string>
+
+      <ytmusic-like-button-renderer like-status="LIKE">
+        <div id="button-shape-dislike"><button aria-label="No me gusta"></button></div>
+        <div id="button-shape-like"><button aria-label="Me gusta"></button></div>
+      </ytmusic-like-button-renderer>
+
+      <!--
+        Copiado de la pagina real (tools/diagnostico-relevo.js): es un
+        yt-icon-button SIN aria-pressed, con el estado en title/label y
+        ademas TRADUCIDO. Aqui ponia `<button aria-pressed="true">`, que era
+        inventado, y por eso las pruebas daban por buena una lectura del
+        estado que en el navegador no funcionaba nunca. El modo de verdad
+        vive en ytmusic-player-bar[repeat-mode].
+      -->
+      <yt-icon-button class="repeat style-scope ytmusic-player-bar" title="Repetir una" label="Repetir una"></yt-icon-button>
+      <button class="shuffle" aria-label="Reproducción aleatoria"></button>
+
+      <!--
+        La barra de tiempo de YouTube Music, con sus DOS formas de decir lo
+        mismo: el deslizador y el texto "1:35 / 3:18".
+
+        Es la unica fuente que sabe por donde va LA PISTA: el <video> lleva
+        la cola entera en una sola linea de tiempo y sus numeros son
+        acumulados.
+
+        Van sin valores a proposito, y cada prueba pone los suyos con el
+        ayudante conTiempoDePagina. Vacia, el adaptador contesta null y se
+        cae al <video>, que es el camino degradado que tambien hay que
+        probar.
+      -->
+      <tp-yt-paper-slider id="progress-bar" role="slider"></tp-yt-paper-slider>
+      <span class="time-info ytmusic-player-bar"></span>
+    </ytmusic-player-bar>
+
+    <ytmusic-player>
+      <div id="movie_player">
+        <video></video>
+      </div>
+    </ytmusic-player>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!--
+  Un "marco" que imita una ventana Document Picture-in-Picture.
+
+  Carga el pip.css REAL y el pip.html REAL, así que lo que se ve aquí es lo
+  que se verá en la ventana flotante. Solo cambia el origen de los datos:
+  aquí son de mentira y allí vienen de YouTube Music.
+
+  Vive en src/options — y por tanto SÍ viaja en el paquete — porque la página
+  de Preferencias lo incrusta como vista previa honesta: no es un dibujo de
+  la ventana, ES la ventana, con su CSS y su HTML de verdad. La rejilla de
+  desarrollo (tools/vista-previa.html) carga este mismo archivo para mirarlo
+  a varios tamaños a la vez.
+
+  El guion vive aparte en vista-previa.js: dentro de la extensión la CSP de
+  Manifest V3 (script-src 'self') ignora los <script> en línea sin avisar,
+  y una vista previa en blanco no avisa de nada.
+
+  Parámetros: ?video=1 para simular una pista con imagen, ?letra=1 para el
+  karaoke, ?escenario=1 para la letra en grande, ?limpio=1 para sólo
+  carátula, ?espectro=1 para las barras.
+-->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../pip/pip.css" />
+    <script src="../shared/constants.js"></script>
+    <!--
+      Los iconos REALES, del mismo módulo que usa la ventana. Sin esto el
+      marco seguiría enseñando los emoji y dejaría de servir para lo único
+      que sirve: mirar cómo queda de verdad a cada tamaño.
+    -->
+    <script src="../shared/iconos.js"></script>
+  </head>
+  <body>
+    <script src="vista-previa.js"></script>
+  </body>
+</html>

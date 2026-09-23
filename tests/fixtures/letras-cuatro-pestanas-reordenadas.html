@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+  EL MUNDO TEMIDO: cuatro pestañas y la nueva metida ANTES de la de letras.
+
+  La validación de fase 0 sobre music.youtube.com real (2026) encontró que
+  las pestañas ya no son tres sino cuatro: «Comentarios» apareció y entró
+  DESPUÉS de «Letra», así que la vieja lógica posicional (headers[1])
+  siguió funcionando de pura suerte. Este fixture simula el día en que la
+  suerte se acabe: la intrusa entra en la posición [1] y la de letras cae
+  a la [2].
+
+  La intrusa se llama «LETRAS DEL MOMENTO» a propósito: es también el
+  señuelo que vigila que la búsqueda por texto esté ANCLADA («LETRAS» no
+  es «LETRA») — una regex sin anclas elegiría la pestaña equivocada.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <img class="image ytmusic-player-bar" src="https://lh3.googleusercontent.com/abc=w60-h60-l90-rj" />
+      <yt-formatted-string class="title ytmusic-player-bar">Bohemian Rhapsody</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">
+        Queen • A Night at the Opera • 1975
+      </yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player>
+      <video></video>
+    </ytmusic-player>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">A CONTINUACIÓN</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">LETRAS DEL MOMENTO</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="true">LETRA</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">RELACIONADO</div>
+
+      <div id="tab-renderer">
+        <ytmusic-description-shelf-renderer>
+          <yt-formatted-string class="header style-scope ytmusic-description-shelf-renderer">Letra</yt-formatted-string>
+          <yt-formatted-string class="non-expandable description style-scope ytmusic-description-shelf-renderer">Is this the real life?
+Is this just fantasy?
+Caught in a landslide
+No escape from reality</yt-formatted-string>
+          <yt-formatted-string class="footer style-scope ytmusic-description-shelf-renderer">Fuente: LyricFind</yt-formatted-string>
+        </ytmusic-description-shelf-renderer>
+      </div>
+    </ytmusic-player-page>
+  </body>
+</html>

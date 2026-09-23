@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+  <body>
+    <!--
+      Calcado de spotify-sonando.html (el DOM medido 2026-09-14) mas lo
+      UNICO que cambia en MODO VIDEO, medido en vivo el 2026-09-16 sobre
+      la pestaña real del usuario: cuando la pista es un video musical
+      aparece UN <video> de verdad colgado de data-testid
+      'video-player-npv' — src blob:, con DRM (mediaKeys), la pista
+      ENTERA (164,361 s = 2:44) y SIN silenciar. En modo audio ese
+      bloque no existe (0 medios, medido en la misma sesion).
+
+      El Canvas se queda a proposito y ANTES en orden de documento: es
+      el señuelo medido que el ancla tiene que ganar. Un selector de
+      'video' a secas caeria en el bucle mudo de 6,9 s, que es
+      exactamente el elemento que el adaptador lleva prohibido devolver
+      desde su primera medicion.
+
+      La barra dice los tiempos del video medido: max=164361 son los
+      milisegundos EXACTOS de la pista de 2:44; el texto va por 0:19
+      mientras el value dice 20000 (cuantizado a step=5000, la mentira
+      medida de siempre).
+    -->
+
+    <main>
+      <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00001e02senuelodelalbum" alt="" />
+      <button data-testid="add-button" aria-checked="true" aria-label="Agregar a la biblioteca"></button>
+
+      <!-- Misma forma estructural que en spotify-sonando.html: base
+           comun + marca de recuento uno, con las vacias medidas (2 al
+           frente, una interior, una al final) que el portador recorta
+           por los bordes. La marcada (DOM 3) es la linea EMITIDA 1. -->
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line">Linea uno de relleno</div>
+      <div dir="auto" class="clase-base-minificada marca-de-la-que-canta" data-testid="lyrics-line">Linea dos de relleno</div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line">Linea tres de relleno</div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+    </main>
+
+    <aside aria-label="Fila de reproducción">
+      <button data-testid="PanelHeader_CloseButton" aria-label="Cerrar"></button>
+      <h2>Fila de reproducción</h2>
+
+      <div data-testid="context-item-info-title"><a data-testid="context-item-link" href="/track/senuelo">Señuelo del panel</a></div>
+      <span data-testid="context-item-info-subtitles"><a href="/artist/senuelo">Señuelo de artista</a></span>
+      <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00001e02senuelodelpanel" alt="" />
+
+      <!-- Los DOS videos cuelgan del mismo testid del panel (medido
+           2026-09-16: NPV_Panel_OpenDiv es el ancla estable mas cercana
+           al Canvas, y el video de pista tambien vive dentro del panel).
+           Que el selector del Canvas los encuentre a AMBOS es adrede: son
+           las guardas (no ser la pista, loop, muted, sin mediaKeys) las
+           que tienen que elegir, no el orden del documento. -->
+      <div data-testid="NPV_Panel_OpenDiv">
+        <!-- EL CANVAS, el señuelo: sigue aqui y sigue PRIMERO. -->
+        <div class="canvasVideoContainerNPV">
+          <video muted loop src="https://video-fa.scdn.co/canvaz/bucle-visual"></video>
+        </div>
+
+        <!-- EL VIDEO DEL MODO VIDEO (medido 2026-09-16): el unico medio
+             real de la pagina. Ni muted ni loop: es la cancion. -->
+        <div data-testid="video-player-npv">
+          <video src="blob:https://open.spotify.com/9f3c1a2e-video-musical"></video>
+        </div>
+      </div>
+
+      <h2>Estás escuchando</h2>
+      <ul aria-label="Estás escuchando">
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851sonando" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">El Precio de Tu Error</span>
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/yeison">Yeison Jiménez</a>, <a href="/artist/pasabordo">Pasabordo</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+      </ul>
+
+      <h2>Próximas canciones de: Veci</h2>
+      <ul aria-label="Siguiente">
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851siguiente1" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">Vas a Llorar</span>
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/yeison">Yeison Jiménez</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+      </ul>
+    </aside>
+
+    <aside data-testid="now-playing-bar">
+      <div data-testid="now-playing-widget">
+        <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00004851caratulabuena" alt="" />
+        <div data-testid="context-item-info-title"><a data-testid="context-item-link" href="/track/elpreciodetuerror">El Precio de Tu Error</a></div>
+        <span data-testid="context-item-info-subtitles"><a href="/artist/yeison">Yeison Jiménez</a>, <a href="/artist/pasabordo">Pasabordo</a></span>
+        <button aria-checked="false" aria-label="Agregar a Tus me gusta"></button>
+        <button aria-label="Expandir"></button>
+      </div>
+
+      <div data-testid="player-controls">
+        <button class="e-10860-legacy-button" aria-label="Habilitar el Modo aleatorio inteligente para Veci"></button>
+        <button data-testid="control-button-skip-back" aria-label="Anterior"></button>
+        <!-- SONANDO: el icono de pausa. Verificado en vivo que el boton
+             es EL MISMO en modo video (2026-09-16). -->
+        <button data-testid="control-button-playpause" aria-label="Pausar">
+          <svg viewBox="0 0 16 16"><path d="M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z"></path></svg>
+        </button>
+        <button data-testid="control-button-skip-forward" aria-label="Siguiente"></button>
+        <button data-testid="control-button-repeat" aria-checked="false" aria-label="Activar repetición"></button>
+      </div>
+
+      <div data-testid="playback-position">0:19</div>
+      <div data-testid="playback-progressbar">
+        <input type="range" min="0" max="164361" step="5000" value="20000" />
+      </div>
+      <div data-testid="playback-duration">2:44</div>
+
+      <button data-testid="lyrics-button" data-active="true" aria-pressed="true" aria-label="Letra"></button>
+      <button data-testid="control-button-queue" aria-checked="true" aria-label="Fila de reproducción"></button>
+    </aside>
+  </body>
+</html>

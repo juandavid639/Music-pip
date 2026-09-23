@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Validación del anuncio con un lector de pantalla de verdad</title>
+<!--
+  El pendiente que jsdom no puede oír: ¿un lector de pantalla REAL anuncia
+  «Ahora suena…» cuando cambia la canción, y calla cuando debe callar?
+
+  Este banco monta la ventana flotante DE VERDAD (pip.html + pip.css + pip.js,
+  sin copias) dentro de un iframe cuyo documento se escribe de una pieza al
+  nacer: la región aria-live existe al montarse el documento, que es la
+  condición que los lectores exigen y la que hay que validar, no imitar.
+  Lo único fingido es chrome.*: un remedo mínimo cuyo chrome.i18n lee el
+  catálogo español REAL de _locales, igual que hace i18nFalso en las pruebas.
+
+  Cómo se usa, con NVDA (o cualquier lector) encendido:
+    node tools/servidor-vista-previa.js
+    -> http://127.0.0.1:8347/tools/validacion-anuncio.html        (a mano)
+    -> http://127.0.0.1:8347/tools/validacion-anuncio.html?auto   (solo)
+
+  En modo auto el guion corre solo, en bucle, con pausas para que el lector
+  respire: cambia canciones (debe anunciar), repinta la misma (debe callar),
+  quita el artista (sin coma huérfana) y vacía la cola (debe callar).
+  NO se empaqueta: tools/ está fuera de la lista blanca.
+-->
+<style>
+  body {
+    margin: 0;
+    padding: 18px 22px;
+    background: #191b1f;
+    color: #e8e8e8;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 14px;
+  }
+  h1 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 4px 0; color: #9aa0a6; max-width: 720px; }
+  .fila { display: flex; gap: 20px; align-items: flex-start; margin-top: 14px; }
+  iframe { width: 380px; height: 560px; border: 1px solid #333; border-radius: 8px; background: #000; }
+  .mandos button {
+    display: block;
+    margin: 0 0 8px;
+    padding: 8px 14px;
+    background: #2b2f36;
+    color: #e8e8e8;
+    border: 1px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+  }
+  .mandos button:hover { background: #363b44; }
+  #bitacora {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #101214;
+    border: 1px solid #2a2d31;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 560px;
+    max-height: 300px;
+    overflow: auto;
+  }
+  .esperado { color: #6fcf7c; }
+  .silencio { color: #9aa0a6; }
+  .region { color: #f4c56a; }
+</style>
+</head>
+<body>
+<h1>El anuncio del cambio de canción, para oídos de verdad</h1>
+<p>
+  Encienda el lector de pantalla (NVDA, Narrador, VoiceOver) y use los botones
+  — o añada <code>?auto</code> a la URL para que el guion corra solo. Lo que el
+  lector debería decir está en la bitácora; lo que NO debería decir, también.
+</p>
+<!--
+  La bitácora es aria-hidden: existe para los ojos de quien valida. Si el
+  lector la leyera, taparía justo lo que se vino a escuchar.
+-->
+<div class="fila">
+  <div class="mandos" aria-hidden="true">
+    <button id="b-primera">1 · Primera canción (debe CALLAR)</button>
+    <button id="b-cambio">2 · Otra canción (debe ANUNCIAR)</button>
+    <button id="b-misma">3 · La misma otra vez (debe CALLAR)</button>
+    <button id="b-sin-artista">4 · Canción sin artista (sin coma huérfana)</button>
+    <button id="b-nada">5 · Se acaba la cola (debe CALLAR)</button>
+  </div>
+  <iframe id="marco" title="Ventana flotante real"></iframe>
+</div>
+<div id="bitacora" aria-hidden="true"></div>
+
+<script>
+(async function () {
+  "use strict";
+
+  /* ---- El remedo mínimo de chrome.*: lo justo para que pip.js viva ---- */
+
+  let catalogo = {};
+  window.chrome = {
+    runtime: {
+      id: "validacion-anuncio",
+      getURL: function (ruta) { return ruta; },
+      sendMessage: function () {
+        const cb = arguments[arguments.length - 1];
+        if (typeof cb === "function") cb({});
+      },
+      onMessage: { addListener: function () {} },
+      connect: function () {
+        return {
+          postMessage: function () {},
+          disconnect: function () {},
+          onMessage: { addListener: function () {} },
+          onDisconnect: { addListener: function () {} }
+        };
+      }
+    },
+    storage: {
+      sync: {
+        get: function (claves, cb) { (cb || claves)({}); },
+        set: function (obj, cb) { if (cb) cb(); }
+      },
+      local: {
+        get: function (claves, cb) { (cb || claves)({}); },
+        set: function (obj, cb) { if (cb) cb(); }
+      },
+      onChanged: { addListener: function () {} }
+    },
+    i18n: {
+      // El catálogo REAL, con la sustitución $1/$2 que hace Chrome.
+      getMessage: function (clave, sustituciones) {
+        const entrada = catalogo[clave];
+        if (!entrada) return "";
+        const lista = Array.isArray(sustituciones)
+          ? sustituciones
+          : sustituciones === undefined ? [] : [sustituciones];
+        return entrada.message.replace(/\$(\d)/g, function (_, n) {
+          return lista[Number(n) - 1] === undefined ? "" : lista[Number(n) - 1];
+        });
+      }
+    }
+  };
+
+  function guion(linea, clase) {
+    const p = document.createElement("div");
+    p.className = clase;
+    p.textContent = linea;
+    const caja = document.getElementById("bitacora");
+    caja.appendChild(p);
+    caja.scrollTop = caja.scrollHeight;
+  }
+
+  /* ---- Los módulos reales, en el mismo orden que el banco de pruebas ---- */
+
+  function cargar(ruta) {
+    return new Promise(function (listo, fallo) {
+      const s = document.createElement("script");
+      s.src = ruta;
+      s.onload = listo;
+      s.onerror = function () { fallo(new Error("No cargó " + ruta)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  catalogo = await (await fetch("/_locales/es/messages.json")).json();
+  for (const modulo of [
+    "/src/shared/constants.js",
+    "/src/shared/textos.js",
+    "/src/shared/messages.js",
+    "/src/shared/ecualizador.js",
+    "/src/shared/settings.js",
+    "/src/content/youtube-music-adapter.js",
+    "/src/content/track-timeline.js",
+    "/src/content/player-controller.js",
+    "/src/content/audio-spectrum.js",
+    "/src/shared/iconos.js",
+    "/src/pip/pip.js"
+  ]) await cargar(modulo);
+
+  /* ---- La ventana real, nacida de una pieza ---- */
+
+  const PIP_HTML = await (await fetch("/src/pip/pip.html")).text();
+  const marco = document.getElementById("marco");
+  const docVentana = marco.contentDocument;
+  docVentana.open();
+  docVentana.write(
+    '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">' +
+    '<link rel="stylesheet" href="/src/pip/pip.css"></head><body>' +
+    PIP_HTML + "</body></html>"
+  );
+  docVentana.close();
+
+  const banco = window.YTMPip.PipView.__bancoDePruebas;
+  banco.montar(window, docVentana);
+  const region = docVentana.getElementById("ytmpip-anuncio");
+
+  function cancion(title, artist) {
+    return { connected: true, playing: true, title: title, artist: artist, hasVideo: false, lyrics: {} };
+  }
+
+  /* Tras cada paso se apunta lo esperado Y lo que la región tiene. */
+  function paso(nombre, estado, esperaAnuncio) {
+    const antes = region.textContent;
+    window.YTMPip.PipView.onStateUpdate(estado);
+    const despues = region.textContent;
+    guion(nombre, esperaAnuncio ? "esperado" : "silencio");
+    if (esperaAnuncio) {
+      guion("  el lector debería decir: «" + despues + "»", "esperado");
+    } else {
+      guion(
+        despues === antes
+          ? "  (la región no cambió: el lector debe callar)"
+          : "  ¡LA REGIÓN CAMBIÓ Y NO DEBÍA!: «" + despues + "»",
+        despues === antes ? "silencio" : "region"
+      );
+    }
+  }
+
+  const PASOS = [
+    ["1 · Primera canción — debe CALLAR", cancion("Vals de medianoche", "Trío Nocturno"), false],
+    ["2 · Otra canción — debe ANUNCIAR", cancion("Luna llena", "Trío Nocturno"), true],
+    ["3 · La misma otra vez — debe CALLAR", cancion("Luna llena", "Trío Nocturno"), false],
+    ["4 · Sin artista — anuncio corto, sin coma huérfana", cancion("Sola", ""), true],
+    ["5 · Se acaba la cola — debe CALLAR", cancion("", ""), false]
+  ];
+
+  document.getElementById("b-primera").onclick = function () { paso.apply(null, PASOS[0]); };
+  document.getElementById("b-cambio").onclick = function () { paso.apply(null, PASOS[1]); };
+  document.getElementById("b-misma").onclick = function () { paso.apply(null, PASOS[2]); };
+  document.getElementById("b-sin-artista").onclick = function () { paso.apply(null, PASOS[3]); };
+  document.getElementById("b-nada").onclick = function () { paso.apply(null, PASOS[4]); };
+
+  /*
+   * Modo auto: el guion corre solo con pausas largas para que el lector
+   * termine cada frase antes de la siguiente. En cada vuelta las canciones
+   * cambian de número para que el paso 2 siga siendo un cambio de verdad.
+   */
+  if (new URLSearchParams(location.search).has("auto")) {
+    let vuelta = 0;
+    (function ciclo() {
+      vuelta += 1;
+      const lista = [
+        ["1 · Primera/última canción — debe CALLAR", cancion("Vals de medianoche " + vuelta, "Trío Nocturno"), vuelta > 1],
+        ["2 · Otra canción — debe ANUNCIAR", cancion("Luna llena " + vuelta, "Trío Nocturno"), true],
+        ["3 · La misma otra vez — debe CALLAR", cancion("Luna llena " + vuelta, "Trío Nocturno"), false],
+        ["4 · Sin artista — anuncio corto", cancion("Sola " + vuelta, ""), true],
+        ["5 · Se acaba la cola — debe CALLAR", cancion("", ""), false]
+      ];
+      let i = 0;
+      (function siguiente() {
+        if (i >= lista.length) { setTimeout(ciclo, 8000); return; }
+        paso.apply(null, lista[i]);
+        i += 1;
+        setTimeout(siguiente, 6000);
+      })();
+    })();
+    guion("Modo auto: el guion corre solo, en bucle.", "silencio");
+  }
+
+  guion("Banco listo: ventana real montada, catálogo español real.", "silencio");
+})().catch(function (err) {
+  document.getElementById("bitacora").textContent = String(err);
+});
+</script>
+</body>
+</html>

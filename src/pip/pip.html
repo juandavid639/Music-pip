@@ -1,0 +1,424 @@
+<div id="ytmpip-root" class="compact">
+  <!--
+    Fondo difuminado construido con la MISMA portada que ya se descarga
+    para la miniatura: no hay peticion de red adicional. El velo de encima
+    garantiza contraste del texto sea cual sea la imagen.
+  -->
+  <div id="ytmpip-backdrop" class="ytmpip-backdrop" aria-hidden="true"></div>
+  <!--
+    El Canvas de Spotify: su bucle visual, de fondo. Se alimenta por
+    captureStream() desde el vídeo de la página — la única vía que existe:
+    su blob: está revocado (medido: reutilizar la URL da ERR_FILE_NOT_FOUND).
+    Hermano POSTERIOR al backdrop y en su misma capa: el orden del documento
+    lo pinta encima de la portada difuminada, y el velo de siempre lo tapa
+    lo justo para que el texto se lea. autoplay+muted+playsinline y ningún
+    play(): a un chorro silencioso Chrome lo deja arrancar solo.
+  -->
+  <video id="ytmpip-canvas-fondo" class="ytmpip-canvas-fondo" autoplay muted playsinline hidden aria-hidden="true"></video>
+  <div class="ytmpip-scrim" aria-hidden="true"></div>
+  <!--
+    El halo de luz: un aro del color de acento pegado al borde de la
+    ventana, POR DENTRO. Por dentro no es una elección estética sino el
+    límite físico: la ventana del Document PiP es una ventana del sistema
+    operativo —un rectángulo opaco— y no existe forma de pintar fuera de
+    sus bordes ni de hacerla transparente. El derrame exterior de los
+    montajes de marketing es arte, no una captura.
+
+    pointer-events: none en la hoja: es pura decoración y no puede robar
+    ni un clic. Nace SIN hidden porque el valor de serie es visible
+    (haloPreference "shown"); applySettings lo corrige al abrir si la
+    preferencia dice otra cosa. Va encima de todo (z-index 3, el tope de
+    la ventana es 2): un marco de luz tapado por los mandos dejaría de
+    ser un marco.
+  -->
+  <div id="ytmpip-halo" aria-hidden="true"></div>
+
+  <!--
+    El anuncio del cambio de canción, para quien NO está mirando la ventana.
+    Los lectores de pantalla sólo vigilan regiones aria-live que ya existían
+    al montarse el documento, así que ésta se cose aquí vacía y pip.js sólo
+    le escribe el texto («Ahora suena…») cuando la música avanza sola.
+    role="status" ya implica aria-live="polite" y aria-atomic="true", pero se
+    escriben igual: son la parte que las pruebas pueden leer sin adivinar
+    qué implica qué en cada lector. Sin data-t: nunca tiene texto de reserva.
+  -->
+  <div id="ytmpip-anuncio" class="ytmpip-solo-lector" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="ytmpip-content">
+    <header class="ytmpip-header">
+      <span id="ytmpip-status" class="ytmpip-status" data-t="conectando">Conectando…</span>
+      <div class="ytmpip-header-actions">
+        <!--
+          `data-ico` ES LA LISTA DE ICONOS, y vive aquí y no dentro de
+          iconos.js porque quien sabe qué botones hay es este archivo; el
+          módulo sólo sabe dibujar. Añadir un botón con su dibujo es añadir
+          un atributo, sin tocar JavaScript.
+
+          EL EMOJI SE QUEDA ESCRITO detrás. No es un descuido ni un resto:
+          es lo que se ve si iconos.js no llega a cargar. El módulo pinta
+          con `replaceChildren`, así que en cuanto está el SVG el emoji
+          desaparece; si no está, el botón sigue diciendo algo en vez de
+          quedarse en un círculo vacío.
+
+          El de "sólo carátula" no lleva `data-ico` a propósito: "Aa" no es
+          un emoji de relleno, es la etiqueta que se eligió (ver abajo).
+        -->
+        <!--
+          Alternar vídeo / carátula. Va en la cabecera y no en la fila de
+          extras porque esa fila desaparece en compacto, ajustado y mini —
+          justo los tamaños en los que se ve vídeo. La cabecera sobrevive en
+          todos, incluido el superpuesto, donde se desvanece con el resto de
+          los controles. Nace oculto: sin vídeo no hay nada que alternar.
+        -->
+        <button id="ytmpip-video-toggle" type="button" hidden aria-pressed="false" aria-label="Mostrar la carátula en vez del vídeo" data-t-aria="mostrar_caratula_video" title="Ver carátula" data-t-title="ver_caratula" data-ico="caratula">🖼</button>
+        <!--
+          El vídeo flotante DEL NAVEGADOR (PiP nativo). Convive con el de
+          arriba sin pisarlo: aquél presta el vídeo a ESTA ventana —imposible
+          con DRM, la sesión de claves se rompe—; éste le pide al navegador
+          SU ventanita, que funciona incluso cifrado porque el navegador la
+          compone él solo y nunca enseña los cuadros a JS (medido en
+          open.spotify.com, 2026-09-16: se abrió con el vídeo DRM dentro).
+          Nace oculto: sin vídeo que flotar, no se ofrece.
+        -->
+        <button id="ytmpip-native-pip" type="button" hidden aria-pressed="false" aria-label="Abrir el vídeo en la ventana flotante del navegador" data-t-aria="abrir_video_navegador" title="Vídeo flotante del navegador" data-t-title="video_flotante_navegador" data-ico="ventanita">🎬</button>
+        <!--
+          El fondo visual: el Canvas de Spotify (su bucle vertical) detrás
+          de la ventana. Nace oculto: sólo aparece cuando el estado trae la
+          señal canvasAvailable, y en YouTube Music no la trae nunca.
+        -->
+        <button id="ytmpip-canvas-toggle" type="button" hidden aria-pressed="false" aria-label="Mostrar el fondo visual de la canción" data-t-aria="mostrar_fondo_visual" title="Fondo visual" data-t-title="fondo_visual" data-ico="fondo">🌌</button>
+        <!--
+          El halo de luz: el aro del color de acento pegado al borde de la
+          ventana. NO nace oculto, al revés que sus vecinos: no depende de
+          la canción ni del sitio —un borde lo tiene cualquier ventana—,
+          así que ofrecerlo siempre es decir la verdad. Nace pulsado
+          porque el valor de serie es visible; applySettings lo repinta
+          con lo guardado al abrir. Apagar desde aquí NO borra el modo
+          (fijo o latido) elegido en Preferencias: son dos claves.
+        -->
+        <button id="ytmpip-halo-toggle" type="button" aria-pressed="true" aria-label="Ocultar el halo de luz del borde" data-t-aria="ocultar_halo_luz" title="Quitar el halo" data-t-title="quitar_halo" data-ico="halo">✨</button>
+        <!--
+          Espectro. Nace oculto porque su disponibilidad no se sabe hasta
+          intentar capturar el audio: con una pista cifrada no hay nada que
+          medir y ofrecer el botón sería prometer algo que no se puede
+          cumplir. Lo destapa el propio intento de conexión.
+        -->
+        <button id="ytmpip-spectrum-toggle" type="button" hidden aria-pressed="false" aria-label="Mostrar el espectro de la música" data-t-aria="mostrar_espectro_musica" title="Ver el espectro" data-t-title="ver_espectro" data-ico="espectro">📊</button>
+        <!--
+          Lo que ocupe el escenario late con los graves: la portada, o el
+          vídeo cuando la canción trae vídeo. Nace oculto por lo MISMO que el
+          espectro y no por parecido: los dos dependen de poder capturar el
+          audio, y con una pista cifrada no hay ni barras ni pulso.
+
+          LA ETIQUETA DICE "LA IMAGEN" Y NO "LA CARÁTULA" a propósito. Decía
+          carátula, y era verdad mientras el efecto se apagaba solo en modo
+          vídeo; en cuanto dejó de apagarse, el botón habría estado anunciando
+          una portada mientras hacía latir un videoclip.
+
+          Es un botón propio y no un efecto colgado del espectro. Podrían
+          compartir interruptor —comparten el analizador por debajo— pero son
+          dos cosas que se quieren por separado: hay quien quiere que la
+          imagen respire sin tener barras encima tapándola, y al revés.
+          Un interruptor que enciende dos cosas no se puede apagar a medias.
+
+          Y hace falta que sea un CLIC: el AudioContext nace suspendido si no
+          lo pide un gesto del usuario, y suspendido se leen ceros. Conectarlo
+          solos al abrir la ventana daría un pulso plano sin decir por qué.
+        -->
+        <button id="ytmpip-pulse-toggle" type="button" hidden aria-pressed="false" aria-label="Hacer que la imagen lata con los graves" data-t-aria="imagen_lata" title="Pulso con los graves" data-t-title="pulso_graves" data-ico="pulso">💓</button>
+        <!--
+          La entrada de EMERGENCIA a la letra. El botón «Letras» vive en la
+          fila de extras, y la densidad mini (ventana de menos de 310 px de
+          alto) esconde esa fila entera; en Spotify con la vista de letras
+          de la página cerrada tampoco hay línea karaoke bajo el título, así
+          que una ventana bajita se quedaba SIN NINGUNA forma de encender la
+          letra — el error reportado. Este micrófono hace exactamente lo
+          mismo que «Letras» (mismo manejador, mismo panel) y sólo aparece
+          cuando aquella fila no se ve. Nace oculto: con la ventana alta
+          sería el mismo botón dos veces. Ver sincronizarMicDeCabecera en
+          pip.js, que es quien decide cuándo se enseña.
+
+          Lleva aria-expanded y no aria-pressed a propósito: es un mando de
+          panel, como «Letras» y «Siguientes», no un interruptor de estado
+          propio como los demás de la cabecera.
+        -->
+        <button id="ytmpip-mic-toggle" type="button" hidden aria-expanded="false" aria-label="Mostrar u ocultar letras" data-t-aria="mostrar_ocultar_letras" title="Letras" data-t-title="letras" data-ico="letra">🎤</button>
+        <!--
+          Modo limpio: sólo la imagen, sin título ni artista. "Aa" en vez de
+          un dibujo porque lo que se apaga es TEXTO, y dos letras lo dicen
+          mejor que cualquier pictograma. Fue la primera excepción a los
+          emoji —"a 10 px un emoji a color queda en una mancha"— y sigue
+          siendo la única que no se convierte en icono: era una etiqueta
+          bien elegida, no un apaño.
+        -->
+        <button id="ytmpip-clean-toggle" type="button" aria-pressed="false" aria-label="Ocultar el título y el artista" data-t-aria="ocultar_titulo_artista" title="Sólo carátula" data-t-title="solo_caratula">Aa</button>
+        <button id="ytmpip-expand-toggle" type="button" aria-label="Cambiar tamaño de la ventana" data-t-aria="cambiar_tamano_ventana" title="Cambiar tamaño" data-t-title="cambiar_tamano" data-ico="tamano">⤢</button>
+        <button id="ytmpip-close" type="button" aria-label="Cerrar ventana flotante" data-t-aria="cerrar_ventana" title="Cerrar" data-t-title="cerrar" data-ico="cerrar">✕</button>
+      </div>
+    </header>
+
+    <div class="ytmpip-body">
+      <!--
+        El escenario aloja UNA de dos cosas: el <video> real tomado
+        prestado de YouTube Music, o la portada. Nunca las dos.
+      -->
+      <div class="ytmpip-stage">
+        <div id="ytmpip-video-slot" class="ytmpip-video-slot" hidden></div>
+        <img id="ytmpip-artwork" class="ytmpip-artwork" alt="Sin portada" data-t-alt="sin_portada" />
+      </div>
+
+      <div class="ytmpip-info">
+        <p id="ytmpip-title" class="ytmpip-title" title="" data-t="sin_reproduccion">Sin reproducción</p>
+        <p id="ytmpip-artist" class="ytmpip-artist"></p>
+        <p id="ytmpip-album" class="ytmpip-album"></p>
+        <!--
+          La linea que se esta cantando AHORA. Solo aparece cuando la letra
+          esta sincronizada y el panel completo no esta a la vista (ventana
+          compacta): es la version de bolsillo de la letra en movimiento.
+          Un clic sobre ella abre el panel completo.
+        -->
+        <p id="ytmpip-now-line" class="ytmpip-now-line" hidden title="Abrir la letra completa" data-t-title="abrir_letra_completa"></p>
+        <!--
+          Adelanto de lo que viene: mismas lineas que el panel completo,
+          pero apagadas y sin negrita, para que se sepa que siguen sin
+          competir con la que suena. Se preparan siempre tres y el CSS de
+          densidad decide cuantas caben; asi el "cuantas" vive en un solo
+          sitio. aria-hidden porque el panel de letra ya ofrece el texto
+          entero: leerlo dos veces solo estorba.
+        -->
+        <div id="ytmpip-next-lines" class="ytmpip-next-lines" hidden aria-hidden="true"></div>
+      </div>
+
+    </div>
+
+    <!--
+      El espectro va en posición absoluta y no en el flujo: así no ocupa una
+      fila de alto. Reservarle sitio propio habría sido repetir el error que
+      ya costó dos veces en este archivo —cualquier altura fija acaba
+      empujando los controles fuera de la ventana— y además en modo mini no
+      cabría.
+
+      DÓNDE CUELGA: ha vivido en tres sitios, y los dos primeros estaban mal
+      por motivos distintos.
+
+        1. Dentro del ESCENARIO. Ahí heredaba su tamaño: con vídeo el
+           escenario es la ventana entera y el espectro salía ancho, pero con
+           carátula es una miniatura de 96 px y el espectro salía de 96×33.
+        2. Dentro del CUERPO. Arregló lo anterior —mide igual con carátula
+           que con vídeo—, pero el cuerpo termina donde empieza la barra de
+           progreso, así que el espectro tocaba fondo a media ventana. Se
+           veía flotando encima de los controles, que es justo lo que se
+           reportó.
+        3. Aquí, hermano del cuerpo y de los controles. Como `.ytmpip-content`
+           NO está posicionado, el `position: absolute` de este canvas se
+           resuelve contra `#ytmpip-root`, o sea contra la ventana entera.
+
+      Eso además hace que la preferencia "altura del espectro" signifique por
+      fin lo que su propio comentario en constants.js dice desde el primer
+      día: "porcentaje del alto de la VENTANA", con el 100 % siendo la
+      ventana entera. Con el canvas colgando del cuerpo, ese 100 % era el
+      100 % de un trozo.
+
+      Va DESPUÉS del cuerpo y ANTES de los controles a propósito: siendo un
+      elemento posicionado se pinta por encima de sus hermanos sin posición,
+      así que las barras tapan la carátula y el vídeo (que es lo que se
+      quiere) y los controles se ponen por encima con un z-index en el CSS.
+
+      aria-hidden porque es decoración: no dice nada que no diga ya la
+      música, y un lector de pantalla no puede hacer nada con ello.
+    -->
+    <canvas id="ytmpip-spectrum" class="ytmpip-spectrum" hidden aria-hidden="true"></canvas>
+
+    <div class="ytmpip-progress-row">
+      <span id="ytmpip-current-time" class="ytmpip-time">0:00</span>
+      <div class="ytmpip-seek-wrap">
+        <!--
+          <input type="range"> nativo en vez de un deslizador propio a base
+          de divs: trae gratis el teclado (flechas, Inicio/Fin), el rol y
+          los valores ARIA correctos. Un div con role="slider" habria
+          exigido reimplementar todo eso a mano y peor.
+        -->
+        <input
+          id="ytmpip-seek"
+          class="ytmpip-seek"
+          type="range"
+          min="0"
+          max="0"
+          step="1"
+          value="0"
+          aria-label="Posición de la canción"
+          data-t-aria="posicion_cancion"
+        />
+        <span id="ytmpip-seek-preview" class="ytmpip-seek-preview" hidden aria-hidden="true">0:00</span>
+      </div>
+      <span id="ytmpip-duration" class="ytmpip-time">0:00</span>
+    </div>
+
+    <!--
+      LOS SEGUNDOS NO VAN DENTRO DEL DIBUJO. El icono clásico de saltar
+      lleva el número escrito en el arco, y aquí no: estos botones bajan a
+      24 px en mini y el dibujo mide algo más de un tercio de eso, así que
+      la cifra saldría a unos cinco píxeles. Un número que no se puede leer
+      es peor que ninguno, porque ocupa sitio y ensucia la flecha.
+
+      Los segundos siguen estando donde sí se leen —el `aria-label` y el
+      `title`—, y ahí además son los de verdad: los reescribe applySettings
+      cuando se cambia la preferencia, cosa que un dibujo fijo con un "10"
+      pintado dentro no podría hacer. El 10 de aquí es sólo el valor de
+      partida, y dura lo que tarda en llegar la configuración.
+    -->
+    <div class="ytmpip-controls">
+      <button id="ytmpip-seek-backward" type="button" aria-label="Retroceder 10 segundos" data-ico="retroceder">⏪</button>
+      <button id="ytmpip-previous" type="button" aria-label="Canción anterior" data-t-aria="cancion_anterior" data-ico="anterior">⏮</button>
+      <button id="ytmpip-play-pause" type="button" aria-label="Reproducir" data-t-aria="reproducir" data-ico="reproducir">▶</button>
+      <button id="ytmpip-next" type="button" aria-label="Siguiente canción" data-t-aria="cancion_siguiente" data-ico="siguiente">⏭</button>
+      <button id="ytmpip-seek-forward" type="button" aria-label="Adelantar 10 segundos" data-ico="adelantar">⏩</button>
+    </div>
+
+    <div class="ytmpip-extras">
+      <button id="ytmpip-like" class="ytmpip-icon-button" type="button" aria-label="Me gusta" data-t-aria="me_gusta" aria-pressed="false" title="Me gusta" data-t-title="me_gusta" data-ico="corazon">♡</button>
+
+      <div class="ytmpip-volume">
+        <button id="ytmpip-mute" class="ytmpip-icon-button" type="button" aria-label="Silenciar" data-t-aria="silenciar" title="Silenciar" data-t-title="silenciar" data-ico="volumen">🔊</button>
+        <input
+          id="ytmpip-volume"
+          class="ytmpip-volume-slider"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="100"
+          aria-label="Volumen"
+          data-t-aria="volumen"
+        />
+      </div>
+
+      <button id="ytmpip-shuffle" class="ytmpip-icon-button" type="button" aria-label="Reproducción aleatoria" data-t-aria="reproduccion_aleatoria" title="Aleatorio" data-t-title="aleatorio" data-ico="aleatorio">🔀</button>
+      <button id="ytmpip-repeat" class="ytmpip-icon-button" type="button" aria-label="Repetir" data-t-aria="repetir" title="Repetir" data-t-title="repetir" data-ico="repetir">🔁</button>
+      <!--
+        VELOCIDAD. Sin `data-ico` y con texto dentro, por la misma razón que
+        "Aa": lo que hay que enseñar es un NÚMERO, y no existe un dibujo que
+        diga "1,25×". Aquí el texto no es el suplente de un icono que falta,
+        es el contenido, así que este botón se queda fuera del sistema de
+        iconos a propósito y no por olvido.
+
+        El "1×" escrito aquí es sólo el valor de partida, y dura lo que tarda
+        en llegar el primer estado: a partir de ahí lo reescribe render() con
+        lo que de verdad diga el <video>, que puede no ser lo que pedimos.
+      -->
+      <button id="ytmpip-speed" class="ytmpip-icon-button ytmpip-speed" type="button" aria-label="Velocidad de reproducción: normal" data-t-aria="velocidad_normal" title="Velocidad de reproducción" data-t-title="velocidad" aria-pressed="false">1×</button>
+      <!--
+        TEMPORIZADOR DE APAGADO. Cicla apagado → 15 → 30 → 60 → apagado, y
+        la música se pausa sola al vencer el plazo.
+
+        Es el único botón HÍBRIDO de la fila: apagado enseña la luna (el
+        `data-ico` de aquí), y con plazo puesto enseña los minutos que
+        quedan —"29′"— como texto, igual que la velocidad, porque no hay
+        dibujo que diga "quedan 29 minutos". Los dos sistemas no chocan:
+        pintar el número borra el SVG, y volver a la luna pasa por
+        Iconos.poner, que ve el botón sin dibujo y lo reconstruye.
+
+        `aria-pressed` significa "hay un plazo en marcha", como en el
+        ecualizador: encendido o apagado, sin medias tintas.
+      -->
+      <button id="ytmpip-sleep" class="ytmpip-icon-button ytmpip-sleep" type="button" aria-label="Temporizador de apagado: apagado" data-t-aria="temporizador_apagado" title="Temporizador de apagado" data-t-title="temporizador" aria-pressed="false" data-ico="luna">🌙</button>
+      <!--
+        ECUALIZADOR. Es un INTERRUPTOR, no una rueda de ajustes: enciende y
+        apaga, y al encender vuelve al último ajuste que hubo. La rueda —ir
+        pasando por «Plano», «Graves», «Voz»...— se descartó a propósito,
+        porque quien haya dejado sus cinco números puestos a mano los
+        perdería en el primer clic, y desde una ventana de 340 px no habría
+        forma de recuperarlos. Elegir ajuste sigue estando en Opciones, que
+        es donde se ven los deslizadores.
+
+        `aria-pressed` aquí sí significa lo que parece: encendido o apagado.
+        (En el botón de velocidad significa otra cosa —«no está de
+        fábrica»— porque allí no hay dos estados sino muchos.)
+      -->
+      <button id="ytmpip-eq" class="ytmpip-icon-button" type="button" aria-label="Ecualizador: apagado" data-t-aria="ecualizador_apagado" title="Ecualizador" data-t-title="ecualizador" aria-pressed="false" data-ico="ecualizador">🎛</button>
+      <!--
+        LAS BARRITAS. Enseñan la FORMA del ajuste: qué banda sube, cuál baja
+        y cuánto, con una raya en el cero, igual que los deslizadores de la
+        página de opciones. El botón de al lado dice el nombre —«Más
+        graves»— y eso no dice nada a quien no se sepa los presets de
+        memoria; el dibujo sí, y de un vistazo.
+
+        VA VACÍO A PROPÓSITO. Las barras las crea pip.js, una por banda de
+        EQUALIZER_BANDS. Escribirlas aquí a mano sería escribir el número de
+        bandas por segunda vez, y el día que hubiera una sexta esta ventana
+        seguiría dibujando cinco sin dar ningún error. (En options.html sí
+        están escritas a mano, y allí hay un motivo que aquí no existe: cada
+        <label> necesita apuntar al `id` de su deslizador.)
+
+        `aria-hidden` porque es un DUPLICADO para quien ve. Lo que dice el
+        dibujo ya lo dice el `aria-label` del botón con palabras, y mejor:
+        «Ecualizador: Más graves». Un lector de pantalla leyendo cinco
+        barritas sin nombre no ganaría nada.
+
+        Se esconde con `hidden` cuando el ecualizador está apagado, y ahí hay
+        una trampa que pip.css tiene que desactivar a mano: ver el comentario
+        de `.ytmpip-eq-bandas[hidden]`.
+      -->
+      <span id="ytmpip-eq-bandas" class="ytmpip-eq-bandas" aria-hidden="true" hidden></span>
+      <!--
+        LA CHINCHETA: fijar a ESTA canción el ecualizador que suena ahora.
+        Clavada (aria-pressed="true"), la canción tiene ajuste propio
+        apuntado y se pondrá solo cada vez que vuelva a sonar; suelta, la
+        canción suena con lo que haya puesto en general.
+
+        Va pegada al interruptor del ecualizador porque fija ESO: el par se
+        lee «esto suena así… y que se quede así para esta canción». En la
+        fila de acciones secundarias parecería fijar la ventana.
+
+        `disabled` mientras no conste qué canción suena: fijar sin saber a
+        quién sería apuntarle el ajuste a una canción fantasma. Lo pone y
+        lo quita render() con cada estado.
+      -->
+      <button id="ytmpip-eq-pin" class="ytmpip-icon-button" type="button" aria-label="Fijar el ecualizador a esta canción" data-t-aria="fijar_ecualizador" title="Fijar el ecualizador a esta canción" data-t-title="fijar_ecualizador" aria-pressed="false" data-ico="chincheta" disabled>📌</button>
+    </div>
+
+    <div class="ytmpip-secondary-actions">
+      <button id="ytmpip-lyrics-toggle" type="button" aria-label="Mostrar u ocultar letras" data-t-aria="mostrar_ocultar_letras" aria-expanded="false" data-t="letras">Letras</button>
+      <!--
+        La cola. Comparte fila y comportamiento con "Letras" porque son la
+        misma clase de cosa: un panel de consulta que se abre a demanda.
+        Los dos paneles son EXCLUYENTES entre sí (abrir uno cierra el
+        otro): comparten el único hueco elástico de la ventana, y con los
+        dos abiertos ninguno tendría alto para decir nada.
+      -->
+      <button id="ytmpip-queue-toggle" type="button" aria-label="Mostrar u ocultar la cola de reproducción" data-t-aria="mostrar_ocultar_cola" aria-expanded="false" data-t="siguientes">Siguientes</button>
+      <!--
+        SIN marcas data-t a propósito: el rótulo lleva el nombre del sitio
+        («Volver a Spotify» en Spotify) y lo compone pip.js con
+        t("volver_al_sitio", [nombre del registro]); una marca lo pisaría
+        con el texto plano del catálogo. El texto escrito es la reserva por
+        si el registro no está.
+      -->
+      <button id="ytmpip-back-to-tab" type="button" aria-label="Volver a YouTube Music">Volver a YouTube Music</button>
+    </div>
+
+    <section id="ytmpip-queue-panel" class="ytmpip-queue-panel" hidden aria-label="Próximas canciones" data-t-aria="proximas_canciones">
+      <!--
+        Dos presentaciones excluyentes, calcadas del panel de letras: la
+        lista cuando la cola se ve, y el párrafo cuando no. El párrafo
+        existe porque la cola puede no estar en el DOM (los selectores
+        dependen del panel lateral de YouTube Music) y un panel que se abre
+        vacío sin explicación parece un botón roto.
+      -->
+      <ol id="ytmpip-queue-list" class="ytmpip-queue-list" hidden></ol>
+      <p id="ytmpip-queue-empty" class="ytmpip-queue-empty" data-t="cola_no_a_la_vista">La cola no está a la vista en la página</p>
+    </section>
+
+    <section id="ytmpip-lyrics-panel" class="ytmpip-lyrics-panel" hidden aria-label="Letras de la canción" data-t-aria="letras_cancion">
+      <!--
+        Dos presentaciones excluyentes. El bloque de parrafo sirve para los
+        estados sin letra (cargando, no disponible, error); cuando hay
+        letra de verdad se pinta linea a linea en el contenedor, que es lo
+        que permite resaltar la actual y saltar a ella con un clic.
+      -->
+      <div id="ytmpip-lyrics-lines" class="ytmpip-lyrics-lines" hidden></div>
+      <p id="ytmpip-lyrics-text" class="ytmpip-lyrics-text" data-t="letras_no_disponibles">Letras no disponibles</p>
+      <p id="ytmpip-lyrics-source" class="ytmpip-lyrics-source"></p>
+    </section>
+  </div>
+</div>

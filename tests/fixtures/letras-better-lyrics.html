@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+  Better Lyrics, estructura de la version PUBLICADA (v2.3.3 y anteriores).
+  Es la que tiene instalada quien reporto el fallo.
+
+  ADVERTENCIA sobre la version anterior de este fichero: decia estar
+  "copiada de la fuente de Better Lyrics" y era mentira. Estaba inventada
+  a partir de lo que parecia razonable, y por eso el lector pasaba las
+  pruebas y fallaba en la pagina real. Esta si esta contrastada contra
+  src/modules/lyrics/injectLyrics.ts, src/core/constants.ts y
+  public/css/blyrics/lyrics.css del repositorio better-lyrics/better-lyrics.
+
+  Lo que reproduce, y por que:
+
+  - La pestaña LETRA de YouTube Music esta `disabled` y el panel nativo
+    lleva `blyrics-hidden`: Better Lyrics lo esconde y planta el suyo.
+    Mirando solo lo nativo la respuesta seria "no hay letra", que era
+    justo lo que devolviamos mientras el usuario veia la letra en pantalla.
+
+  - LO IMPORTANTE: cada palabra es un <span class="blyrics--word"> dentro
+    de un <span> envoltorio SIN clase, y los envoltorios se emiten
+    PEGADOS, sin un solo caracter de espacio entre ellos. Better Lyrics
+    descarta los trozos en blanco al construir el DOM y marca la palabra
+    anterior con `blyrics--has-trailing-space`; el hueco lo pinta despues
+    el CSS con `margin-right: 0.25em`.
+
+    Por eso los <span> de aqui van TODOS en la misma linea y pegados. Si
+    se formatearan con saltos de linea, el HTML meteria nodos de texto en
+    blanco, textContent devolveria las palabras separadas y el fixture
+    dejaria de reproducir el fallo: mostraria la letra bien y taparia el
+    defecto en vez de cazarlo. Es exactamente lo que pasaba antes.
+
+  Las trampas van a proposito:
+  - "intentions" partida en dos <span> por ser larga (`data-wrap-after`),
+    que hay que volver a pegar SIN espacio;
+  - una traduccion y una romanizacion colgando de la misma linea;
+  - un coro de fondo en `.blyrics-background-lyric` (ojo: -lyric, no
+    -line, que es el nombre de la version aun sin publicar);
+  - una linea instrumental, que no tiene texto sino un SVG.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <yt-formatted-string class="title ytmusic-player-bar">Staring (Acoustic)</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">Tipling Rock • Staring • 2019</yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page">A CONTINUACIÓN</div>
+      <div class="tab-header style-scope ytmusic-player-page" disabled aria-disabled="true">LETRA</div>
+      <div class="tab-header style-scope ytmusic-player-page">RELACIONADO</div>
+
+      <div id="tab-renderer">
+        <!-- El panel nativo sigue ahí, pero oculto por Better Lyrics. -->
+        <ytmusic-message-renderer class="blyrics-hidden">
+          <yt-formatted-string class="text style-scope ytmusic-message-renderer">
+            Letra no disponible
+          </yt-formatted-string>
+        </ytmusic-message-renderer>
+
+        <div id="blyrics-wrapper">
+          <div class="blyrics-container" data-sync="richsync">
+            <!-- "Walking down the street tonight" + coro de fondo -->
+            <div class="blyrics--line" data-time="12.4" data-duration="3.2" data-line-number="0"><span><span class="blyrics--word blyrics--has-trailing-space" data-time="12.4" data-content="Walking">Walking</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="12.9" data-content="down">down</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="13.1" data-content="the">the</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="13.4" data-content="street">street</span></span><span><span class="blyrics--word" data-time="13.8" data-content="tonight">tonight</span></span><span class="blyrics-background-lyric"><span class="blyrics--word blyrics-background-lyric" data-time="14.2" data-content="(tonight)">(tonight)</span></span>
+              <div class="blyrics--romanized">wokingu daun za sutoriito tunaito</div>
+              <div class="blyrics--translated">Caminando por la calle esta noche</div>
+            </div>
+
+            <!-- "I've come to share bad intentions": la ultima palabra va
+                 partida en dos por larga, y NO lleva espacio en medio. -->
+            <div class="blyrics--line" data-time="15.6" data-duration="2.8" data-line-number="1"><span><span class="blyrics--word blyrics--has-trailing-space" data-time="15.6" data-content="I've">I've</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="15.9" data-content="come">come</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="16.1" data-content="to">to</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="16.3" data-content="share">share</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="16.7" data-content="bad">bad</span></span><span><span class="blyrics--word" data-time="17.0" data-content="inten" data-wrap-after="true">inten</span><span class="blyrics--word" data-time="17.2" data-content="tions">tions</span></span>
+            </div>
+
+            <!-- Interludio: ni una letra, solo el icono animado. -->
+            <div
+              class="blyrics--line blyrics--instrumental"
+              data-time="18.4"
+              data-duration="9.0"
+              data-line-number="2"
+              data-instrumental="true"
+            >
+              <svg class="blyrics--instrumental-icon" viewBox="0 0 24 24"></svg>
+            </div>
+
+            <!-- "I don't know what's wrong or right" -->
+            <div class="blyrics--line" data-time="27.4" data-duration="3.0" data-line-number="3"><span><span class="blyrics--word blyrics--has-trailing-space" data-time="27.4" data-content="I">I</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="27.6" data-content="don't">don't</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="27.9" data-content="know">know</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="28.2" data-content="what's">what's</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="28.5" data-content="wrong">wrong</span></span><span><span class="blyrics--word blyrics--has-trailing-space" data-time="28.8" data-content="or">or</span></span><span><span class="blyrics--word" data-time="29.0" data-content="right">right</span></span>
+            </div>
+          </div>
+
+          <div class="blyrics-footer">
+            <a id="betterLyricsFooterLink" href="https://lrclib.net/"
+              >LRCLIB<span style="opacity: 0.5"
+                ><svg viewBox="0 0 24 24"><title>Sincronizada palabra a palabra</title></svg></span
+            ></a>
+          </div>
+        </div>
+      </div>
+    </ytmusic-player-page>
+  </body>
+</html>

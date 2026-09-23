@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Comparación: la cabecera bajo el velo débil</title>
+<!--
+  Maqueta de la decisión abierta del README (Pendiente, fase 3): el texto de
+  estado de la cabecera cae por debajo de WCAG AA cuando la carátula es
+  extrema, porque vive bajo la parada DÉBIL del velo (la de arriba).
+
+  Dos opciones sobre la mesa:
+    A) velo local para la cabecera  - un degradado propio detrás del header
+    B) tinta plena para el estado   - el estado usa --ytmpip-text en vez del gris
+
+  Esta página NO copia ningún color: hace fetch del pip.css real y saca las
+  variables con la misma expresión que usa tests/unit/accesibilidad.test.js.
+  Si mañana cambia un color del tema, esta maqueta cambia sola.
+
+  Cada celda compone el peor caso exacto (carátula blanca pura en tema
+  oscuro, negra pura en claro) con la cadena real: fondo <- carátula a
+  opacidad --ytmpip-fondo <- velo (parada de arriba) <- [velo local en A].
+  Debajo de cada celda, el contraste calculado con las cuentas WCAG 2.x.
+
+  Sólo se mira desde el servidor de vista previa:
+    node tools/servidor-vista-previa.js
+    -> http://127.0.0.1:8347/tools/comparacion-cabecera.html
+-->
+<style>
+  body {
+    margin: 0;
+    padding: 20px 24px 28px;
+    background: #191b1f;
+    color: #e8e8e8;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 13px;
+  }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  p.nota { margin: 0 0 18px; color: #9aa0a6; max-width: 900px; }
+  table { border-collapse: separate; border-spacing: 14px 10px; }
+  th { font-size: 12px; font-weight: 600; color: #c8cdd2; text-align: left; }
+  th.fila { font-weight: 400; color: #9aa0a6; max-width: 110px; vertical-align: top; padding-top: 8px; }
+  td { vertical-align: top; }
+
+  /* La mini-ventana: misma cadena de capas que la ventana real. */
+  .ventana {
+    position: relative;
+    width: 290px;
+    height: 118px;
+    border-radius: 8px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .capa { position: absolute; inset: 0; }
+  .arte  { z-index: -2; }
+  .scrim { z-index: -1; }
+  .velo  { z-index: 0; }
+  .contenido { position: relative; z-index: 1; padding: 8px 10px; }
+  .cabecera { display: flex; justify-content: space-between; align-items: center; }
+  .estado { font-size: 11px; white-space: nowrap; }
+  .acciones { font-size: 12px; letter-spacing: 4px; }
+  .desconectado { font-size: 11px; margin-top: 2px; }
+  .tit { font-size: 14px; font-weight: 600; margin-top: 14px; }
+  .art { font-size: 12px; margin-top: 2px; }
+
+  .cifras { margin-top: 6px; font-size: 12px; line-height: 1.5; color: #c8cdd2; }
+  .cifras b { font-variant-numeric: tabular-nums; }
+  .pasa   { color: #6fcf7c; }
+  .falla  { color: #ef7b7b; }
+  #error { color: #ef7b7b; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>La cabecera bajo el velo débil: hoy, velo local (A) y tinta plena (B)</h1>
+<p class="nota">
+  Colores leídos del <code>pip.css</code> real en este momento. Peor caso:
+  carátula blanca pura en tema oscuro, negra pura en claro; el estado vive bajo
+  la parada de arriba del velo. Umbral AA para texto de 11&nbsp;px: <b>4.5:1</b>.
+</p>
+<div id="error"></div>
+<table id="rejilla"></table>
+
+<script>
+(async function () {
+  "use strict";
+
+  const respuesta = await fetch("../src/pip/pip.css");
+  if (!respuesta.ok) {
+    document.getElementById("error").textContent =
+      "No se pudo leer ../src/pip/pip.css (" + respuesta.status + ")";
+    return;
+  }
+  const css = await respuesta.text();
+
+  /* ---- Lectura de variables: misma receta que accesibilidad.test.js ---- */
+
+  function bloque(selector) {
+    const inicio = css.indexOf(selector + " {");
+    if (inicio === -1) throw new Error("No existe el bloque " + selector);
+    return css.slice(inicio, css.indexOf("\n}", inicio));
+  }
+
+  function variablesDe(selector) {
+    const texto = bloque(selector);
+    const variables = {};
+    for (const m of texto.matchAll(/--([a-z-]+):\s*([^;]+);/g)) {
+      variables[m[1]] = m[2].trim();
+    }
+    return variables;
+  }
+
+  const oscuro = variablesDe(":root");
+  const claroSolo = variablesDe("html.ytmpip-theme-light");
+  const claro = Object.assign({}, oscuro, claroSolo);
+  const fondoLetra = Number(
+    variablesDe("#ytmpip-root.ytmpip-lyrics-stage")["ytmpip-fondo"]
+  );
+  const fondoReposo = Number(oscuro["ytmpip-fondo"]);
+
+  /* ---- Cuentas WCAG 2.x: idénticas a las de la prueba ---- */
+
+  function lineal(canal) {
+    const c = canal / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function luminancia(rgb) {
+    return 0.2126 * lineal(rgb[0]) + 0.7152 * lineal(rgb[1]) + 0.0722 * lineal(rgb[2]);
+  }
+  function contraste(a, b) {
+    const la = luminancia(a);
+    const lb = luminancia(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  function sobre(frente, alfa, fondo) {
+    return [0, 1, 2].map(function (i) {
+      return alfa * frente[i] + (1 - alfa) * fondo[i];
+    });
+  }
+  function colorDe(texto) {
+    let m = texto.match(/^#([0-9a-f]{6})$/i);
+    if (m) {
+      return [0, 1, 2].map(function (i) {
+        return parseInt(m[1].slice(i * 2, i * 2 + 2), 16);
+      });
+    }
+    m = texto.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+    throw new Error("Color ilegible: " + texto);
+  }
+
+  /* La parada DE ARRIBA del velo real: donde vive la cabecera. */
+  function paradaDeArriba(scrim) {
+    const m = scrim.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
+    return { color: [Number(m[1]), Number(m[2]), Number(m[3])], alfa: Number(m[4]) };
+  }
+
+  /* ---- Las dos propuestas (esto SÍ es nuevo: es lo que se compara) ---- */
+
+  const VELO_LOCAL = {
+    oscuro: { color: [15, 15, 15], alfa: 0.78 },
+    claro: { color: [255, 255, 255], alfa: 0.85 }
+  };
+
+  /* ---- La rejilla ---- */
+
+  const COLUMNAS = [
+    { id: "hoy", titulo: "Hoy (gris apagado, velo de la ventana)" },
+    { id: "a", titulo: "Opción A: velo local para la cabecera" },
+    { id: "b", titulo: "Opción B: tinta plena para el estado" }
+  ];
+
+  const FILAS = [
+    { titulo: "Oscuro, reposo", vars: oscuro, tema: "oscuro", arte: [255, 255, 255], fondo: fondoReposo },
+    { titulo: "Oscuro, letra en grande", vars: oscuro, tema: "oscuro", arte: [255, 255, 255], fondo: fondoLetra },
+    { titulo: "Claro, reposo", vars: claro, tema: "claro", arte: [0, 0, 0], fondo: fondoReposo },
+    { titulo: "Claro, letra en grande", vars: claro, tema: "claro", arte: [0, 0, 0], fondo: fondoLetra }
+  ];
+
+  function cifra(etiqueta, ratio) {
+    const clase = ratio >= 4.5 ? "pasa" : "falla";
+    const marca = ratio >= 4.5 ? "✔" : "✘";
+    return etiqueta + " <b class='" + clase + "'>" + ratio.toFixed(2) + ":1 " + marca + "</b>";
+  }
+
+  function celda(fila, columna) {
+    const v = fila.vars;
+    const bg = colorDe(v["ytmpip-bg"]);
+    const texto = colorDe(v["ytmpip-text"]);
+    const gris = colorDe(v["ytmpip-text-dim"]);
+    const acento = colorDe(v["ytmpip-accent"]);
+    const parada = paradaDeArriba(v["ytmpip-scrim"]);
+
+    /* La cadena real: fondo <- carátula <- parada de arriba del velo. */
+    const conArte = sobre(fila.arte, fila.fondo, bg);
+    let superficie = sobre(parada.color, parada.alfa, conArte);
+
+    let veloCSS = "";
+    if (columna.id === "a") {
+      const velo = VELO_LOCAL[fila.tema];
+      superficie = sobre(velo.color, velo.alfa, superficie);
+      const tono = velo.color.join(", ");
+      veloCSS =
+        "background: linear-gradient(180deg, rgba(" + tono + ", " + velo.alfa +
+        ") 0%, rgba(" + tono + ", " + velo.alfa + ") 38%, rgba(" + tono + ", 0) 62%)";
+    }
+
+    const tintaEstado = columna.id === "b" ? texto : gris;
+    const ratioEstado = contraste(tintaEstado, superficie);
+    const ratioDesconectado = contraste(acento, superficie);
+
+    const rgb = function (c) { return "rgb(" + c.join(", ") + ")"; };
+
+    return (
+      "<td>" +
+      "<div class='ventana' style='background: " + rgb(bg) + "'>" +
+      "<div class='capa arte' style='background: " + rgb(fila.arte) +
+      "; opacity: " + fila.fondo + "'></div>" +
+      "<div class='capa scrim' style='background: " + v["ytmpip-scrim"] + "'></div>" +
+      (veloCSS ? "<div class='capa velo' style='" + veloCSS + "'></div>" : "") +
+      "<div class='contenido'>" +
+      "<div class='cabecera'>" +
+      "<span class='estado' style='color: " + rgb(tintaEstado) + "'>Conectado a la pestaña</span>" +
+      "<span class='acciones' style='color: " + rgb(tintaEstado) + "'>⛭⨯</span>" +
+      "</div>" +
+      "<div class='desconectado' style='color: " + rgb(acento) + "'>Sin conexión</div>" +
+      "<div class='tit' style='color: " + rgb(texto) + "'>Vals de medianoche</div>" +
+      "<div class='art' style='color: " + rgb(gris) + "'>Trío Nocturno</div>" +
+      "</div></div>" +
+      "<div class='cifras'>" +
+      cifra("estado", ratioEstado) + " &nbsp;·&nbsp; " +
+      cifra("sin conexión", ratioDesconectado) +
+      "</div></td>"
+    );
+  }
+
+  let html = "<tr><th></th>" + COLUMNAS.map(function (c) {
+    return "<th>" + c.titulo + "</th>";
+  }).join("") + "</tr>";
+
+  for (const fila of FILAS) {
+    html += "<tr><th class='fila'>" + fila.titulo +
+      "<br><small>fondo " + fila.fondo + "</small></th>" +
+      COLUMNAS.map(function (c) { return celda(fila, c); }).join("") + "</tr>";
+  }
+
+  document.getElementById("rejilla").innerHTML = html;
+})().catch(function (err) {
+  document.getElementById("error").textContent = String(err);
+});
+</script>
+</body>
+</html>

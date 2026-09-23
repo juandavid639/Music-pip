@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Canción CON letra. Reproduce la estructura real de YouTube Music
+  descubierta al depurar: el texto vive en yt-formatted-string.description,
+  con un .header ("Letra") encima y un .footer ("Fuente: LyricFind") debajo.
+  El fixture incluye header y footer a propósito: son la trampa en la que
+  cayó la primera versión del lector, que devolvía los tres juntos.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <img class="image ytmusic-player-bar" src="https://lh3.googleusercontent.com/abc=w60-h60-l90-rj" />
+      <yt-formatted-string class="title ytmusic-player-bar">Bohemian Rhapsody</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">
+        Queen • A Night at the Opera • 1975
+      </yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player>
+      <video></video>
+    </ytmusic-player>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">A CONTINUACIÓN</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="true">LETRA</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">RELACIONADO</div>
+
+      <div id="tab-renderer">
+        <ytmusic-description-shelf-renderer>
+          <yt-formatted-string class="header style-scope ytmusic-description-shelf-renderer">Letra</yt-formatted-string>
+          <yt-formatted-string class="non-expandable description style-scope ytmusic-description-shelf-renderer">Is this the real life?
+Is this just fantasy?
+Caught in a landslide
+No escape from reality</yt-formatted-string>
+          <yt-formatted-string class="footer style-scope ytmusic-description-shelf-renderer">Fuente: LyricFind</yt-formatted-string>
+        </ytmusic-description-shelf-renderer>
+      </div>
+    </ytmusic-player-page>
+  </body>
+</html>

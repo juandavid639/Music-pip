@@ -1,0 +1,366 @@
+/* ---------- POR QUÉ ESTE ARCHIVO SE PARECE TANTO A pip.css ----------
+ *
+ * Los nombres y los valores son los mismos a propósito. El menú y la ventana
+ * flotante se abren desde el mismo icono y se ven casi seguidos: si uno usa
+ * gris opaco y el otro blanco translúcido, parecen dos programas.
+ *
+ * ESTA COPIA NO ES LA REGLA DUPLICADA QUE EN ESTE PROYECTO SE PERSIGUE, y
+ * conviene tenerlo claro porque la frase se parece mucho a la excusa que
+ * suele preceder a una: son dos DOCUMENTOS distintos, con dos hojas de
+ * estilo, y no hay forma de que el menú cargue la de la ventana flotante
+ * —ni siquiera importándola: pip.css da por hecho un #ytmpip-root a pantalla
+ * completa con escenario, letra y mandos, nada de lo cual existe aquí—.
+ *
+ * Lo que sí sería duplicar de verdad, y no se hace, es el DIBUJO de los
+ * iconos: salen los dos de shared/iconos.js.
+ *
+ * Lo que no se ha traído: el tema claro. La ventana flotante lo cambia
+ * porque lo guardan las preferencias; el menú no lee preferencias y hacerle
+ * leerlas por un color significaría un `chrome.storage` asíncrono y el menú
+ * parpadeando de blanco a negro al abrirse. Se queda oscuro, como estaba.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0f0f0f;
+  --surface: rgba(255, 255, 255, 0.09);
+  --surface-hover: rgba(255, 255, 255, 0.18);
+  --text: #f1f1f1;
+  --text-dim: #a8a8a8;
+  --accent: #ff0000;
+  --border: rgba(255, 255, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 13px;
+}
+
+#ytmpip-popup-root {
+  position: relative;
+  width: 260px;
+  /* El fondo difuminado se sale del marco a propósito (ver más abajo); sin
+     esto asomaría por los cuatro lados del menú. */
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ---------- El fondo ----------
+ *
+ * Calcado de `.ytmpip-backdrop` de la ventana flotante, incluido el
+ * `scale(1.25)`, que ahí lleva escrito su motivo y aquí vale igual: el
+ * desenfoque difumina también el BORDE de la imagen, así que se agranda
+ * para que ese borde caiga fuera y no queden las esquinas transparentes.
+ *
+ * `opacity: 0` de salida y lo sube popup.js al poner una portada. Así el
+ * menú sin canción no enseña un rectángulo oscuro a medias: enseña el color
+ * plano de siempre, que es lo que hay.
+ */
+.ytmpip-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-position: center;
+  background-size: cover;
+  filter: blur(28px) saturate(1.5);
+  transform: scale(1.25);
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.ytmpip-popup-backdrop.ytmpip-has-art {
+  opacity: 0.5;
+}
+
+/*
+ * El velo. Sin él, una portada clara deja el texto blanco ilegible, y eso no
+ * es un caso raro: media discografía tiene la portada blanca.
+ *
+ * Va en un pseudoelemento del contenedor y no como fondo del contenido para
+ * que cubra el menú entero de un tirón, sin costuras entre secciones.
+ */
+.ytmpip-popup-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.62) 0%, rgba(15, 15, 15, 0.86) 100%);
+}
+
+.ytmpip-popup-content {
+  position: relative;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- Estado ---------- */
+
+.ytmpip-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/*
+ * El punto. Gris mientras no se sabe, y verde cuando hay pestaña.
+ *
+ * VERDE Y NO EL ROJO DE ACENTO, aunque el acento estaba a mano: el acento
+ * marca lo PULSABLE en toda la extensión (el botón grande, el foco, las
+ * barras del ecualizador). Usarlo además para "conectado" le daría dos
+ * significados al mismo color, y entonces no significa ninguno.
+ *
+ * El color no va solo: al lado hay una frase que dice lo mismo con palabras.
+ * Un estado contado únicamente con color no lo lee quien no distingue ese
+ * color, y aquí además el punto mide 8 px.
+ */
+.ytmpip-popup-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-dim);
+  transition: background-color 200ms ease;
+}
+
+.ytmpip-popup-dot.ytmpip-conectado {
+  background: #4ac47a;
+}
+
+.ytmpip-popup-status {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- La canción ---------- */
+
+.ytmpip-popup-body {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/*
+ * La portada crece de 48 a 56 px y se le pone sombra y borde.
+ *
+ * La sombra no es decoración: es lo que la despega del fondo difuminado.
+ * Sin ella, una portada sobre su propia versión borrosa se funde con él y no
+ * se ve dónde empieza. El borde hace el mismo trabajo con las portadas
+ * oscuras, donde la sombra no se distingue.
+ */
+.ytmpip-popup-artwork {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.ytmpip-popup-info {
+  min-width: 0;
+}
+
+.ytmpip-popup-title,
+.ytmpip-popup-artist {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * El título pesa más que el artista. Antes pesaban lo mismo (13 px los dos,
+ * sólo cambiaba el color), y dos líneas del mismo tamaño una encima de otra
+ * se leen como una lista, no como "esto es la canción y esto quien la toca".
+ */
+.ytmpip-popup-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ytmpip-popup-artist {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* ---------- Los mandos ---------- */
+
+.ytmpip-popup-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+button {
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 140ms ease, transform 140ms ease, opacity 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+/*
+ * El hundido al pulsar. Es lo único que confirma que el clic ha entrado: el
+ * menú manda el comando a la pestaña y la respuesta tarda 200 ms en volver
+ * (popup.js pide el estado con un setTimeout), así que sin esto hay un
+ * cuarto de segundo en el que el botón parece no haber hecho nada.
+ */
+button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Anterior y siguiente: redondos, sin relleno, de acompañamiento. */
+.ytmpip-popup-step {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.ytmpip-popup-step:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/*
+ * Reproducir/pausar: EL botón. Más grande, redondo y del color de acento.
+ *
+ * El icono se pinta con `currentColor`, así que el color del texto tiene que
+ * ser oscuro para que el dibujo se vea sobre el rojo. Es el mismo #0f0f0f
+ * del fondo y no un negro puro, por lo mismo de siempre: un solo negro.
+ */
+.ytmpip-popup-play {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0f0f0f;
+  box-shadow: 0 4px 14px rgba(241, 90, 90, 0.35);
+}
+
+.ytmpip-popup-play:hover:not(:disabled) {
+  background: #ff6d6d;
+}
+
+.ytmpip-popup-play .ytmpip-ico {
+  width: 1.4em;
+  height: 1.4em;
+}
+
+/* Los iconos. Misma regla que en pip.css y por los mismos motivos (allí
+   está explicada entera): el tamaño en `em` para que lo siga mandando el
+   `font-size` que ya había, y `currentColor` para que el dibujo se pinte
+   del color del botón. */
+.ytmpip-ico {
+  width: 1.25em;
+  height: 1.25em;
+  fill: currentColor;
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ---------- Abrir la ventana ---------- */
+
+.ytmpip-popup-primary {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ytmpip-popup-primary:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- EL ESTADO APAGADO, QUE NO EXISTÍA ----------
+ *
+ * Esto no es un retoque de aspecto, es un fallo que llevaba puesto desde el
+ * principio: popup.js hace `openPip.disabled = !state.connected` y en la
+ * hoja NO HABÍA NINGUNA REGLA para `:disabled`. O sea que sin YouTube Music
+ * abierto el botón se veía exactamente igual que funcionando, se podía
+ * pulsar con toda la confianza del mundo y no pasaba nada. Ni un mensaje.
+ *
+ * El navegador no avisa de esto: `disabled` funciona —el clic no llega—, lo
+ * que falta es CONTARLO. Es el mismo tipo de fallo silencioso que el resto
+ * de este proyecto persigue, sólo que en la hoja de estilos.
+ *
+ * `cursor: not-allowed` además de la opacidad: la opacidad sola se puede
+ * confundir con "el menú todavía está cargando".
+ */
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ytmpip-popup-options-link {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-decoration: none;
+  padding: 2px;
+  border-radius: 4px;
+  transition: color 140ms ease;
+}
+
+.ytmpip-popup-options-link:hover {
+  color: var(--text);
+}
+
+.ytmpip-popup-options-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Quien pide menos movimiento se queda sin las transiciones y sin el hundido
+ * del clic. El foco, el color y el estado apagado siguen: eso es
+ * información, no movimiento.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ytmpip-popup-backdrop,
+  .ytmpip-popup-dot,
+  .ytmpip-popup-options-link,
+  button {
+    transition: none;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}

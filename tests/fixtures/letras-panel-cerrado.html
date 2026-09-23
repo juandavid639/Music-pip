@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Caso intermedio y el más importante de los tres: la canción SÍ tiene
+  letra (la pestaña no está deshabilitada) pero el panel todavía no se ha
+  renderizado porque el usuario no lo ha abierto.
+
+  Esto debe dar LOADING, no UNAVAILABLE. Confundir ambos era exactamente
+  el fallo original: cualquier ausencia se reportaba como "no hay letra".
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <yt-formatted-string class="title ytmusic-player-bar">Come Together</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">The Beatles • Abbey Road</yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="true">A CONTINUACIÓN</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">LETRA</div>
+      <div class="tab-header style-scope ytmusic-player-page" aria-selected="false">RELACIONADO</div>
+
+      <div id="tab-renderer"></div>
+    </ytmusic-player-page>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Music PiP</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main id="ytmpip-popup-root">
+      <!--
+        La carátula difuminada de fondo, igual que en la ventana flotante.
+
+        NO ES UN ADORNO IMPORTADO PORQUE QUEDE BONITO ALLÍ. El menú estaba
+        plano —un rectángulo gris con cajas grises encima— y la razón de
+        fondo era que no tenía NADA de la canción salvo dos líneas de texto
+        de 12 px. La portada difuminada hace dos cosas a la vez: da
+        profundidad (hay algo detrás de las superficies, así que las
+        superficies se ven como superficies) y hace que el menú cambie con
+        la música, que es de lo que va la extensión.
+
+        Va vacío en el HTML y lo rellena popup.js con la portada de turno.
+        Sin canción se queda vacío y el menú vuelve al color plano, que es
+        lo correcto: no hay nada que enseñar.
+      -->
+      <div id="ytmpip-popup-backdrop" class="ytmpip-popup-backdrop"></div>
+
+      <div class="ytmpip-popup-content">
+        <header class="ytmpip-popup-header">
+          <!--
+            El punto de estado. Dice lo mismo que el texto de al lado y por
+            eso es `aria-hidden`: quien usa un lector de pantalla ya recibe
+            la frase entera, y un "punto" leído en voz alta no añade nada.
+
+            Existe porque el texto solo, en gris de 11 px, era la línea que
+            menos se veía del menú siendo la que contesta la primera
+            pregunta: ¿me está viendo YouTube Music o no? Un color se lee
+            antes que una palabra.
+          -->
+          <span id="ytmpip-popup-dot" class="ytmpip-popup-dot" aria-hidden="true"></span>
+          <span id="ytmpip-popup-status" class="ytmpip-popup-status" data-t="buscando_musica">Buscando la música…</span>
+        </header>
+
+        <div class="ytmpip-popup-body">
+          <img id="ytmpip-popup-artwork" class="ytmpip-popup-artwork" alt="Sin portada" data-t-alt="sin_portada" />
+          <div class="ytmpip-popup-info">
+            <p id="ytmpip-popup-title" class="ytmpip-popup-title" data-t="sin_reproduccion">Sin reproducción</p>
+            <p id="ytmpip-popup-artist" class="ytmpip-popup-artist"></p>
+          </div>
+        </div>
+
+        <!--
+          Los mismos tres dibujos que la ventana flotante, del mismo módulo.
+          No es un adorno: el menú y la ventana se abren desde el mismo sitio
+          y se ven casi seguidos, así que si aquí quedaran emoji del sistema
+          volvería justo el problema que los iconos vinieron a quitar —dos
+          juegos distintos para el mismo botón.
+
+          LOS TRES BOTONES YA NO SON IGUALES. Eran tres cuadrados grises del
+          mismo tamaño, y eso es una jerarquía plana: el menú no decía cuál
+          es el botón que se viene a pulsar. Reproducir/pausar es el que se
+          usa, así que es redondo, más grande y del color de acento; los
+          otros dos se quedan de acompañamiento. La clase lo dice.
+        -->
+        <div class="ytmpip-popup-controls">
+          <button id="ytmpip-popup-previous" type="button" class="ytmpip-popup-step" aria-label="Canción anterior" data-t-aria="cancion_anterior" data-ico="anterior">⏮</button>
+          <button id="ytmpip-popup-play-pause" type="button" class="ytmpip-popup-play" aria-label="Reproducir" data-t-aria="reproducir" data-ico="reproducir">▶</button>
+          <button id="ytmpip-popup-next" type="button" class="ytmpip-popup-step" aria-label="Siguiente canción" data-t-aria="cancion_siguiente" data-ico="siguiente">⏭</button>
+        </div>
+
+        <button id="ytmpip-popup-open-pip" type="button" class="ytmpip-popup-primary" data-t="abrir_ventana_flotante">Abrir ventana flotante</button>
+
+        <a id="ytmpip-popup-options-link" href="../options/options.html" target="_blank" class="ytmpip-popup-options-link" data-t="preferencias">Preferencias</a>
+      </div>
+    </main>
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/messages.js"></script>
+    <script src="../shared/textos.js"></script>
+    <script src="../shared/iconos.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

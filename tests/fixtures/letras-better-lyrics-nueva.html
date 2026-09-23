@@ -1,0 +1,125 @@
+<!doctype html>
+<!--
+  Better Lyrics, estructura de la REESCRITURA que todavia no han publicado
+  (master del repositorio better-lyrics/better-lyrics, posterior a v2.3.3).
+
+  Existe este fixture porque el dia que publiquen esa version la
+  actualizacion llegara sola a los navegadores de los usuarios, sin que
+  nosotros toquemos nada. Si el lector solo supiera leer la maquetacion
+  vieja, la letra se rompería ese dia y sin ningún cambio por nuestra parte.
+
+  Lo que cambia respecto a la publicada:
+
+  - Aparece `.blyrics-line-main` envolviendo el texto principal, y dentro
+    `.blyrics-bidi-run` y `.blyrics-word-group`. Es la señal por la que se
+    distinguen las dos versiones.
+
+  - Los espacios entre palabras SI son nodos de texto de verdad, asi que
+    aqui basta con colapsar. Por eso este fichero si puede ir formateado
+    con saltos de linea sin falsear nada: hay espacio de verdad entre las
+    palabras. (En el fixture de la version publicada NO, y va explicado
+    alli.)
+
+  - Las palabras largas llevan dentro un `.blyrics-word-highlight` que
+    DUPLICA su propio texto para poder animarlo. Es la trampa principal:
+    sin quitarlo antes, textContent devuelve "streetstreet".
+
+  - Los coros de fondo pasan a llamarse `.blyrics-background-line` (en la
+    publicada son `.blyrics-background-lyric`).
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <yt-formatted-string class="title ytmusic-player-bar">Staring (Acoustic)</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">Tipling Rock • Staring • 2019</yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page" disabled aria-disabled="true">LETRA</div>
+
+      <div id="tab-renderer">
+        <ytmusic-message-renderer class="blyrics-hidden">
+          <yt-formatted-string class="text style-scope ytmusic-message-renderer">
+            Letra no disponible
+          </yt-formatted-string>
+        </ytmusic-message-renderer>
+
+        <div id="blyrics-wrapper">
+          <div class="blyrics-container" data-sync="richsync">
+            <div class="blyrics--line" data-time="12.4" data-duration="3.2" data-line-number="0">
+              <div class="blyrics-line-main">
+                <span class="blyrics-bidi-run">
+                  <span class="blyrics-word-group"><span class="blyrics--word">Walking</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">down</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">the</span></span>
+                  <!-- Palabra larga: lleva el clon de animacion dentro. -->
+                  <span class="blyrics-word-group blyrics-word-group-long"
+                    ><span class="blyrics--word"
+                      >street<span class="blyrics-word-highlight">street</span></span
+                    ></span
+                  >
+                  <span class="blyrics-word-group"><span class="blyrics--word">tonight</span></span>
+                </span>
+              </div>
+              <div class="blyrics-background-line">
+                <span class="blyrics-bidi-run">
+                  <span class="blyrics-word-group"><span class="blyrics--word">(tonight)</span></span>
+                </span>
+              </div>
+              <div class="blyrics--romanized blyrics-content-line">wokingu daun za sutoriito tunaito</div>
+              <div class="blyrics--translated blyrics-content-line">Caminando por la calle esta noche</div>
+            </div>
+
+            <div class="blyrics--line" data-time="15.6" data-duration="2.8" data-line-number="1">
+              <div class="blyrics-line-main">
+                <span class="blyrics-bidi-run">
+                  <span class="blyrics-word-group"><span class="blyrics--word">I've</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">come</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">to</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">share</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">bad</span></span>
+                  <span class="blyrics-word-group blyrics-word-group-long"
+                    ><span class="blyrics--word"
+                      >intentions<span class="blyrics-word-highlight">intentions</span></span
+                    ></span
+                  >
+                </span>
+              </div>
+            </div>
+
+            <div
+              class="blyrics--line blyrics--instrumental"
+              data-time="18.4"
+              data-duration="9.0"
+              data-line-number="2"
+              data-instrumental="true"
+            >
+              <svg class="blyrics--instrumental-icon" viewBox="0 0 24 24"></svg>
+            </div>
+
+            <div class="blyrics--line" data-time="27.4" data-duration="3.0" data-line-number="3">
+              <div class="blyrics-line-main">
+                <span class="blyrics-bidi-run">
+                  <span class="blyrics-word-group"><span class="blyrics--word">I</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">don't</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">know</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">what's</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">wrong</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">or</span></span>
+                  <span class="blyrics-word-group"><span class="blyrics--word">right</span></span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="blyrics-footer">
+            <a id="betterLyricsFooterLink" href="https://lrclib.net/"
+              >LRCLIB<span style="opacity: 0.5"
+                ><svg viewBox="0 0 24 24"><title>Sincronizada palabra a palabra</title></svg></span
+            ></a>
+          </div>
+        </div>
+      </div>
+    </ytmusic-player-page>
+  </body>
+</html>

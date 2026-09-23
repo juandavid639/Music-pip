@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+  <body>
+    <!--
+      Calcado del DOM medido por tools/diagnostico-youtube.js (2026-09-14)
+      sobre dos paginas reales de www.youtube.com: un video suelto
+      (watch?v=5sSfADAsmfg) y un Mix (watch?v=lw1FAHzBci4&list=RD..., panel
+      de cola con 25 items; aqui 3, con `selected` en el que suena).
+
+      Los señuelos NO son adorno: la pagina real tiene OCHO "#title" y TRES
+      "like-button-view-model", y las pruebas los cuentan para que nadie
+      pueda quitarlos sin que se note. Tambien estan los DOS <video>: el
+      del reproductor y la precarga pausada suelta al final del body.
+    -->
+    <ytd-watch-flexy video-id="lw1FAHzBci4">
+      <div id="movie_player">
+        <div class="html5-video-container">
+          <video class="html5-main-video"></video>
+        </div>
+        <div class="ytp-chrome-bottom">
+          <button class="ytp-play-button" title="Pausa (k)" aria-label="Pausa (k)"></button>
+          <!-- <a> y no <button>, como en la pagina real (ocultos en un
+               video suelto, visibles dentro de una lista) -->
+          <a class="ytp-prev-button" href="/watch?v=anterior" aria-label="Anterior"></a>
+          <a class="ytp-next-button" href="/watch?v=siguiente" aria-label="Siguiente"></a>
+          <span class="ytp-time-current">0:16</span>
+          <span class="ytp-time-duration">21:58</span>
+          <!-- La barra HELADA medida: decia 16 mientras el video iba por
+               40.3 (solo se refresca con los controles a la vista) -->
+          <div class="ytp-progress-bar" role="slider" aria-valuemin="0" aria-valuenow="16" aria-valuemax="1318"></div>
+        </div>
+      </div>
+
+      <!--
+        Señuelos DELANTE de la ficha del video, a proposito. El diagnostico
+        midio CUANTOS hay (8 "#title", 3 like) pero no su ORDEN en el
+        documento; el fixture asume el peor caso — señuelos antes que el
+        bueno — para que un selector des-anclado no acierte de chiripa.
+      -->
+      <div id="chips-decoy">
+        <div id="title">Señuelo previo 1</div>
+        <div id="title">Señuelo previo 2</div>
+        <like-button-view-model><button aria-pressed="false"></button></like-button-view-model>
+      </div>
+
+      <ytd-watch-metadata>
+        <div id="title">
+          <h1><yt-formatted-string>Trippie Redd - Love Sick (Visualizer)</yt-formatted-string></h1>
+        </div>
+        <div id="owner">
+          <ytd-channel-name><a href="/@TrippieRedd">Trippie Redd</a></ytd-channel-name>
+        </div>
+        <segmented-like-dislike-button-view-model>
+          <like-button-view-model>
+            <button aria-pressed="false" aria-label="Marcar este video como Me gusta"></button>
+          </like-button-view-model>
+          <dislike-button-view-model>
+            <button aria-pressed="false" aria-label="Marcar este video como No me gusta"></button>
+          </dislike-button-view-model>
+        </segmented-like-dislike-button-view-model>
+      </ytd-watch-metadata>
+
+      <ytd-playlist-panel-renderer id="playlist">
+        <ytd-playlist-panel-video-renderer selected>
+          <a id="video-title">Trippie Redd - Love Sick (Visualizer)</a>
+          <span id="byline">Trippie Redd</span>
+        </ytd-playlist-panel-video-renderer>
+        <ytd-playlist-panel-video-renderer>
+          <a id="video-title">$UICIDEBOY$ - The Number You Have Dialed Is Not In Service</a>
+          <span id="byline">$uicideboy$</span>
+        </ytd-playlist-panel-video-renderer>
+        <ytd-playlist-panel-video-renderer>
+          <a id="video-title">Trippie Redd - Real Feel (Visualizer)</a>
+          <span id="byline">Trippie Redd</span>
+        </ytd-playlist-panel-video-renderer>
+      </ytd-playlist-panel-renderer>
+
+      <!-- El resto de señuelos: entre este bloque y el previo, "#title"
+           casa 8 veces y "like-button-view-model button" casa 3, igual
+           que lo medido -->
+      <div id="related">
+        <div id="title">Señuelo related 1</div>
+        <div id="title">Señuelo related 2</div>
+        <div id="title">Señuelo related 3</div>
+        <div id="title">Señuelo related 4</div>
+        <div id="title">Señuelo related 5</div>
+        <like-button-view-model><button aria-pressed="false"></button></like-button-view-model>
+      </div>
+    </ytd-watch-flexy>
+
+    <!-- La PRECARGA medida: un segundo <video> pausado FUERA del
+         reproductor, con la misma clase que el bueno -->
+    <video class="html5-main-video"></video>
+  </body>
+</html>

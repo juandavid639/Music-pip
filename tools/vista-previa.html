@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!--
+  Rejilla con la MISMA ventana flotante a varios tamaños a la vez.
+
+  Cada recuadro es un iframe del marco (src/options/vista-previa.html — vive
+  allí porque la página de Preferencias lo incrusta), y dentro del iframe
+  window.innerWidth/innerHeight valen lo que mide el recuadro: exactamente la
+  señal que usa applyDensity() en pip.js. Asi que lo que se ve aqui es lo que
+  se vera al arrastrar la esquina de la ventana real.
+
+  El objetivo es responder de un vistazo a una sola pregunta: ¿en algun tamaño
+  se salen los controles por abajo? Los recuadros marcados como "limite" estan
+  justo a un pixel del umbral, que es donde se rompen estas cosas.
+
+  No se empaqueta: tools/ esta fuera de la lista blanca de empaquetar.ps1.
+-->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vista previa de la ventana flotante</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #202124;
+        color: #e8eaed;
+        font: 13px/1.4 system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      p.nota {
+        margin: 0 0 20px;
+        color: #9aa0a6;
+      }
+      .rejilla {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        margin-bottom: 6px;
+        color: #9aa0a6;
+      }
+      figcaption b {
+        color: #e8eaed;
+        font-weight: 600;
+      }
+      iframe {
+        border: 1px solid #5f6368;
+        border-radius: 8px;
+        background: #000;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ventana flotante a distintos tamaños</h1>
+    <p class="nota">
+      Cada recuadro mide justo lo que dice su etiqueta. Los controles de
+      reproducción deben verse enteros en todos.
+    </p>
+    <div class="rejilla" id="rejilla"></div>
+
+    <script>
+      /*
+       * Los tamaños no son al azar: los cuatro primeros son los que abre la
+       * extension por su cuenta, y los demas son los bordes donde cambia la
+       * maquetacion (un pixel a cada lado del umbral) mas el caso que reporto
+       * el usuario: video en una ventana encogida a mano.
+       */
+      const CASOS = [
+        { alto: 480, ancho: 420, video: true, nombre: "Vídeo (por defecto)" },
+        { alto: 560, ancho: 380, video: false, nombre: "Ampliado (por defecto)" },
+        { alto: 360, ancho: 420, video: true, nombre: "Vídeo, alto justo", aviso: "el texto cede" },
+        { alto: 309, ancho: 420, video: true, nombre: "Vídeo superpuesto", aviso: "justo al entrar" },
+        { alto: 200, ancho: 340, video: false, nombre: "Compacto (por defecto)" },
+        { alto: 300, ancho: 420, video: true, nombre: "Vídeo encogido a mano", aviso: "el caso reportado" },
+        { alto: 399, ancho: 380, video: false, nombre: "Justo por debajo de tight" },
+        { alto: 309, ancho: 380, video: false, nombre: "Justo por debajo de mini" },
+        { alto: 420, ancho: 289, video: false, nombre: "Estrecho" },
+        { alto: 220, ancho: 300, video: true, nombre: "Vídeo diminuto", aviso: "el peor caso" },
+        { alto: 318, ancho: 571, letra: true, nombre: "Karaoke ancho", aviso: "pantallazo 1" },
+        { alto: 268, ancho: 425, letra: true, nombre: "Karaoke mini", aviso: "pantallazo 2" },
+        { alto: 160, ancho: 385, letra: true, nombre: "Karaoke aplastado", aviso: "el texto se salía por los dos lados" },
+        { alto: 130, ancho: 385, letra: true, nombre: "Karaoke al límite", aviso: "aquí el adelanto ya vale 0" },
+        { alto: 480, ancho: 380, letra: true, escenario: true, nombre: "Letra en grande" },
+        { alto: 268, ancho: 425, letra: true, escenario: true, nombre: "Letra en grande, mini", aviso: "el panel manda sobre la densidad" },
+        { alto: 360, ancho: 340, limpio: true, nombre: "Sólo carátula" },
+        { alto: 200, ancho: 340, limpio: true, nombre: "Sólo carátula, mini", aviso: "sin texto no hay fila que ceder" },
+        { alto: 420, ancho: 289, limpio: true, nombre: "Sólo carátula, estrecho" },
+        { alto: 420, ancho: 289, video: true, espectro: true, nombre: "Cabecera llena, estrecha", aviso: "los cinco botones en 289 px" },
+        { alto: 420, ancho: 260, video: true, espectro: true, nombre: "Cabecera llena, 260 px", aviso: "el suelo real de la ventana" },
+        { alto: 360, ancho: 340, espectro: true, nombre: "Espectro" },
+        { alto: 200, ancho: 340, espectro: true, nombre: "Espectro, mini", aviso: "el peor caso: 34 % de muy poco" },
+        { alto: 360, ancho: 340, limpio: true, espectro: true, nombre: "Sólo carátula + espectro" },
+        { alto: 300, ancho: 420, video: true, espectro: true, nombre: "Espectro sobre vídeo", aviso: "los controles ya van superpuestos" },
+        // Los dos extremos del alto configurable, que es lo unico de las
+        // preferencias nuevas que puede romper la maquetacion.
+        { alto: 360, ancho: 340, espectro: true, altoEspectro: 10, nombre: "Espectro al 10 %", aviso: "el minimo: ¿se sigue viendo?" },
+        { alto: 360, ancho: 340, espectro: true, altoEspectro: 100, nombre: "Espectro al 100 %", aviso: "el maximo: ¿tapa el texto?" },
+        { alto: 200, ancho: 340, espectro: true, altoEspectro: 100, nombre: "Espectro al 100 %, mini" },
+        { alto: 300, ancho: 420, video: true, espectro: true, altoEspectro: 100, colorEspectro: "#00ff88", nombre: "Al 100 % con color propio, sobre vídeo" }
+      ];
+
+      const rejilla = document.getElementById("rejilla");
+
+      for (const caso of CASOS) {
+        const figura = document.createElement("figure");
+        const pie = document.createElement("figcaption");
+        pie.innerHTML =
+          `<b>${caso.nombre}</b> — ${caso.ancho}×${caso.alto}` +
+          (caso.aviso ? ` <span style="color:#f28b82">(${caso.aviso})</span>` : "");
+
+        const marco = document.createElement("iframe");
+        marco.width = caso.ancho;
+        marco.height = caso.alto;
+        const parametros = [];
+        if (caso.video) parametros.push("video=1");
+        if (caso.letra) parametros.push("letra=1");
+        if (caso.escenario) parametros.push("escenario=1");
+        if (caso.limpio) parametros.push("limpio=1");
+        if (caso.espectro) parametros.push("espectro=1");
+        if (caso.altoEspectro) parametros.push("altoEspectro=" + caso.altoEspectro);
+        if (caso.colorEspectro) parametros.push("colorEspectro=" + encodeURIComponent(caso.colorEspectro));
+        marco.src =
+          "/src/options/vista-previa.html" +
+          (parametros.length ? "?" + parametros.join("&") : "");
+
+        figura.append(pie, marco);
+        rejilla.appendChild(figura);
+      }
+    </script>
+  </body>
+</html>

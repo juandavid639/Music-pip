@@ -1,0 +1,24 @@
+# El zip es artefacto de build: se regenera con tools/empaquetar.ps1
+dist/
+
+# La maqueta de Google AI Studio es material de referencia de terceros
+# (React + Tailwind); no es codigo del proyecto y no viaja al repo.
+music-pip---configuración-y-mockup-interactivo/
+
+# Las capturas crudas de pantalla completa pueden llevar informacion
+# personal del escritorio: se recortan a tienda/capturas-finales/ y
+# solo viajan las finales.
+tienda/capturas-crudas/
+
+# Dependencias de desarrollo (npm las repone: npm install)
+node_modules/
+
+# Codigo de OTRO proyecto, solo de referencia (tiene su propia licencia)
+better-lyrics-master/
+
+# Ajustes locales de Claude Code
+.claude/
+
+# Ruido de editores y del sistema
+.DS_Store
+Thumbs.db

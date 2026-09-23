@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+  <body>
+    <!--
+      Calcado del DOM medido por tools/diagnostico-spotify.js a -4.js
+      (2026-09-14) sobre paginas reales de open.spotify.com, en cuatro
+      pasadas: album con Canvas, album sin Canvas, panel de cola abierto
+      y vista de letras (/lyrics).
+
+      El estado que reproduce es el mas cargado que se midio: cancion
+      SONANDO (icono de pausa a la vista), panel de cola abierto y vista
+      de letras abierta a la vez.
+
+      Los señuelos NO son adorno, son lo medido: los data-testid de
+      titulo y artistas casan DOS veces en la pagina (barra inferior +
+      panel derecho) y la caratula TRES; el aleatorio es el unico boton
+      de la zona de controles SIN data-testid (5 botones, 4 con nombre);
+      y hay UN <video> en la pagina que NO es la musica: el Canvas, un
+      bucle visual mudo de 6,9 s. Las pruebas cuentan los señuelos para
+      que un fixture recortado no las deje en verde vigilando nada.
+
+      La barra dice la mentira medida a proposito: el texto va por 0:19
+      mientras el value del input dice 20000 (cuantizado a saltos de
+      step=5000 ms); el max=161983 son los milisegundos EXACTOS de la
+      cancion de 2:41.
+
+      Los CUATRO ranges del censo (2026-09-16), en su orden de
+      documento: señuelo LayoutResizer, progreso, volumen, señuelo
+      LayoutResizer. Los dos tiradores de ancho son inputs range de
+      verdad: la escritura sintetica que no ancle por testid escribe
+      en un panel, no en la musica.
+
+      Las lineas de letra son DE RELLENO: la letra real no se copia.
+      Lo medido es la estructura (data-testid='lyrics-line', 33 divs
+      dentro de <main>; aqui 3).
+    -->
+
+    <!-- Señuelo MEDIDO (censo de ranges, 2026-09-16): el tirador de
+         ancho del panel izquierdo es un input range de verdad
+         (min=72 max=420 step=10). Va ANTES que la barra en orden de
+         documento a proposito: un selector generico de range caeria
+         aqui primero. Las pruebas lo cuentan para que un fixture
+         recortado no las deje en verde vigilando nada. -->
+    <div data-testid="LayoutResizer__resize-bar">
+      <input type="range" min="72" max="420" step="10" value="280" />
+    </div>
+
+    <main>
+      <!-- La cabecera del album: caratula señuelo 1 de 3, y el boton de
+           guardar EL ALBUM, que es la trampa medida del testid
+           'add-button': tambien lleva aria-checked y en una pasada del
+           diagnostico era EL que casaba. Va ANTES de la barra a
+           proposito: un selector de me-gusta sin anclar caeria aqui. -->
+      <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00001e02senuelodelalbum" alt="" />
+      <button data-testid="add-button" aria-checked="true" aria-label="Agregar a la biblioteca"></button>
+
+      <!-- La vista de letras abierta (ruta /lyrics): las lineas viven en
+           divs sueltos directamente bajo main. Las clases reproducen la
+           ESTRUCTURA medida (2026-09-16), no los nombres: en la pagina
+           real vienen minificadas y ROTAN entre despliegues, asi que el
+           adaptador no puede buscar un nombre, tiene que calcular cual
+           aparece en una sola linea. Aqui: una clase base comun a todas
+           y una marca que solo lleva la linea que se canta.
+
+           La FORMA copia la segunda pasada medida (68 divs en el DOM,
+           65 lineas emitidas): 2 vacias al frente, una vacia interior
+           (separador de estrofa) y una vacia al final. El trim() del
+           portador sintetico se come las del frente y la del final,
+           asi que la marcada (DOM 3) es la linea EMITIDA 1. -->
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line">Linea uno de relleno</div>
+      <div dir="auto" class="clase-base-minificada marca-de-la-que-canta" data-testid="lyrics-line">Linea dos de relleno</div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line">Linea tres de relleno</div>
+      <div dir="auto" class="clase-base-minificada" data-testid="lyrics-line"></div>
+    </main>
+
+    <!-- El panel derecho: la cola. Es un <aside> con DOS <ul> (medido:
+         1 fila sonando + 12 siguientes; aqui 3). Los aria-label vienen
+         TRADUCIDOS: la separacion del adaptador es estructural. -->
+    <aside aria-label="Fila de reproducción">
+      <button data-testid="PanelHeader_CloseButton" aria-label="Cerrar"></button>
+      <h2>Fila de reproducción</h2>
+
+      <!-- Los señuelos del panel: el mismo trio de testids que la ficha
+           de la barra, ANTES que la buena en orden de documento -->
+      <div data-testid="context-item-info-title"><a data-testid="context-item-link" href="/track/senuelo">Señuelo del panel</a></div>
+      <span data-testid="context-item-info-subtitles"><a href="/artist/senuelo">Señuelo de artista</a></span>
+      <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00001e02senuelodelpanel" alt="" />
+
+      <!-- EL CANVAS: el unico <video> de la pagina y no es la musica
+           (muted, bucle de 6,9 s; medido con la musica sonando y
+           el elemento en silencio). Su padre medido: canvasVideoContainerNPV,
+           y el testid estable mas cercano (medido 2026-09-16):
+           NPV_Panel_OpenDiv, el ancla de getCanvasVideo(). -->
+      <div data-testid="NPV_Panel_OpenDiv">
+        <div class="canvasVideoContainerNPV">
+          <video muted loop src="https://video-fa.scdn.co/canvaz/bucle-visual"></video>
+        </div>
+      </div>
+
+      <h2>Estás escuchando</h2>
+      <ul aria-label="Estás escuchando">
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851sonando" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">El Precio de Tu Error</span>
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/yeison">Yeison Jiménez</a>, <a href="/artist/pasabordo">Pasabordo</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+      </ul>
+
+      <h2>Próximas canciones de: Veci</h2>
+      <ul aria-label="Siguiente">
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851siguiente1" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">Vas a Llorar</span>
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/yeison">Yeison Jiménez</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851siguiente2" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">El Amor de Mi Vida</span>
+            <!-- El envoltorio medido tal cual: su textContent ya trae
+                 los artistas CON las comas puestas -->
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/nico">Nico Hernández</a>, <a href="/artist/recoditos">Banda Los Recoditos</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+        <li>
+          <img data-testid="entity-image" src="https://i.scdn.co/image/ab67616d00004851siguiente3" alt="" />
+          <button data-testid="play-button" aria-label="Reproducir"></button>
+          <div>
+            <span class="e-10860-line-clamp">Aventurero</span>
+            <span class="L0K1ZKmubWHgrHYlWxDu"><a href="/artist/pasabordo">Pasabordo</a></span>
+          </div>
+          <button data-testid="more-button" aria-label="Más opciones"></button>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- La barra inferior: un <aside>, no un <footer> (medido: en la
+         vista de letras el footer no esta y esta barra sigue) -->
+    <aside data-testid="now-playing-bar">
+      <div data-testid="now-playing-widget">
+        <img data-testid="cover-art-image" src="https://i.scdn.co/image/ab67616d00004851caratulabuena" alt="" />
+        <div data-testid="context-item-info-title"><a data-testid="context-item-link" href="/track/elpreciodetuerror">El Precio de Tu Error</a></div>
+        <span data-testid="context-item-info-subtitles"><a href="/artist/yeison">Yeison Jiménez</a>, <a href="/artist/pasabordo">Pasabordo</a></span>
+        <!-- "Me gusta": el UNICO boton con aria-checked dentro de la
+             ficha (medido). Su aria-label es idioma; el atributo no. -->
+        <button aria-checked="false" aria-label="Agregar a Tus me gusta"></button>
+        <!-- Señuelo: la ficha real trae mas botones SIN aria-checked -->
+        <button aria-label="Expandir"></button>
+      </div>
+
+      <!-- Los 5 botones medidos: 4 con data-testid y el aleatorio sin
+           el, que se caza justo por esa ausencia. Sin aria-checked ni
+           aria-pressed (medido encendido Y apagado: null los dos). -->
+      <div data-testid="player-controls">
+        <button class="e-10860-legacy-button" aria-label="Habilitar el Modo aleatorio inteligente para Veci"></button>
+        <button data-testid="control-button-skip-back" aria-label="Anterior"></button>
+        <!-- SONANDO: el dibujo del icono de pausa. Solo el PREFIJO del
+             path esta medido ("M2.7 1..."); el resto del dibujo es
+             relleno, el adaptador no lo mira. -->
+        <button data-testid="control-button-playpause" aria-label="Pausar">
+          <svg viewBox="0 0 16 16"><path d="M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z"></path></svg>
+        </button>
+        <button data-testid="control-button-skip-forward" aria-label="Siguiente"></button>
+        <!-- Repetir: aria-checked de TRES posiciones, medido a golpe de
+             clic: false=apagado, true=repetir todo, mixed=repetir una -->
+        <button data-testid="control-button-repeat" aria-checked="false" aria-label="Activar repetición"></button>
+      </div>
+
+      <div data-testid="playback-position">0:19</div>
+      <div data-testid="playback-progressbar">
+        <input type="range" min="0" max="161983" step="5000" value="20000" />
+      </div>
+      <div data-testid="playback-duration">2:41</div>
+
+      <!-- El boton de letras con la vista abierta (medido):
+           data-active y aria-pressed en "true", sin idioma -->
+      <button data-testid="lyrics-button" data-active="true" aria-pressed="true" aria-label="Letra"></button>
+      <button data-testid="control-button-queue" aria-checked="true" aria-label="Fila de reproducción"></button>
+
+      <!-- El deslizador de volumen (censo de ranges, 2026-09-16):
+           min=0 max=1 step=0.1, la pagina CUANTIZA a decimas. El 0.4
+           es el valor medido en vivo. -->
+      <div data-testid="volume-bar">
+        <input type="range" min="0" max="1" step="0.1" value="0.4" />
+      </div>
+    </aside>
+
+    <!-- Señuelo 2 del censo: el tirador de ancho del panel derecho
+         (min=280 max=362 step=10), tambien un range de verdad. -->
+    <div data-testid="LayoutResizer__resize-bar">
+      <input type="range" min="280" max="362" step="10" value="320" />
+    </div>
+  </body>
+</html>

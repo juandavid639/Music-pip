@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  Canción SIN letra. Dos señales simultáneas, como en la interfaz real:
+  la pestaña lleva el atributo `disabled` y #tab-renderer contiene un
+  ytmusic-message-renderer en vez del description shelf.
+-->
+<html lang="es">
+  <body>
+    <ytmusic-player-bar>
+      <yt-formatted-string class="title ytmusic-player-bar">Untitled Instrumental</yt-formatted-string>
+      <yt-formatted-string class="byline ytmusic-player-bar">Artista Desconocido</yt-formatted-string>
+    </ytmusic-player-bar>
+
+    <ytmusic-player-page id="player-page">
+      <div class="tab-header style-scope ytmusic-player-page">A CONTINUACIÓN</div>
+      <div class="tab-header style-scope ytmusic-player-page" disabled aria-disabled="true">LETRA</div>
+      <div class="tab-header style-scope ytmusic-player-page">RELACIONADO</div>
+
+      <div id="tab-renderer">
+        <ytmusic-message-renderer>
+          <yt-formatted-string class="text style-scope ytmusic-message-renderer">
+            Letra no disponible
+          </yt-formatted-string>
+        </ytmusic-message-renderer>
+      </div>
+    </ytmusic-player-page>
+  </body>
+</html>

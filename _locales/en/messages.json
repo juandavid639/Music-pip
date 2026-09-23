@@ -1,0 +1,644 @@
+{
+  "abrir_letra_completa": {
+    "message": "Open the full lyrics"
+  },
+  "abrir_ventana_flotante": {
+    "message": "Open floating window"
+  },
+  "abrir_ventana_music_pip": {
+    "message": "Open the Music PiP floating window"
+  },
+  "abrir_ventana_music_pip_title": {
+    "message": "Open floating window (Music PiP)"
+  },
+  "abrir_video_navegador": {
+    "message": "Open the video in the browser's floating window"
+  },
+  "adelantar_s": {
+    "message": "Forward $1 s"
+  },
+  "adelantar_segundos": {
+    "message": "Forward $1 seconds"
+  },
+  "ahora_suena": {
+    "message": "Now playing $1"
+  },
+  "ahora_suena_de": {
+    "message": "Now playing $1, by $2"
+  },
+  "aleatorio": {
+    "message": "Shuffle"
+  },
+  "banda_aire": {
+    "message": "Air"
+  },
+  "banda_claridad": {
+    "message": "Clarity"
+  },
+  "banda_cuerpo": {
+    "message": "Body"
+  },
+  "banda_graves": {
+    "message": "Bass"
+  },
+  "banda_medios": {
+    "message": "Mids"
+  },
+  "bandas_legend": {
+    "message": "The bands, from bass to treble"
+  },
+  "buscando_musica": {
+    "message": "Looking for the music…"
+  },
+  "cambiar_tamano": {
+    "message": "Resize"
+  },
+  "cambiar_tamano_ventana": {
+    "message": "Resize the window"
+  },
+  "cambios_se_guardan": {
+    "message": "Changes save themselves"
+  },
+  "cancion_anterior": {
+    "message": "Previous song"
+  },
+  "cancion_siguiente": {
+    "message": "Next song"
+  },
+  "cargando_letras": {
+    "message": "Loading lyrics…"
+  },
+  "cerrar": {
+    "message": "Close"
+  },
+  "cerrar_ventana": {
+    "message": "Close floating window"
+  },
+  "cola_no_a_la_vista": {
+    "message": "The queue is not in view on the page"
+  },
+  "comando_abrir_ventana": {
+    "message": "Open the floating window (if Chrome refuses, it highlights the page's PiP button)"
+  },
+  "comando_cancion_anterior": {
+    "message": "Previous song"
+  },
+  "comando_cancion_siguiente": {
+    "message": "Next song"
+  },
+  "comando_reproducir_pausar": {
+    "message": "Play or pause"
+  },
+  "conectado": {
+    "message": "Connected"
+  },
+  "conectado_a_sitio": {
+    "message": "Connected to $1"
+  },
+  "conectando": {
+    "message": "Connecting…"
+  },
+  "desconectado": {
+    "message": "Disconnected"
+  },
+  "donde_funciona": {
+    "message": "Which sites this works on"
+  },
+  "ecualizador": {
+    "message": "Equalizer"
+  },
+  "ecualizador_apagado": {
+    "message": "Equalizer: off"
+  },
+  "ecualizador_estado": {
+    "message": "Equalizer: $1"
+  },
+  "eq_ajuste_propio": {
+    "message": "custom setting"
+  },
+  "eq_apagado": {
+    "message": "off"
+  },
+  "eq_aviso_1": {
+    "message": "With \u201cOff\u201d the sound is untouched. As soon as you pick any other option, the tab's audio starts going through the equalizer, and"
+  },
+  "eq_aviso_2": {
+    "message": "keeps going through it even if you turn it off again"
+  },
+  "eq_aviso_3": {
+    "message": ", until you reload the music tab."
+  },
+  "eq_pista_1a": {
+    "message": "Because"
+  },
+  "eq_pista_1b": {
+    "message": "an equalizer redistributes the sound, it doesn't boost it"
+  },
+  "eq_pista_1c": {
+    "message": ". Music from YouTube Music already arrives at full level, so to make room for more bass everything else has to come down a little: the more you raise a band, the quieter the whole thing sounds. Right below the sliders we tell you what your current setting costs."
+  },
+  "eq_pista_2": {
+    "message": "Tip: lowering is free. If you want to hear more bass, lower the other bands instead of raising the bass one — you only pay for raising."
+  },
+  "eq_pista_3": {
+    "message": "And about \u201cOff\u201d: it leaves the sound as is, but if you ever turned the equalizer on, the detour stays in place inside until you reload the tab."
+  },
+  "eq_pregunta": {
+    "message": "Why does raising a band make it sound quieter?"
+  },
+  "error_letras": {
+    "message": "The lyrics could not be read"
+  },
+  "extension_descripcion": {
+    "message": "Floating window for YouTube Music, YouTube and Spotify: artwork, lyrics, equalizer and shortcuts. Unofficial, not affiliated."
+  },
+  "extension_recargada": {
+    "message": "Extension reloaded · press F5 on the tab"
+  },
+  "fijado_a_cancion": {
+    "message": "Pinned to this song: $1. Click to forget it"
+  },
+  "fijar_ecualizador": {
+    "message": "Pin the equalizer to this song"
+  },
+  "fila_ajuste": {
+    "message": "Setting"
+  },
+  "fila_ajuste_ayuda": {
+    "message": "Pick a ready-made one or move the bands yourself, which is what \u201cMy own\u201d means."
+  },
+  "fila_al_abrir": {
+    "message": "When it opens, show"
+  },
+  "fila_al_abrir_ayuda": {
+    "message": "Which of the two tabs the window opens with. Inside you can switch between them whenever you want."
+  },
+  "fila_altura": {
+    "message": "Bar height"
+  },
+  "fila_altura_ayuda": {
+    "message": "How much of the window's height they take up."
+  },
+  "fila_caida": {
+    "message": "How the bars fall"
+  },
+  "fila_caida_ayuda": {
+    "message": "At 1 they fall slowly and look smooth; at 60 they drop with every beat of the music."
+  },
+  "fila_canvas_ayuda": {
+    "message": "The short video Spotify gives some songs, as the window's background. It also turns on and off with the window's 🌌 button."
+  },
+  "fila_color": {
+    "message": "Color"
+  },
+  "fila_color_ayuda": {
+    "message": "What color they are painted. With a palette of yours, the bars go from the first color to the last."
+  },
+  "fila_colores": {
+    "message": "Colors"
+  },
+  "fila_colores_ayuda": {
+    "message": "The look of the window. It also decides what color the sound bars get if you leave them on \u201cThe theme's\u201d."
+  },
+  "fila_cuantas_barras": {
+    "message": "How many bars"
+  },
+  "fila_cuantas_barras_ayuda": {
+    "message": "\u201cAs many as fit\u201d shows more or fewer depending on how wide the window is."
+  },
+  "fila_cuantos_colores": {
+    "message": "How many colors"
+  },
+  "fila_difuminar": {
+    "message": "Fade it while playing"
+  },
+  "fila_difuminar_ayuda": {
+    "message": "It turns transparent to stay out of the way and shows fully again when you move the mouse over it. At 0 it never fades; 80 is almost invisible."
+  },
+  "fila_halo": {
+    "message": "Light halo"
+  },
+  "fila_halo_ayuda": {
+    "message": "A light along the inner edge of the window. \"Pulsing\" starts with your first click inside the window, because without a click the browser will not let us listen to the music. The window's ✨ button also turns it on and off."
+  },
+  "fila_halo_color": {
+    "message": "Halo color"
+  },
+  "fila_halo_color_ayuda": {
+    "message": "What color the edge glows. \"The theme's\" changes by itself when you switch between dark and light."
+  },
+  "fila_halo_tu_color_ayuda": {
+    "message": "All the edge light, base and pulse alike, is painted this color."
+  },
+  "fila_letra": {
+    "message": "Song lyrics"
+  },
+  "fila_letra_ayuda": {
+    "message": "They appear as a second tab inside the window, when the site has the lyrics for what's playing."
+  },
+  "fila_numero_barras": {
+    "message": "Number of bars"
+  },
+  "fila_numero_barras_ayuda": {
+    "message": "Between 8 and 40."
+  },
+  "fila_salto": {
+    "message": "Button jump"
+  },
+  "fila_salto_ayuda": {
+    "message": "How much the song moves forward or back when you press the forward and rewind buttons. Between 1 and 60."
+  },
+  "fila_tamano": {
+    "message": "Size when it opens"
+  },
+  "fila_tamano_ayuda": {
+    "message": "If you resize it by dragging an edge, it gets noted down; with \u201cAs I left it\u201d it will open like that next time."
+  },
+  "fila_tu_color": {
+    "message": "Your color"
+  },
+  "fila_tu_color_ayuda": {
+    "message": "All the bars are painted this color."
+  },
+  "fila_video": {
+    "message": "Music video"
+  },
+  "fila_video_ayuda": {
+    "message": "When the song has a video, it shows in the window instead of the artwork. Songs without one keep showing the artwork. Spotify's video is encrypted and can't show here: that one is what the window's 🎬 button is for."
+  },
+  "fondo_visual": {
+    "message": "Visual background"
+  },
+  "fuente": {
+    "message": "Source: $1"
+  },
+  "guardado": {
+    "message": "Saved."
+  },
+  "imagen_lata": {
+    "message": "Make the image beat with the bass"
+  },
+  "imagen_quieta": {
+    "message": "Keep the image still"
+  },
+  "ir_a": {
+    "message": "Go to $1: $2"
+  },
+  "letras": {
+    "message": "Lyrics"
+  },
+  "letras_cancion": {
+    "message": "Song lyrics"
+  },
+  "letras_no_disponibles": {
+    "message": "Lyrics not available"
+  },
+  "marca_recomendado": {
+    "message": "recommended"
+  },
+  "matriz_funcion": {
+    "message": "Feature"
+  },
+  "matriz_leyenda": {
+    "message": "What's missing is not neglect: Spotify's video is encrypted, its sound never passes through the page, and YouTube has no lyrics panel."
+  },
+  "matriz_pip_nativo": {
+    "message": "The browser's floating video (🎬)"
+  },
+  "me_gusta": {
+    "message": "Like"
+  },
+  "mostrar_caratula_letra": {
+    "message": "Show the artwork instead of the lyrics"
+  },
+  "mostrar_caratula_video": {
+    "message": "Show the artwork instead of the video"
+  },
+  "mostrar_espectro_musica": {
+    "message": "Show the music's spectrum"
+  },
+  "mostrar_fondo_visual": {
+    "message": "Show the song's visual background"
+  },
+  "mostrar_halo_luz": {
+    "message": "Show the edge light halo"
+  },
+  "mostrar_letra": {
+    "message": "Show the lyrics instead of the artwork"
+  },
+  "mostrar_ocultar_cola": {
+    "message": "Show or hide the playback queue"
+  },
+  "mostrar_ocultar_letras": {
+    "message": "Show or hide lyrics"
+  },
+  "mostrar_titulo_artista": {
+    "message": "Show the title and artist"
+  },
+  "mostrar_video": {
+    "message": "Show the video instead of the artwork"
+  },
+  "musica_no_encontrada": {
+    "message": "No music site found"
+  },
+  "no_se_pudo_volver": {
+    "message": "Could not go back to the tab"
+  },
+  "nota_pip_nativo": {
+    "message": "Spotify's video is encrypted and the window can't paint it; the 🎬 button opens it in the browser's own floating video, which the encryption doesn't affect."
+  },
+  "nota_sin_audio": {
+    "message": "On Spotify this doesn't work: its sound is out of the page's reach, so there is nothing to touch or measure."
+  },
+  "ocultar_espectro": {
+    "message": "Hide the spectrum"
+  },
+  "ocultar_espectro_musica": {
+    "message": "Hide the music's spectrum"
+  },
+  "ocultar_halo_luz": {
+    "message": "Hide the edge light halo"
+  },
+  "ocultar_titulo_artista": {
+    "message": "Hide the title and artist"
+  },
+  "opcion_a_mi_gusto": {
+    "message": "My own"
+  },
+  "opcion_barras_auto": {
+    "message": "As many as fit"
+  },
+  "opcion_barras_fijo": {
+    "message": "A fixed number"
+  },
+  "opcion_canvas_no": {
+    "message": "Don't show it (the usual background)"
+  },
+  "opcion_claro": {
+    "message": "Light"
+  },
+  "opcion_color_fuente": {
+    "message": "From the video or artwork"
+  },
+  "opcion_color_mio": {
+    "message": "A color of mine"
+  },
+  "opcion_color_paleta": {
+    "message": "A palette of mine"
+  },
+  "opcion_color_rgb": {
+    "message": "Rainbow (keeps changing on its own)"
+  },
+  "opcion_color_tema": {
+    "message": "The theme's"
+  },
+  "opcion_controles": {
+    "message": "The controls"
+  },
+  "opcion_eq_apagado": {
+    "message": "Off (don't touch the sound)"
+  },
+  "opcion_grande": {
+    "message": "Large (380 × 560)"
+  },
+  "opcion_halo_apagado": {
+    "message": "Off"
+  },
+  "opcion_halo_fijo": {
+    "message": "Steady (a still light)"
+  },
+  "opcion_halo_latido": {
+    "message": "Pulsing with the music"
+  },
+  "opcion_letra": {
+    "message": "The lyrics"
+  },
+  "opcion_letra_no": {
+    "message": "Never show them"
+  },
+  "opcion_letra_ver": {
+    "message": "Show them when available"
+  },
+  "opcion_oscuro": {
+    "message": "Dark"
+  },
+  "opcion_pequena": {
+    "message": "Small (340 × 200)"
+  },
+  "opcion_ultima": {
+    "message": "As I left it last time"
+  },
+  "opcion_video_no": {
+    "message": "Don't show it (always the artwork)"
+  },
+  "opcion_video_ver": {
+    "message": "Show it when available"
+  },
+  "opciones_sublema": {
+    "message": "How the floating window looks and behaves."
+  },
+  "opciones_titulo": {
+    "message": "Preferences — Music PiP"
+  },
+  "paleta_legend": {
+    "message": "The colors, from the first bar to the last"
+  },
+  "pausar": {
+    "message": "Pause"
+  },
+  "pista_color_fuente": {
+    "message": "The bars take the most dominant color of what you're watching, and change with the video. If the image has no clear color —black and white, or mostly dark— they fall back to the theme's color."
+  },
+  "pista_color_tema": {
+    "message": "This is the color: it only changes if you switch the window to the light theme."
+  },
+  "pista_halo_fuente": {
+    "message": "The border glows with the most dominant color of what you're watching, and changes with the video. If the image has no clear color —black and white, or mostly dark— it falls back to the theme's color."
+  },
+  "pip_nativo_rechazado": {
+    "message": "The browser asked for a click on the page to open its floating video"
+  },
+  "portada_de": {
+    "message": "Artwork for $1"
+  },
+  "posicion_cancion": {
+    "message": "Song position"
+  },
+  "preamp_baja": {
+    "message": "All the sound goes down $1 dB to make room for what you raised: that's what it costs. An equalizer redistributes the sound, it doesn't boost it; to raise the volume, use the system control."
+  },
+  "preamp_cabe": {
+    "message": "Nothing needs lowering: what you raised fits without taking room from the rest."
+  },
+  "preamp_nada": {
+    "message": "There is nothing to compensate: no band is raised."
+  },
+  "preferencias": {
+    "message": "Preferences"
+  },
+  "preset_graves": {
+    "message": "More bass"
+  },
+  "preset_nocturno": {
+    "message": "Night"
+  },
+  "preset_plano": {
+    "message": "Flat"
+  },
+  "preset_voz": {
+    "message": "Voice"
+  },
+  "proximas_canciones": {
+    "message": "Upcoming songs"
+  },
+  "pulso_graves": {
+    "message": "Beat with the bass"
+  },
+  "quitar_halo": {
+    "message": "Turn off the halo"
+  },
+  "quitar_me_gusta": {
+    "message": "Remove like"
+  },
+  "quitar_pulso": {
+    "message": "Remove the beat"
+  },
+  "quitar_silencio": {
+    "message": "Unmute"
+  },
+  "repetir": {
+    "message": "Repeat"
+  },
+  "repetir_cancion": {
+    "message": "Repeat: this song"
+  },
+  "repetir_desactivado": {
+    "message": "Repeat: off"
+  },
+  "repetir_lista": {
+    "message": "Repeat: the whole list"
+  },
+  "reproduccion_aleatoria": {
+    "message": "Shuffle playback"
+  },
+  "reproducir": {
+    "message": "Play"
+  },
+  "retroceder_s": {
+    "message": "Rewind $1 s"
+  },
+  "retroceder_segundos": {
+    "message": "Rewind $1 seconds"
+  },
+  "separador_decimal": {
+    "message": "."
+  },
+  "siguientes": {
+    "message": "Up next"
+  },
+  "silenciar": {
+    "message": "Mute"
+  },
+  "sin_letra": {
+    "message": "The site has no lyrics for this song"
+  },
+  "sin_portada": {
+    "message": "No artwork"
+  },
+  "sin_reproduccion": {
+    "message": "Nothing playing"
+  },
+  "solo_caratula": {
+    "message": "Artwork only"
+  },
+  "tarjeta_barras": {
+    "message": "Sound bars"
+  },
+  "tarjeta_barras_intro": {
+    "message": "The bars that move with the music behind the artwork. They turn on and off with the window's 📊 button; here you choose how they look."
+  },
+  "tarjeta_eq_intro": {
+    "message": "Change the balance of the sound: more bass, more voice, fewer highs at night."
+  },
+  "tarjeta_matriz": {
+    "message": "What works on each site"
+  },
+  "tarjeta_matriz_intro": {
+    "message": "Everything above, summed up: what each site offers and what it does not. The limits are measured, not assumed."
+  },
+  "tarjeta_musica": {
+    "message": "While the music plays"
+  },
+  "tarjeta_musica_intro": {
+    "message": "What shows inside the window and what the buttons do."
+  },
+  "tarjeta_spotify": {
+    "message": "Only on Spotify"
+  },
+  "tarjeta_spotify_intro": {
+    "message": "What Spotify has and the other sites don't. These settings only act on a Spotify tab."
+  },
+  "tarjeta_ventana": {
+    "message": "The floating window"
+  },
+  "tarjeta_ventana_intro": {
+    "message": "The little window that stays on top of everything else while you listen."
+  },
+  "temporizador": {
+    "message": "Sleep timer"
+  },
+  "temporizador_apagado": {
+    "message": "Sleep timer: off"
+  },
+  "temporizador_menos_minuto": {
+    "message": "Sleep timer: the music will pause in less than a minute"
+  },
+  "temporizador_minutos": {
+    "message": "Sleep timer: the music will pause in $1 minutes"
+  },
+  "unidad_seg": {
+    "message": "sec"
+  },
+  "velocidad": {
+    "message": "Playback speed"
+  },
+  "velocidad_normal": {
+    "message": "Playback speed: normal"
+  },
+  "velocidad_valor": {
+    "message": "Playback speed: $1"
+  },
+  "ver_caratula": {
+    "message": "Show artwork"
+  },
+  "ver_espectro": {
+    "message": "Show the spectrum"
+  },
+  "ver_halo": {
+    "message": "Turn on the halo"
+  },
+  "ver_letra_grande": {
+    "message": "Show the lyrics up close"
+  },
+  "ver_titulo_artista": {
+    "message": "Show the title and artist"
+  },
+  "ver_video": {
+    "message": "Show video"
+  },
+  "video_flotante_navegador": {
+    "message": "Browser's floating video"
+  },
+  "vista_previa_ayuda": {
+    "message": "It is the real window —same HTML, same CSS— playing a fake song. The buttons show it at its two opening sizes; the settings on this page do not change this preview."
+  },
+  "vista_previa_titulo": {
+    "message": "Preview of the floating window"
+  },
+  "volumen": {
+    "message": "Volume"
+  },
+  "volver_al_sitio": {
+    "message": "Back to $1"
+  }
+}
