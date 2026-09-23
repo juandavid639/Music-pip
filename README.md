@@ -6604,10 +6604,12 @@ Debilidad anunciada que sigue viva: la muestra de la nota usa
 `TARJETA.cx/cy` del propio módulo (autorreferente — documenta la capa;
 la posición la sujeta el cotejo).
 
-Quedan del lado del usuario: la cuenta de desarrollador, alojar la
-política (con su correo puesto donde dice `[CORREO-DE-CONTACTO]`), las
-capturas crudas y subir el zip. El mosaico no exige recarga: no viaja
-en el paquete.
+El proyecto vive en https://github.com/juandavid639/Music-pip (licencia
+MIT) y la política ya lleva el correo de contacto; con GitHub Pages
+encendido queda alojada en una URL pública (los pasos exactos, en
+`tienda/ficha.md`, sección 8). Quedan del lado del usuario: la cuenta de
+desarrollador, encender Pages, las capturas crudas y subir el zip. El
+mosaico no exige recarga: no viaja en el paquete.
 
 ## Pendiente (ver documento de arquitectura completo)
 

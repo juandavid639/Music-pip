@@ -186,18 +186,19 @@ anywhere else.
 | Mosaico promocional 440×280 | PENDIENTE — se puede generar por código como el logo |
 | Mosaico marquesina 1400×560 | OPCIONAL |
 
-## 8. Alojar la política de privacidad (gratis, 5 minutos)
+## 8. Alojar la política de privacidad — HECHO CON GITHUB PAGES
 
-Opción A — **GitHub Pages** (recomendada):
-1. Crear repositorio público (p. ej. `music-pip-privacidad`).
-2. Subir `politica-de-privacidad.html` renombrado a `index.html`.
-3. Settings → Pages → Deploy from branch → main → guardar.
-4. La URL queda `https://<tu-usuario>.github.io/music-pip-privacidad/`.
+El proyecto entero vive en https://github.com/juandavid639/Music-pip
+(licencia MIT; el correo de contacto ya está puesto en la política).
+Con Pages encendido (Settings → Pages → Deploy from a branch → main →
+/ (root) → Save), la URL que se pega en la consola de la tienda es:
 
-Opción B — **Google Sites**: crear un sitio, pegar el texto, publicar.
+```
+https://juandavid639.github.io/Music-pip/tienda/politica-de-privacidad.html
+```
 
-**OJO**: antes de subirla, reemplazar `[CORREO-DE-CONTACTO]` en el HTML por un
-correo real (la política debe dar una vía de contacto).
+Pages tarda 1-2 minutos en publicar tras cada push; comprobar que la URL
+abre antes de pegarla en la consola.
 
 ## 9. Orden de faena en la consola
 
