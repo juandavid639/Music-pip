@@ -6611,6 +6611,75 @@ encendido queda alojada en una URL pública (los pasos exactos, en
 desarrollador, encender Pages, las capturas crudas y subir el zip. El
 mosaico no exige recarga: no viaja en el paquete.
 
+## Los valores de serie cobran vida (la tanda R: la 1.0.1, primera actualización publicable)
+
+Primera tanda DESPUÉS de publicar la 1.0.0. La decisión, con las palabras
+del autor: «que el halo aumente conforme la música, lo mismo de el color
+con carátula, barras también con vídeo; las otras creo que están bien».
+Tres valores de `DEFAULT_SETTINGS` y nada más: `haloMode` pasa de
+`"fixed"` a `"pulse"`, y `haloColor` y `spectrumColor` pasan de
+`"accent"` a `"source"`. Ninguna mecánica nueva: solo cambia qué se ve
+sin tocar nada.
+
+**Por qué no rompe el estreno.** El miedo que mantenía `"fixed"` de serie
+—el latido necesita capturar audio y eso pide un clic— ya lo había
+resuelto la regla del gesto de la tanda J: con `"pulse"` guardado el halo
+sale fijo y arranca a latir con el primer clic que toque audio. Y los dos
+`"source"` degradan igual de solos: hasta que el muestreo tiene un color,
+la variable CSS no existe y todo cae al acento del tema (la ausencia ES
+el mecanismo, tandas K y M). La primera impresión es idéntica a la 1.0.0
+y va cobrando vida sola.
+
+**La suite entera se colgó, como estaba anunciado.** La memoria de la
+tanda M lo decía: un color `"source"` enciende el muestreo, que es un
+`setInterval` de verdad en la ventana de jsdom, y un intervalo vivo
+mantiene vivo el proceso. Con `"source"` de serie, TODA ventana virgen
+arranca uno, y las redes de cierre copiadas en `pip-halo` y
+`pip-color-fuente` dejaron de bastar: dos corridas completas se pararon
+en el mismo punto. La red se mudó al único sitio que ve nacer todas las
+ventanas, `tests/helpers/entorno.js` (`crearEntorno` las apunta y un
+`after` las cierra), y las redes viejas se quedan: cerrar dos veces es
+inocuo.
+
+**El segundo cuelgue disfrazado de TypeError.** Con el latido de serie,
+el clic del 📊 en `pip-espectro` y `pip-color-fuente` ya era gesto
+suficiente, y el primer fotograma pedía `getFloatFrequencyData` a un
+doble de audio que no lo implementa a propósito (esos archivos miden el
+espectro, no el halo, que tiene el suyo con el doble completo). El clavo
+es el mismo que ya usaba la prueba del 💓: sus bancos siembran
+`haloMode: "fixed"` salvo que una prueba pida otra cosa. Y la del 💓
+enseñó además la lección de `conLatidoGuardado` por el otro lado: sembrar
+sin `await Settings.load()` es no sembrar, porque `aplicar()` lee la
+caché — y la caché sin cargar dice ahora justo el valor que esa prueba
+necesita descartar.
+
+**Lo que hubo que mover con los valores.** El HTML estático de
+Preferencias dibuja a mano la píldora encendida de serie (tanda P), así
+que tres `aria-pressed` cambiaron de sitio (halo → «Latiendo», y los dos
+colores → «Del vídeo o la carátula»); la prueba del censo estático es la
+única que lo ve, y lo vio. La ronda-y-vuelta de `haloMode` siembra ahora
+`"fixed"` («"pulse" ERA el lejano y ahora es el de serie»), y la página
+virgen de Preferencias enseña la fuente CON su pista. `manifest.json` y
+`package.json` suben juntos a 1.0.1 —la prueba «LA VERSIÓN NO SE CUENTA
+DOS VECES» cayó sola al subir uno— y el `CHANGELOG.md` estrena su
+sección.
+
+**La prueba nueva** (891 en total): «la 1.0.1 estrena de serie: halo
+latiendo y colores según la fuente (decisión fijada)», con las palabras
+del autor citadas, para que revertir un valor no pueda pasar en silencio.
+
+**La mutación**: 3 mutantes (revertir cada valor de serie), todos
+muertos, **2/3/3 exactos**. Confesión de procedimiento: la primera
+predicción (1/1/2) se hizo antes de escribir los reanclajes y no contaba
+el censo de píldoras ni la página virgen del halo; se refijó por escrito
+ANTES de correr los mutantes y esa es la que clavó. Sobrevivieron a
+propósito las pruebas que comparan contra `DEFAULT_SETTINGS` en vivo
+(siguen al mutante) y las de la regla del gesto (ciertas con ambos
+modos). NO MEDIDO en vivo: el estreno real de la 1.0.1 con el latido y
+los colores de fuente de serie — la lógica es la misma ya confirmada en
+las tandas J, K y M, pero nadie ha abierto aún una ventana virgen de esta
+versión sobre el sitio real.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

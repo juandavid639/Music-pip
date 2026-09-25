@@ -1,6 +1,6 @@
 {
   "name": "music-pip",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Pruebas y utilidades de desarrollo. La extension NO se compila: se carga tal cual desde la raiz del proyecto.",
   "scripts": {

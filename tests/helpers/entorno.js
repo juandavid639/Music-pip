@@ -9,9 +9,38 @@
  */
 const fs = require("node:fs");
 const path = require("node:path");
+const { after } = require("node:test");
 const { JSDOM } = require("jsdom");
 
 const RAIZ = path.resolve(__dirname, "..", "..");
+
+/*
+ * LA RED: toda ventana que fabrique crearEntorno se apunta aqui y se
+ * cierra cuando el archivo de pruebas termina.
+ *
+ * Hasta la 1.0.1 esta red vivia copiada solo en pip-halo.test.js y
+ * pip-color-fuente.test.js, los dos unicos archivos que sembraban un
+ * color "source": ese modo enciende el muestreo de la fuente, que es un
+ * setInterval DE VERDAD en la ventana de jsdom, y un intervalo vivo
+ * mantiene vivo el proceso entero — `node --test` se queda esperando el
+ * archivo para siempre. Al volverse "source" el valor DE SERIE, cualquier
+ * ventana virgen arranca el intervalo, y la suite entera se colgo (medido:
+ * dos corridas paradas en el mismo punto). La red se muda al unico sitio
+ * que ve nacer todas las ventanas; win.close() de jsdom descarta el
+ * documento y para sus temporizadores, asi que cerrar dos veces (aqui y
+ * en las redes viejas, que se quedan) es inocuo.
+ */
+const VENTANAS_ABIERTAS = [];
+after(() => {
+  for (const w of VENTANAS_ABIERTAS) {
+    try {
+      w.close();
+    } catch (_error) {
+      // Una ventana ya cerrada por su propia suite no debe tumbar la red.
+    }
+  }
+  VENTANAS_ABIERTAS.length = 0;
+});
 
 /*
  * El catalogo español DE VERDAD, no frases copiadas aqui. Es la pieza que
@@ -97,6 +126,7 @@ function crearEntorno(html = "<!doctype html><html><body></body></html>", opcion
   const win = dom.window;
   win.self = win;
   win.chrome = chromeFalso(opciones);
+  VENTANAS_ABIERTAS.push(win);
   return { dom, win };
 }
 

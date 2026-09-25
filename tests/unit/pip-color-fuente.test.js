@@ -297,6 +297,15 @@ test.after(() => {
 });
 
 function ventana(opciones) {
+  /*
+   * El mismo clavo que en pip-espectro.test.js y por el mismo motivo:
+   * desde la 1.0.1 el halo late de serie, su lectura pide
+   * getFloatFrequencyData y el doble de audio de este archivo no lo
+   * implementa a proposito (aqui se mide el color de la fuente, no el
+   * halo). Fijo salvo que una prueba siembre otra cosa.
+   */
+  opciones = Object.assign({}, opciones);
+  opciones.storage = Object.assign({ haloMode: "fixed" }, opciones.storage);
   const { win } = crearEntorno(leerFixture("controles-completos.html"), opciones);
   ventanas.push(win);
   cargar(

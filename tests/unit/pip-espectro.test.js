@@ -146,6 +146,17 @@ function fingirAudio(win) {
 }
 
 function ventana(opciones) {
+  /*
+   * El halo se clava FIJO en todo el archivo desde la 1.0.1, en que el de
+   * serie paso a ser "pulse": el latido lee el golpe con
+   * getFloatFrequencyData, que el AudioContext fingido de arriba no
+   * implementa A PROPOSITO (aqui se mide el espectro, no el halo — el
+   * halo tiene su archivo con su doble completo). Sin este clavo, el
+   * clic del 📊 es gesto suficiente y el primer fotograma revienta con
+   * un TypeError que no habla de ninguna barra.
+   */
+  opciones = Object.assign({}, opciones);
+  opciones.storage = Object.assign({ haloMode: "fixed" }, opciones.storage);
   const { win } = crearEntorno(leerFixture("controles-completos.html"), opciones);
   cargar(
     win,

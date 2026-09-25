@@ -36,13 +36,16 @@ test("valores validos: se respetan tal cual", async () => {
     // es el unico que demuestra que la preferencia se respeta en vez de
     // caer al de serie.
     canvasPreference: "hidden",
-    // Las dos del halo, y las dos lejos de su valor de serie ("shown"/"fixed")
-    // por la misma razon que canvasPreference: solo lo distinto demuestra
-    // que la normalizacion respeta en vez de pisar.
+    // Las dos del halo, y las dos lejos de su valor de serie ("shown"/
+    // "pulse" desde la 1.0.1 — OJO: "pulse" ERA el lejano y ahora es el
+    // de serie, por eso aqui va "fixed") por la misma razon que
+    // canvasPreference: solo lo distinto demuestra que la normalizacion
+    // respeta en vez de pisar.
     haloPreference: "hidden",
-    haloMode: "pulse",
-    // Un hex y no "accent" (el de serie), por lo mismo de arriba. Ya en
-    // minusculas: las mayusculas las prueba aparte el caso del saneado.
+    haloMode: "fixed",
+    // Un hex y no "source" (el de serie desde la 1.0.1), por lo mismo de
+    // arriba. Ya en minusculas: las mayusculas las prueba aparte el caso
+    // del saneado.
     haloColor: "#00a1ff",
     spectrumBars: 20,
     spectrumFall: 30,
@@ -254,12 +257,30 @@ function puras() {
   return win.YTMPip.Settings;
 }
 
-test("espectro: storage vacio deja los valores por defecto, que son los de siempre", async () => {
+test("espectro: storage vacio deja los valores por defecto — los de siempre, salvo el color", async () => {
   const s = (await preferencias({})).get();
   assert.strictEqual(s.spectrumBars, "auto");
   assert.strictEqual(s.spectrumFall, 12, "12 es la caida que el espectro tenia antes de ser configurable");
   assert.strictEqual(s.spectrumHeight, 34, "34% era el alto fijo que estaba escrito en el CSS");
-  assert.strictEqual(s.spectrumColor, "accent");
+  assert.strictEqual(s.spectrumColor, "source", "desde la 1.0.1 el color de serie sigue a la fuente");
+});
+
+test("la 1.0.1 estrena de serie: halo latiendo y colores segun la fuente (decision fijada)", async () => {
+  /*
+   * Decision del autor tras publicar la 1.0.0, con sus palabras: «que el
+   * halo aumente conforme la musica, lo mismo de el color con caratula,
+   * barras tambien con video; las otras creo que estan bien». Esta prueba
+   * clava SOLO las tres claves que cambiaron — el resto de defaults sigue
+   * anclado en sus pruebas de siempre, que es donde esta el porque de
+   * cada uno. Los tres degradan con elegancia en frio: "pulse" sale fijo
+   * hasta el primer clic que toque audio (regla del gesto, tanda J) y
+   * "source" cae al color del tema hasta que haya caratula muestreada
+   * (la ausencia de la variable ES el mecanismo, tandas K y M).
+   */
+  const s = (await preferencias({})).get();
+  assert.strictEqual(s.haloMode, "pulse", "el halo de serie late con la musica");
+  assert.strictEqual(s.haloColor, "source", "el halo de serie toma el color de la caratula");
+  assert.strictEqual(s.spectrumColor, "source", "las barras de serie toman el color de la fuente");
 });
 
 test("espectro: numeros fuera de rango caen al valor por defecto", async () => {

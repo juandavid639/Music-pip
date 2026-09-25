@@ -4,10 +4,19 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
-## [Sin publicar]
+## [1.0.1] — 2026-09-25
 
-_Aquí se van anotando los cambios según se hacen; al publicar una
-versión, esta sección se renombra con su número y su fecha._
+### Cambiado
+
+- La ventana estrena con más vida de serie: el halo ahora **late con la
+  música** (antes venía fijo), y tanto el halo como las barras del
+  espectro toman **el color de lo que suena** (la carátula o el vídeo)
+  en vez del color del tema. Nada cambia para quien ya tocó esos
+  ajustes: solo son los valores de serie.
+- Sin sorpresas en el estreno: hasta el primer clic que toque audio el
+  halo sale fijo (el latido necesita ese gesto), y hasta que hay color
+  muestreado se usa el del tema — la primera impresión es idéntica a
+  la 1.0.0 y va cobrando vida sola.
 
 ## [1.0.0] — 2026-09-25
 

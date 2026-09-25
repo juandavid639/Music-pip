@@ -1114,17 +1114,23 @@ test("EL COLOR DEL HALO: un hex guardado abre el cuentagotas, y elegir «el del 
   assert.equal(pagina.almacen.haloColor, "#00a1ff", "el color del cuentagotas no llego al storage");
 });
 
-test("sin color de halo guardado sale «el del tema» y el cuentagotas escondido nace con el rojo sugerido", () => {
+test("sin color de halo guardado sale «del video o la caratula» y el cuentagotas escondido nace con el rojo sugerido", () => {
   /*
-   * El rojo sugerido y no negro: el mismo estreno que el cuentagotas del
+   * Reanclada en la 1.0.1: el valor de serie de haloColor paso de
+   * "accent" a "source" (decision del autor tras publicar), asi que la
+   * pagina virgen ya no enseña «El del tema» sino la fuente, CON su
+   * pista de que una portada sin color cae al tema. El rojo sugerido y
+   * no negro sigue igual: el mismo estreno que el cuentagotas del
    * espectro (COLOR_SUGGESTED), para que abrir «Un color mio» no enseñe
    * un #000000 que nadie eligio.
    */
   const pagina = abrirOpciones({});
-  assert.equal(pagina.doc.getElementById("haloColorMode").value, "accent");
+  assert.equal(pagina.doc.getElementById("haloColorMode").value, "source");
   const gotas = pagina.doc.getElementById("haloColor");
   assert.equal(gotas.hidden, true, "el cuentagotas se enseña sin haber elegido color propio");
   assert.equal(gotas.value, pagina.win.YTMPip.CONSTANTS.SPECTRUM_LIMITS.COLOR_SUGGESTED);
+  const pista = pagina.doc.getElementById("haloSourceHint");
+  assert.equal(pista.hidden, false, "la pagina virgen esconde la pista del modo que ahora es el de serie");
 });
 
 test("«DEL VIDEO O LA CARATULA» EN EL HALO: se carga, se guarda como palabra y trae su propia pista", () => {

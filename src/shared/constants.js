@@ -138,20 +138,30 @@
       // la gracia de la funcion; el boton de la ventana lo apaga y la
       // eleccion se recuerda como las demas preferencias.
       canvasPreference: "shown",
-      // El halo de luz: fijo y visible de serie. "Fijo" y no "latido"
-      // porque el latido necesita capturar el audio, y eso pide un clic
-      // del usuario (la misma regla del pulso); un valor de serie que no
-      // funciona hasta hacer algo seria un estreno roto.
-      haloPreference: "shown",
-      haloMode: "fixed",
-      // "accent" = el color del tema, la unica opcion que sigue al tema
-      // si el usuario lo cambia; un hex fijo aqui seria escribir el rojo
-      // de la marca por segunda vez (misma razon que spectrumColor).
-      haloColor: "accent",
       /*
-       * Preferencias del espectro. Los valores por defecto son EXACTAMENTE
-       * lo que el espectro hacia antes de que se pudiera configurar, para
-       * que quien no toque nada no note ningun cambio.
+       * El halo de luz: encendido y LATIENDO de serie. Decision del autor
+       * tras publicar la 1.0.0 («que el halo aumente conforme la musica»);
+       * antes era "fixed" por miedo a un estreno roto — el latido necesita
+       * capturar audio y eso pide un clic —, pero la regla del gesto
+       * (tanda J) ya resuelve eso sola: con "pulse" guardado el halo SALE
+       * fijo y arranca a latir con el primer clic que toque audio. El
+       * estreno no queda roto, queda quieto hasta el primer gesto. En
+       * Spotify (sin captureStream) se queda fijo siempre.
+       */
+      haloPreference: "shown",
+      haloMode: "pulse",
+      // "source" = el color de lo que se este viendo (video o caratula),
+      // pedido por el autor junto con el latido. Hasta que el muestreo
+      // tenga un color, la variable CSS no existe y el halo cae al color
+      // del tema — la ausencia ES el mecanismo (tandas K y M), asi que
+      // el arranque en frio se ve exactamente como el "accent" de antes.
+      haloColor: "source",
+      /*
+       * Preferencias del espectro. Numero, caida y alto siguen siendo
+       * EXACTAMENTE lo que el espectro hacia antes de ser configurable,
+       * para que quien no toque nada no note ningun cambio. El COLOR es
+       * la excepcion desde la 1.0.1: "source" de serie, pedido por el
+       * autor junto con el latido del halo («barras tambien con video»).
        *
        * `"auto"` no es un numero disfrazado: con un numero fijo el espectro
        * sale ridiculo en los dos extremos —en la ventana mini las barras se
@@ -159,18 +169,19 @@
        * reparto por ancho sigue siendo lo que se ofrece de entrada. Quien
        * quiera un numero concreto lo pone, y entonces manda el suyo.
        *
-       * `"accent"` tampoco es un color: es "el que diga el tema". Poner
-       * aqui el rojo de la marca seria escribir el color por segunda vez y
-       * dejar el espectro en rojo oscuro sobre blanco en cuanto alguien
-       * eligiera el tema claro. El tercer valor posible, `"rgb"`, tampoco
-       * es un color: es "ninguno fijo, ve girando". Y el cuarto, `"source"`,
-       * es "el que mande en lo que se esta viendo" —el video o la carátula—,
-       * que ni siquiera se puede saber hasta que haya algo en pantalla.
+       * `"source"` tampoco es un color: es "el que mande en lo que se esta
+       * viendo" —el video o la caratula—, que ni siquiera se puede saber
+       * hasta que haya algo en pantalla; hasta entonces las barras usan el
+       * color del tema, igual que con `"accent"` (= "el que diga el tema";
+       * poner aqui un rojo fijo seria escribir el color de la marca por
+       * segunda vez). El tercer valor, `"rgb"`, tampoco es un color: es
+       * "ninguno fijo, ve girando". Y un "#rrggbb" o una lista de ellos
+       * son el color propio o la paleta del usuario.
        */
       spectrumBars: "auto",
       spectrumFall: 12,
       spectrumHeight: 34,
-      spectrumColor: "accent",
+      spectrumColor: "source",
 
       /*
        * Cuanto se atenua la ventana MIENTRAS SUENA la musica, en porcentaje.

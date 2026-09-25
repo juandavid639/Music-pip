@@ -222,12 +222,14 @@ function golpear(v) {
  * La preferencia: capa y boton
  * ------------------------------------------------------------------ */
 
-test("de serie el halo esta encendido y FIJO: la capa se ve y no se monta ningun analizador", () => {
+test("de serie el halo esta encendido y QUIETO: sin gesto no se monta analizador aunque el modo guardado sea latido", () => {
   /*
    * Las dos mitades importan. La capa visible es la preferencia de serie
-   * (haloPreference "shown"); el analizador sin montar es la promesa de
-   * que un halo fijo es CSS puro, sin FFT por fotograma para una luz que
-   * no se mueve.
+   * (haloPreference "shown"); y desde la 1.0.1 el modo de serie es
+   * "pulse", asi que el analizador sin montar ya no es «un halo fijo es
+   * CSS puro» sino LA REGLA DEL GESTO aplicada al estreno: el latido
+   * guardado sale fijo hasta el primer clic que toque audio. Este es el
+   * arranque en frio que ve todo usuario nuevo.
    */
   const v = ventana();
   conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
@@ -342,11 +344,20 @@ test("el halo late con --ytmpip-halo-golpe y la caratula se queda quieta", async
   );
 });
 
-test("y al reves: el 💓 encendido con el halo fijo no hace brillar el borde", () => {
-  const v = ventana();
+test("y al reves: el 💓 encendido con el halo fijo no hace brillar el borde", async () => {
+  /*
+   * El modo fijo se SIEMBRA desde la 1.0.1: el de serie ahora es "pulse",
+   * y con el default esta prueba se destruia sola — el clic del 💓 es
+   * justamente el gesto que desbloquea el latido guardado. Y se siembra
+   * COMO MANDA la nota de conLatidoGuardado: por Settings.load(), porque
+   * aplicar() lee la cache y una cache sin load() sigue diciendo el de
+   * serie (que ahora es justo el que esta prueba necesita descartar).
+   */
+  const v = ventana({ storage: { haloMode: "fixed" } });
   conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
   v.PipView.onStateUpdate(sinVideo());
-  aplicar(v); // halo de serie: encendido y fijo
+  await v.Settings.load();
+  aplicar(v); // halo encendido y fijo (sembrado arriba)
 
   v.banco.pulsarPulso();
   golpear(v);
@@ -454,12 +465,13 @@ test("sin audio capturable (Spotify) el latido guardado no puede latir, pero el 
  * El color del halo (tanda K): "accent" o un hex, por la FORMA
  * ------------------------------------------------------------------ */
 
-test("de serie el color es el del tema: la capa NO lleva la variable en linea", () => {
+test("de serie el color sigue a la fuente, y sin nada muestreado la capa NO lleva la variable en linea", () => {
   /*
    * La ausencia ES el mecanismo: sin --ytmpip-halo-color en linea, la
    * cadena del CSS cae a var(--ytmpip-accent) y el halo sigue al tema
-   * solo. Si aqui apareciera un hex copiado del tema, cambiar de tema
-   * dejaria el halo con el color viejo.
+   * solo. Desde la 1.0.1 el de serie es "source", y esta prueba es el
+   * arranque en frio: sin caratula muestreada el pintor no escribe nada
+   * y el estreno se ve EXACTAMENTE como el "accent" de antes.
    */
   const v = ventana();
   v.PipView.onStateUpdate(sinVideo());
