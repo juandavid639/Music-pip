@@ -225,3 +225,23 @@ abre antes de pegarla en la consola.
 6. Distribución: pública, todos los países (o los que quieras).
 7. Submit for review — la revisión tarda de horas a pocos días; los rechazos
    llegan por correo con el motivo.
+
+## 10. Cómo publicar una actualización (PUBLICADA 1.0.0 el 2026-09-25)
+
+1. Hacer los cambios con el ritual de siempre (pruebas, mutación, README).
+2. Subir el número en `manifest.json` → `"version"` (la tienda solo acepta
+   versiones mayores que la publicada). Criterio: tercer número para arreglos
+   (1.0.1), segundo para funciones nuevas (1.1.0).
+3. Anotar lo visible en `CHANGELOG.md` (raíz del repo): mover lo de
+   «Sin publicar» a una sección con el número y la fecha.
+4. Reempaquetar: `tools/empaquetar.ps1` + `tools/revisar-zip.js` — el zip
+   sale con el número nuevo en el nombre.
+5. Consola → el elemento → **Package** → **Upload new package** → subir el
+   zip → **Submit for review**.
+6. Los usuarios se actualizan solos (Chrome busca cada pocas horas); no hay
+   que avisar a nadie.
+7. Commit + tag en el repo: `git tag v1.0.1` y `git push --tags`.
+
+OJO: añadir permisos nuevos en el manifiesto dispara revisión profunda y
+puede mostrar un aviso de «nuevos permisos» a los usuarios. No tocar
+`permissions` ni `host_permissions` salvo necesidad real.
