@@ -7458,6 +7458,28 @@ primera versión de una prueba miraba demasiado pronto), 1 en
 **12 de 12 recuentos exactos**. NO MEDIDO: cómo se ven ▶ y ❚❚ en la
 etiqueta real de Chrome (el tamaño de los glifos depende del sistema).
 
+## La 1.1.0 (las cinco mejoras visuales, empaquetadas)
+
+Primera versión con funciones nuevas desde la publicación, así que sube el
+segundo número (receta de la ficha, sección 10). Lleva las tandas Y a AC:
+cuatro temas, tres formas de espectro, el disco de vinilo, el fundido
+entre carátulas y el estado en el icono. `manifest.json`, `package.json` y
+`package-lock.json` suben juntos y el `CHANGELOG.md` pasa su sección «Sin
+publicar» a «[1.1.0]». Suite entera: 1021/1021.
+
+El zip sigue con 40 archivos: todo lo nuevo se escribió dentro de los que
+ya viajaban, y lo que se añadió fuera (pruebas, scripts de mutación) no
+viaja. **Permisos: ninguno nuevo** (`setBadgeText` viene con el icono), así
+que no hay revisión profunda ni aviso a los usuarios; y esta vez tampoco
+cambia ninguna justificación de la ficha.
+
+NO MEDIDO en vivo, y es mucho: los dos temas nuevos, las tres formas con
+audio real, el disco con una carátula de verdad, el fundido con portadas
+que tardan en llegar y la etiqueta del icono en Chrome. Todo se comprobó
+en jsdom y, lo visual, a ojo en la vista previa o en páginas temporales
+con el `pip.js` real; nada de eso es la ventana flotante sobre YouTube
+Music.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
