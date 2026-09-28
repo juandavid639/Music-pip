@@ -7143,6 +7143,32 @@ permiso del autor): **973 de 973**, en Windows. Las tandas S a W habían
 dejado su total «sin contar», porque por decisión del autor en cada una
 solo se corrían sus archivos; esta es la cuenta que las cierra a todas.
 
+## La 1.0.2 (las tandas S a X, empaquetadas)
+
+Segunda actualización publicable, con todo lo de la auditoría del
+2026-09-28. `manifest.json` y `package.json` suben juntos a 1.0.2 (la
+prueba «LA VERSIÓN NO SE CUENTA DOS VECES» lo vigila), y el
+`CHANGELOG.md` pasa su sección «Sin publicar» a «[1.0.2]». De paso,
+`package-lock.json` se puso al día: seguía llamándose
+`youtube-music-pip` 0.1.0 desde antes del cambio de nombre, y no llevaba
+el `engines` nuevo que va a leer `npm ci` en la integración continua;
+el cambio toca solo los campos de la raíz, ninguna dependencia.
+
+El zip sale con los mismos **40 archivos** que la 1.0.1 (todo lo nuevo de
+estas tandas son pruebas y herramientas, que no viajan), limpio según
+`revisar-zip.js`, y lleva dentro la versión, los catálogos con las claves
+nuevas, la vista previa inventada y el service worker con la pestaña
+recordada. Suite entera: 973/973 antes de subir la versión; después solo
+cambiaron números de versión, y sus dos archivos de pruebas siguen en
+verde.
+
+**Al subirla a la consola** hay que pegar de nuevo la justificación del
+permiso `scripting` (sección de permisos de `tienda/ficha.md`), que ahora
+cuenta la reinyección. Los permisos no cambian: no hay revisión profunda ni
+aviso a los usuarios por ese lado. NO MEDIDO: esta versión instalada en
+Chrome, y la actualización real desde la 1.0.1 (que es justo cuando se
+estrena la reinyección de la tanda T).
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
