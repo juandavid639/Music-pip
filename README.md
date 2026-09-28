@@ -1,9 +1,13 @@
 # Music PiP
 
 Extensión de Chrome (Manifest V3, no oficial, no afiliada a Google/YouTube) que abre una
-ventana flotante (Document Picture-in-Picture) para controlar YouTube Music: portada,
-título, artista, progreso, controles de reproducción y letras (solo las que la propia
-página ya muestra en pantalla, sean de YouTube Music o de Better Lyrics).
+ventana flotante (Document Picture-in-Picture) para controlar YouTube Music, YouTube y
+Spotify: portada, título, artista, progreso, controles de reproducción y letras (solo
+las que la propia página ya muestra en pantalla, sean del sitio o de Better Lyrics).
+
+*(Aquí ponía «para controlar YouTube Music» a secas, escrito antes de que llegaran
+YouTube y Spotify; lo encontró la auditoría del 2026-09-28 junto con los demás datos
+caducados de esta página, corregidos en la tanda X.)*
 
 *(Se llamaba «YouTube Music PiP». El nombre se acortó al preparar la publicación,
 por dos motivos: llevar una marca ajena en el nombre es la causa de rechazo más
@@ -14,11 +18,15 @@ puede arreglar y sí se puede sujetar.)*
 
 ## Estado actual
 
-Prototipo funcional (Fase 1 del documento de arquitectura), en JavaScript plano sin
-paso de build. Implementa el backlog de prioridad crítica:
+Publicada en la Chrome Web Store (la 1.0.0 el 2026-09-25; lo que ha cambiado desde
+entonces está en `CHANGELOG.md`), en JavaScript plano sin paso de build. Nació como
+prototipo de la Fase 1 del documento de arquitectura, y esta lista es la de aquel
+backlog de prioridad crítica, ampliada tanda a tanda:
 
-- Manifest V3, permisos mínimos de verdad (`storage`, `scripting`, host permission
-  solo para `music.youtube.com`).
+- Manifest V3, permisos mínimos de verdad (`storage`, `scripting`, y permiso de host
+  solo para los tres sitios: `music.youtube.com`, `www.youtube.com` y
+  `open.spotify.com`). *(Ponía «solo para `music.youtube.com`», de antes de la
+  tanda multi-sitio.)*
 
   *(Aquí ponía además `activeTab`. Se pedía y no se usaba en ninguna línea de
   código: aparecía solo en el manifiesto. Todo el acceso a pestañas pasa por
@@ -3243,7 +3251,11 @@ npm install   # solo la primera vez (jsdom es la única dependencia)
 npm test
 ```
 
-806 pruebas con el runner nativo de Node (`node --test`) y jsdom. **La extensión
+Las pruebas usan el runner nativo de Node (`node --test`) y jsdom, y piden **Node 21 o
+más** (`engines` en `package.json`): el patrón `"tests/**/*.test.js"` de `npm test`
+lo expande el propio `node --test` solo desde la 21, y en la 20 no encuentra ningún
+archivo. *(Aquí ponía «806 pruebas»: eran 891 cuando la auditoría lo leyó. Se quita el
+número por la misma regla que el de las preferencias de arriba.)* **La extensión
 sigue sin paso de compilación**: el arnés de `tests/helpers/entorno.js` evalúa los
 archivos de `src/` tal cual, sin transformarlos. Funciona porque todos los módulos
 son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
@@ -3924,10 +3936,10 @@ salieron de encontrar el defecto con la prueba puesta:
 ## Empaquetado
 
 ```bash
-npm run empaquetar   # -> dist/music-pip-1.0.0.zip
+npm run empaquetar   # -> dist/music-pip-<versión del manifest>.zip
 ```
 
-`tools/empaquetar.ps1` copia solo `manifest.json`, `src/` y `assets/` mediante
+`tools/empaquetar.ps1` copia solo `manifest.json`, `_locales/`, `src/` y `assets/` mediante
 lista blanca, y aborta si detecta `better-lyrics-master`, `tools`, `tests`,
 `node_modules` o `.git`. No usa `Compress-Archive`: en Windows PowerShell 5.1
 escribe las rutas internas con barra invertida y la especificación ZIP exige barra
@@ -6679,6 +6691,457 @@ modos). NO MEDIDO en vivo: el estreno real de la 1.0.1 con el latido y
 los colores de fuente de serie — la lógica es la misma ya confirmada en
 las tandas J, K y M, pero nadie ha abierto aún una ventana virgen de esta
 versión sobre el sitio real.
+
+## Las preferencias dejan de recargarse cada segundo (la tanda S: primera tanda salida de una auditoría)
+
+La auditoría del 2026-09-28 sobre la 1.0.1 encontró un fallo que llevaba
+ahí desde que existe la ventana de respaldo, y que ninguna prueba podía ver
+porque ninguna preguntaba por él. La lista de exclusiones de
+`src/shared/settings.js` (`CLAVES_QUE_SE_APLICAN`) decidía qué cambios de
+storage hacen que las preferencias se relean y se vuelvan a aplicar, y se
+había razonado clave por clave… para las tres anotaciones que alguien
+recordó. Se le escapaban las dos que escribe el service worker, y una de
+ellas era la peor posible: `lastKnownState`.
+
+**La cadena.** El content script manda el estado al service worker cada
+vez que cambia su firma, y la firma lleva `Math.floor(currentTime)`: una
+vez por segundo mientras suena música. El service worker lo guarda en
+`lastKnownState`, eso dispara `storage.onChanged` en todas las pestañas
+soportadas, y cada una hacía `load()` —leer TODAS las claves, las 200
+canciones del ecualizador incluidas— y `notify()`, con lo que la ventana
+volvía a aplicar tema, variables CSS y ecualizador. Para quedarse
+exactamente igual, sesenta veces por minuto.
+
+**El arreglo** es añadir las dos claves a la lista, que ahora es una
+lista con nombre (`CLAVES_QUE_NO_SE_APLICAN`) en vez de un filtro de
+`&&` encadenados. Se pensó en darle la vuelta y hacer una lista blanca, y
+se descartó a sabiendas: olvidar una anotación cuesta recargas de más (lo
+que pasó), olvidar una preferencia en una lista blanca costaría un ajuste
+que deja de aplicarse en vivo sin que nadie lo note. El segundo olvido es
+más silencioso que el primero.
+
+**Lo que impide que vuelva a pasar** no es la línea arreglada sino el
+censo de `tests/unit/settings-recargas.test.js`: una tabla que clasifica
+TODAS las claves de `STORAGE_KEYS` como preferencia o como anotación, y
+una prueba que cae si aparece una clave sin clasificar. Quien añada la
+próxima tiene que decidir por escrito qué es. Otra prueba recorre la
+tabla y comprueba que cada clave hace lo que dice su fila.
+
+**La política de privacidad, de paso.** La misma auditoría vio que
+`tienda/politica-de-privacidad.html` prometía dos cosas que no eran
+ciertas: que los datos se podían borrar «restaurando los valores de
+fábrica» en Preferencias (ese botón no existe) y que lo que se lee de la
+página «no se registra» (se guardan en local `lastKnownState` —título,
+artista, carátula, letra y cola— y la memoria del ecualizador por canción,
+hasta 200 pares título/artista). Ahora enumera las tres cosas que se
+guardan, en los dos idiomas, y dice cómo se borran de verdad: la
+chincheta para cada canción y la desinstalación para todo. La
+declaración de datos de la ficha (sección 6) sigue siendo «no se
+recopila nada»: la Chrome Web Store llama recopilar a transmitir fuera
+del equipo, y nada sale de él.
+
+**Las pruebas**: 5 nuevas en `settings-recargas.test.js`, verdes. Por
+decisión del autor se corrió solo ese archivo, no la suite entera (que
+queda para antes de empaquetar la próxima versión): el recuento total
+esperado es 896, pero NO SE HA CONTADO.
+
+**La mutación** (`tools/mutar-recargas.js`): 4 mutantes, todos muertos,
+**2/1/1/2 exactos** contra la predicción fijada por escrito en la cabecera
+del script antes de correrlo. El primer mutante es, letra por letra, el
+código de la 1.0.1: la prueba de regresión cae con él. Ningún mutante
+tumba el censo, y es lo esperado: el censo no vigila esta lista sino
+`STORAGE_KEYS`, y ninguna mutación de aquí añade una clave. NO MEDIDO en
+vivo: cuánto se nota el ahorro en un navegador real; lo que se ha medido
+es que las lecturas de storage por segundo de música pasan de una a cero.
+
+## El service worker deja de olvidar (la tanda T: la pestaña recordada, la reinyección y las respuestas que no mienten)
+
+Segunda tanda salida de la auditoría del 2026-09-28. El service worker era
+el único archivo de la extensión sin ninguna prueba, y la auditoría le
+encontró cinco fallos de la familia de siempre: ninguno da error.
+
+**1. Los atajos se iban a otra pestaña.** La pestaña musical vivía solo en
+la variable `musicTabId`, y un service worker de MV3 se duerme a los ~30 s
+sin eventos. Al despertar valía `null`, y como solo se rehidrataba al
+instalar y al arrancar Chrome, `findMusicTab` caía a `tabs[0]`. Con la
+música en pausa (ninguna pestaña `audible`), Alt+Shift+K un minuto después
+le daba al play de la primera pestaña soportada, que desde que
+www.youtube.com es sitio soportado puede ser un tutorial cualquiera. Ahora
+la pestaña se recuerda en `chrome.storage.session`, que es justo la vida
+que hace falta: sobrevive al sueño y muere al reiniciar el navegador o al
+actualizar, que es cuando los ids de pestaña dejan de significar nada.
+
+**2. Cualquier pestaña se quedaba el puesto y escribía el estado.**
+`CONTENT_SCRIPT_READY` se quedaba el puesto sin preguntar: abrir la portada
+de YouTube bastaba para que los atajos dejaran la música. Y `STATE_UPDATE`
+escribía `lastKnownState` viniera de donde viniera: esa misma portada pisaba
+con su «sin reproducción» la canción de la pestaña de Spotify. La regla
+nueva es una sola: **la pestaña musical es la última que sonó**. Cargar
+solo da el puesto si está vacante; empezar a sonar lo gana siempre; y el
+último estado solo lo escribe la recordada. Una pestaña `audible` sigue
+mandando por encima, como antes. Cerrar la pestaña compara contra la
+recordada y no contra la variable: cerrar DESPIERTA al service worker, y
+recién despierto la comparación vieja fallaba justo cuando más falta hacía,
+con el menú de respaldo pintando «conectado» a una pestaña que ya no existía.
+
+**3. Cada actualización dejaba la extensión muerta hasta un F5.** Este era
+el peor, y la auditoría se quedó corta: lo apuntó como «atajos e icono
+muertos», pero leyendo el modo huérfano apareció que también el botón PiP de
+la propia página estaba muerto, porque `openPip` se niega sin extensión viva
+(necesita cargar pip.html). Chrome solo inyecta los content scripts en las
+páginas que se cargan después de instalar o actualizar; las que ya estaban
+abiertas se quedaban sin nada o con un huérfano. La 1.0.1 recién publicada
+ya lo hizo con todos los que la tuvieran abierta.
+
+Ahora el service worker, al instalar y al actualizar, da script a cada
+pestaña soportada que no tenga uno vivo, con la lista de archivos leída del
+propio manifiesto (una copia sería una segunda lista que no se entera de los
+módulos nuevos). Se salta la que está cargando (la cubre Chrome con el
+manifiesto al llegar a `document_idle`, e inyectarle también daría dos
+copias de todo en el mismo mundo) y la descartada (no tiene documento). Y
+como red para lo que eso no alcance, todo mensaje a una pestaña que responde
+«no hay nadie al otro lado» le da script y lo intenta una vez más; el icono
+hace lo mismo cuando la pestaña no tiene `PipView` en este mundo.
+
+**El segundo problema de la reinyección: el botón del huérfano.** Una
+pestaña que no se recargó tiene ahora DOS mundos aislados sobre un solo DOM,
+y el huérfano ya dejó su botón PiP puesto. La comprobación de siempre (¿hay
+algo con este id?) hacía que el mundo vivo no pusiera el suyo, y el que se
+veía era el del huérfano: un botón que no abre nada, justo después de
+actualizar. Ahora el mundo vivo ADOPTA: si el botón con ese id no es el
+suyo, lo sustituye en el mismo sitio. Y un huérfano ni pone botón ni roba el
+ajeno, porque con este mismo código (de la 1.0.2 en adelante) robaría de
+vuelta en cada mutación y los dos observers se pasarían la vida quitándose
+el botón. El huérfano de la 1.0.1 no necesita esa guarda: solo mira el id,
+lo encuentra y se calla.
+
+**Lo que se pierde conviviendo con el huérfano, dicho claro.** Su observer
+sigue corriendo hasta el F5 (trabajo repetido, no un fallo). Y si tenía el
+ecualizador encendido al actualizar, su grafo de audio sigue sonando con el
+último ajuste y el mundo nuevo no puede volver a cruzar ese `<video>`
+(`createMediaElementSource` solo se hace una vez por elemento): el
+ecualizador queda sin efecto hasta el F5. `fuenteDe` ya atrapa ese fallo y
+lo degrada a «sin ecualizar», así que la música no se corta.
+
+**4. El menú recibía «abierto» de una ventana que no se abrió.**
+`OPEN_PIP_REQUEST` llamaba a `openPipOnTab`, tiraba el resultado y
+contestaba `ok: true`. El clic en una página de la extensión no le da
+activación a la pestaña, así que lo normal era un `NotAllowedError` tomado
+por éxito, sin plan B. Ahora el menú usa el mismo camino que el icono y el
+atajo (`intentarAbrir`), que hace parpadear el botón PiP de la pestaña y
+devuelve qué pasó. El menú lo dice con una frase: «Pulsa el botón PiP de la
+página de música» o, si no hay botón, «Recarga la pestaña de música (F5)».
+Sin esa frase, el botón parpadeaba en una pestaña que el usuario no estaba
+mirando. Dos claves nuevas en los dos catálogos.
+
+**5. Un `.catch` que faltaba.** Si `windows.create` fallaba, quien pedía la
+ventana de respaldo se quedaba esperando una respuesta que no llegaba nunca.
+
+**El banco nuevo** (`tests/unit/service-worker.test.js`, 24 pruebas) carga
+el service worker de verdad en un contexto de `vm` con un `chrome` falso.
+Cada pestaña falsa lleva su mundo aislado, y las funciones que el service
+worker inyecta con `executeScript({ func })` se ejecutan de verdad dentro de
+él, serializadas por su texto como hace Chrome. «Dormirse» es tirar el
+contexto y montar otro con la misma sesión, que es exactamente lo que le
+pasa a un service worker de MV3. Dos trampas del banco, por si alguien lo
+amplía: los objetos que salen del `vm` tienen otro `Object.prototype` y
+`deepStrictEqual` los rechaza aunque sean iguales (se aplanan con `plano`),
+y `mensaje()` lleva un plazo de 500 ms, porque un `sendResponse` que no
+llega nunca (el `.catch` del punto 5) no haría caer la prueba: colgaría la
+suite entera. Contra el service worker de la 1.0.1 caen 18 de las 24; las
+seis que pasan son reglas que no cambiaron (la pestaña audible manda, no se
+inyecta dos veces, sin pestaña se contesta `not_found`…). Además, 3 pruebas
+nuevas en `pip-lanzador.test.js` (adopción y huérfano) y 3 en
+`popup.test.js` (la frase del menú). Por decisión del autor solo se
+corrieron los archivos de la tanda: la suite entera NO SE HA CONTADO.
+
+**La mutación** (`tools/mutar-tanda-t.js`): 18 mutantes, todos muertos, 9 de
+ellos devolviendo una regla a la 1.0.1. Predicción fijada por escrito antes
+de correr: 17 de 18 recuentos exactos. **El que fallé**: «no recuerda cuál
+es el suyo» (quitar `lanzadorPropio = btn`), predicho 1 y real 2. No conté
+que `destacarLanzador` también llama a `ensureLauncher`: sin recordar el
+botón propio, destacarlo lo rehace y el parpadeo se le pone a un botón que
+acaba de salir del DOM. Lo tumbó la prueba del parpadeo, que no era de esta
+tanda. Es un efecto real del mutante, no ruido de la prueba.
+
+**Lo que hay que llevar a la tienda.** La reinyección le da al permiso
+`scripting` un uso que su justificación no contaba: se ha añadido en la
+ficha (sección de permisos) y en la política, en los dos idiomas. El
+permiso no cambia, así que no hay aviso a los usuarios, pero el texto de
+la consola hay que pegarlo de nuevo al subir la próxima versión. El
+`CHANGELOG.md` estrena una sección «Sin publicar» con esta tanda y la S.
+
+**NO MEDIDO en vivo**, y es lo que más importa medir: la reinyección sobre
+una actualización de verdad. La receta para medirla con la versión
+desempaquetada: abrir music.youtube.com con una canción, ir a
+chrome://extensions y pulsar recargar en Music PiP (Chrome lo trata como
+una actualización, `reason: "update"`), y SIN recargar la pestaña: pulsar
+el botón PiP de la página (debe abrir la ventana), probar Alt+Shift+K
+(debe pausar) y mirar que haya un solo botón PiP. Tampoco medido: si
+`storage.session` responde a tiempo en el primer evento tras un despertar
+en frío (en el banco responde siempre).
+
+## Lo que una ventana le dejaba a la siguiente (la tanda U: `openPip` por fin con pruebas)
+
+Tercera tanda de la auditoría. Todos sus fallos vivían en el mismo sitio:
+la apertura de la ventana, el único trozo de `pip.js` que ninguna prueba
+ejecutaba, porque necesita `documentPictureInPicture` y jsdom no lo tiene.
+
+**El banco nuevo** (`tests/unit/pip-apertura.test.js`) le da a la página un
+`requestWindow` que devuelve una segunda ventana jsdom y un `fetch` que
+sirve `pip.html` del disco; cerrar es lo que hace Chrome (`pagehide` y
+`closed`). Todo lo demás corre tal cual: cablear, aplicar preferencias, el
+latido de 300 ms. **Trampa que ya costó un cuelgue**: el doble de `close`
+tiene que acabar llamando al `close` de jsdom, porque la red de
+`tests/helpers/entorno.js` cierra las ventanas con ese mismo `close`, y si
+no llega al de verdad el latido mantiene vivo el proceso para siempre.
+
+**1. La barra se congelaba con un atajo.** Tras un clic el foco se queda
+en la barra de tiempo, y su `keydown` marcaba «arrastrando» con cualquier
+tecla. Espacio, K, M o N son atajos de la ventana, no mueven el
+deslizador, así que `change` no llegaba nunca y `seeking` se quedaba en
+true hasta que el foco se fuera: con N se veía la canción nueva con la
+barra y el contador congelados. Ahora solo empiezan arrastre las teclas
+que un `range` atiende (flechas, Inicio, Fin, AvPág, RePág), y soltar la
+tecla termina, igual que soltar el puntero, porque Inicio en el segundo
+cero tampoco cambia el valor.
+
+**2. Cuatro variables recordaban la ventana anterior.** `openPip` ya
+reiniciaba con cuidado las que APUNTAN a algo de la ventana vieja (el rAF,
+los temporizadores), pero no las que RECUERDAN algo de ella, y por eso
+nadie las echó de menos:
+- `seeking` y `changingVolume`: cerrar con el dedo en la barra o en el
+  volumen (Ctrl+W a mitad de arrastre) hacía nacer la ventana nueva con
+  ese control congelado.
+- `lastQueueSignature`: con la ventana cerrada `render` no llega a pintar
+  la cola, así que la firma seguía siendo la de la vieja. Si la cola no
+  había cambiado, la ventana nueva se quedaba diciendo «la cola no está a
+  la vista» con canciones en ella.
+- `lastSongKey`: cerrar, dejar que cambie la canción y reabrir hacía que
+  la primera canción se anunciara («Ahora suena…») y se animara como un
+  cambio, contra lo que dice el propio `alCambiarDeCancion`.
+
+**3. Dos aperturas a la vez.** La guarda de «ya hay ventana» no cubría el
+hueco en que `requestWindow` está pendiente. Dos peticiones seguidas (un
+doble clic, o el botón y el icono) pedían dos ventanas, y la continuación
+de la primera cableaba la SEGUNDA otra vez: listeners duplicados (Espacio
+pausaba y reanudaba, o sea «no hace nada»), dos latidos y una suscripción
+a preferencias perdida. Ahora hay una apertura en curso como mucho, y la
+segunda petición recibe la misma promesa. La llamada de dentro sigue
+siendo síncrona hasta `requestWindow`: envolverla no gasta la activación
+de usuario.
+
+**4. Accesibilidad**, tres cosas pequeñas:
+- El texto que el lector dice de la barra llevaba un «de» escrito a mano
+  («1:02 de 3:40» también en inglés); ahora sale del catálogo
+  (`tiempo_de_total`).
+- La línea en vivo de la letra respondía al clic pero no al teclado. Ahora
+  es `role="button"` con `tabindex`, Enter y Espacio la despliegan, y
+  Espacio no llega a pausar porque `atajoPara` ya le deja la barra
+  espaciadora a todo lo que tenga rol de botón.
+- Ningún documento declaraba bien su idioma: menú y Preferencias llevaban
+  `lang="es"` fijo y la ventana ninguno, así que con Chrome en inglés el
+  lector leía inglés con voz española. Ahora lo pone `Textos.aplicar`, que
+  ya pasa por los tres, y sale del CATÁLOGO (clave `idioma`) y no de
+  `getUILanguage()`: con Chrome en francés el texto que se ve es el español
+  por defecto, y solo el catálogo que contestó sabe en qué idioma contestó.
+
+**Un hallazgo descartado**: la auditoría marcó como riesgo que la URL de la
+carátula entre sin escapar en `url("…")` del fondo. Es un falso positivo:
+la URL sale siempre de `img.src`, que el navegador ya serializa (las
+comillas llegan como `%22` y las barras invertidas pasan a `/` en http), así
+que no puede cerrar la cadena.
+
+**Las pruebas**: 14 nuevas en `pip-apertura.test.js` y 3 en
+`localizacion.test.js`, más los 9 archivos que tocan lo cambiado: todos
+verdes (103 en esos archivos). Dos pruebas se reforzaron ANTES de fijar la
+predicción, porque habrían dejado vivos a sus mutantes: no había ninguna
+que mirara el volumen al reabrir, y la del «de» pasaba igual con el texto a
+mano, porque el catálogo del banco es el español (ahora le da a esa clave
+una respuesta en inglés).
+
+**La mutación** (`tools/mutar-tanda-u.js`): 11 mutantes, todos muertos,
+**11 de 11 recuentos exactos**. NO MEDIDO en vivo: el doble clic real sobre
+el botón PiP (el banco no pide activación de usuario) y cómo pronuncia un
+lector de pantalla de verdad con el `lang` nuevo.
+
+## Tres contextos, una verdad (la tanda V: el ecualizador, Preferencias y la memoria por canción)
+
+Cuarta tanda de la auditoría. Tres fallos que no rompían nada a la vista:
+una puerta sin vuelta que solo miraba el elemento, y dos copias de lo
+guardado que no se enteraban de lo que escribían los demás.
+
+**1. El ecualizador no preguntaba al sitio.** Cruzar la puerta de
+`createMediaElementSource` no tiene vuelta, y la única guarda era mirar si
+el elemento trae `mediaKeys` en ese instante. En el modo vídeo de Spotify
+hay un `<video>` real que se midió cifrado, pero nadie midió el ORDEN: si el
+observer lo ve antes de que la página le ponga las claves, la puerta se
+cruzaría con un elemento que minutos después sonaría en silencio hasta
+recargar. Spotify ya declaraba `audioGrafo: false` justo por eso, y nadie lo
+consultaba antes de esa puerta. Ahora lo consulta `puedeEcualizarse`, que es
+el único dueño de la decisión: meterlo en `content-script.js` habría sido
+una segunda copia de la regla, justo lo que el comentario de
+`sincronizarEcualizador` prohíbe. Sin capacidades publicadas no se veta.
+
+**2. Preferencias pisaba lo cambiado desde la ventana.** La página leía
+storage una vez al abrir y su `save` escribe todos los campos en cada
+cambio. Con Preferencias abierta, el ✨, el 🌌, el interruptor del
+ecualizador, o el ajuste que la memoria por canción pone al empezar otra
+canción, se deshacían al tocar cualquier otra cosa de la página. Ahora un
+cambio de fuera la repinta con `load`, con dos filtros:
+- Solo las claves que SE APLICAN, con la clasificación de `settings.js`
+  expuesta como `Settings.seAplica` (la lista que vigila el censo de la
+  tanda S). Sin él, `lastKnownState` repintaría la página debajo del ratón
+  cada segundo con música.
+- No el eco de lo que la propia página acaba de escribir (Chrome avisa
+  también de las escrituras propias): eco es que todas las claves cambiadas
+  traen justo el valor escrito.
+
+**Trampa que casi cuela**: la primera idea era suscribirse a `Settings`,
+que ya vigila storage con ese filtro. No habría funcionado nunca:
+Preferencias no carga `messages.js`, así que `Settings.load` sale sin leer
+nada (no hay `isContextValid`) y jamás avisa. Por eso la página escucha
+`storage.onChanged` ella misma y solo toma prestada la clasificación.
+
+**3. La memoria por canción se pisaba entre pestañas.** Se cargaba una vez
+por pestaña y `persistir` escribe el mapa entero: con YouTube Music y
+YouTube abiertos, fijar una canción en una pestaña borraba lo que se había
+fijado en la otra. Ahora cada escritura de esa clave, venga de donde venga,
+sustituye la copia de la pestaña, con el mismo saneado que la carga. Queda
+un hueco, dicho claro: dos pestañas fijando en el mismo instante se quedan
+con la última escritura. Y se deja a propósito que fijar en una pestaña
+cambie cómo suena la otra: el ecualizador es uno para toda la extensión, y
+la memoria por canción escribe ahí por diseño.
+
+**Las pruebas**: 3 nuevas en `audio-grafo.test.js`, 7 en
+`opciones-en-vivo.test.js` (banco nuevo con un storage que avisa de cada
+escritura, propia o ajena, como Chrome) y 4 en
+`ecualizador-por-cancion.test.js`, más los archivos que tocan lo cambiado:
+todo verde.
+
+**La mutación** (`tools/mutar-tanda-v.js`): 9 mutantes, todos muertos,
+**9 de 9 recuentos exactos**. Dos mutantes se dejaron fuera a sabiendas, y
+así consta en la cabecera del script: vetar sin capacidades publicadas
+tumbaría casi todo `audio-grafo.test.js` (monta sin adaptador) y no sé
+predecir el número exacto, y cambiar `!== false` por `=== true` es
+equivalente con capacidades booleanas. Un hallazgo del propio proceso: el
+filtro `visibles.length === 0` de Preferencias es redundante con `esEco`
+(sobre una lista vacía, `every` da true), así que el mutante que lo quitaba
+habría sobrevivido; se mutó el filtro de claves en su lugar.
+
+NO MEDIDO en vivo: el orden real entre el `<video>` del modo vídeo de
+Spotify y sus `mediaKeys` (la guarda nueva no depende de él, que es la
+idea), y Preferencias abierta junto a la ventana en Chrome de verdad.
+
+## La vista previa dice lo que se verá, y deja de ser de otro (la tanda W)
+
+Quinta tanda de la auditoría: el marco `src/options/vista-previa.html`, que
+Preferencias incrusta como «lo que se verá», y la accesibilidad de la
+propia página. El marco viaja en el paquete y hasta aquí no lo cargaba
+ninguna prueba.
+
+**1. Letra ajena en el paquete.** La canción de ejemplo tenía título,
+artista y álbum de una canción real y cuatro versos en inglés atribuidos a
+ella. La auditoría no pudo confirmar si eran la letra real, y no hacía
+falta: un ejemplo no necesita arriesgarse a distribuir letra ajena sin
+permiso. Ahora es «Luz de madrugada», de «Los Ejemplos», con cuatro versos
+escritos para esta vista previa. La prueba no puede demostrar que un texto
+no sea de nadie; fija que no vuelvan los de antes.
+
+**2. No hablaba el idioma del navegador.** El marco no cargaba `textos.js`,
+así que con Chrome en inglés el `pip.html` incrustado seguía en español, y
+«Conectado» y «Letra: Better Lyrics» iban escritos a mano (el segundo,
+además, distinto de lo que pinta la ventana, que dice «Fuente: …» con la
+clave `fuente`). Ahora pasa por `Textos.aplicar` como la ventana. **Trampa
+que casi cuela**: el marco vive en dos sitios, y en la rejilla de
+`tools/vista-previa.html` se sirve fuera de la extensión, sin `chrome.i18n`.
+Allí el `t()` de la ventana habría devuelto la clave pelada («conectado»),
+que en la ventana es un fallo que se ve y aquí sería uno que no es. Por eso
+el marco lleva su propio `t()` con el español como respaldo. El censo de
+`localizacion.test.js` vigila ahora también `vista-previa.js`.
+
+**3. Treinta botones que no hacían nada.** Quien navegaba Preferencias con
+el teclado entraba en los botones del marco uno por uno, y el lector de
+pantalla los anunciaba como botones. Ahora el cuerpo del marco es `inert`
+(ni foco ni árbol de accesibilidad) y el iframe lleva `tabindex="-1"`; su
+`title` sigue diciendo qué es.
+
+**4. Preferencias**, dos cosas pequeñas: el «Guardado.» aparecía y se iba
+sin que un lector lo dijera (ahora `role="status"`), y la página no tenía
+región principal (el contenedor de las tarjetas pasa de `<div>` a
+`<main>`, con la misma clase y el mismo aspecto: comprobado en la
+rejilla, `display:flex` y 760 px como antes).
+
+**Las pruebas**: 5 nuevas en `vista-previa.test.js` (el marco cargado de
+verdad en jsdom, dentro y fuera de la extensión), más los archivos que
+tocan lo cambiado: todo verde. Comprobado también a ojo con el servidor de
+la rejilla: la vista previa y Preferencias se ven igual, con la canción
+nueva.
+
+**La mutación** (`tools/mutar-tanda-w.js`): 8 mutantes, todos muertos,
+**8 de 8 recuentos exactos**. NO MEDIDO: la vista previa con Chrome en
+inglés dentro de la extensión de verdad (el banco le da un catálogo inglés
+de mentira) y un lector de pantalla real recorriendo Preferencias.
+
+## El andamiaje (la tanda X: la integración continua, Node 21 y un revisor de zip que lee el índice)
+
+Sexta tanda de la auditoría, y la única que no toca la extensión: lo que
+hay alrededor para que las pruebas corran y el paquete salga limpio.
+
+**1. Integración continua.** `.github/workflows/pruebas.yml` corre la suite
+entera en cada push a `main` y en cada pull request, en Linux con Node 22.
+Hasta aquí la única red era `npm test` a mano, y la suite entera se
+reservaba para antes de empaquetar porque tarda un par de minutos: justo el
+paso que se salta un día con prisa. Correr en Linux vigila además lo que en
+Windows no se ve (mayúsculas en rutas, finales de línea). No empaqueta: el
+empaquetador es PowerShell de Windows y el zip se sube a mano.
+
+**2. Node 21 como mínimo, escrito.** `npm test` usa el patrón
+`"tests/**/*.test.js"`, y ese patrón lo expande el propio `node --test` solo
+desde la 21: en la 20 LTS no encuentra ni un archivo. No estaba escrito en
+ningún sitio. Ahora `package.json` lo declara en `engines`, y una prueba
+(`andamiaje.test.js`) exige que el flujo de CI use un Node que lo cumpla.
+
+**3. El revisor del zip leía mal (en potencia).** `tools/revisar-zip.js`
+buscaba la firma de cabecera local (`PK\x03\x04`) por todo el archivo,
+datos comprimidos incluidos: cuatro bytes cualesquiera de un PNG o de un
+deflate que formaran esa firma se leían como un archivo más, con un nombre
+de basura que podía tumbar la revisión de un paquete sano. Ahora lee el
+directorio central, el índice que el zip declara de sí mismo a partir del
+registro de fin (EOCD), que es también lo que lee Chrome. Dicho con
+honestidad: **el fallo estaba latente**. Sobre los tres zips reales de
+`dist/` el revisor viejo y el nuevo cuentan exactamente lo mismo (40, 40 y
+29 archivos); ninguno lo había disparado. Queda además importable
+(`nombresDelZip`, `revisar`) para poder probarlo, y usa `subarray` en vez
+del `Buffer.slice` obsoleto.
+
+**4. Datos caducados en esta página y en la ficha**, corregidos con su
+nota en el sitio (el estilo de siempre de este README): la introducción
+decía «para controlar YouTube Music» a secas; «Estado actual» decía
+«Prototipo funcional (Fase 1)» de una extensión ya publicada; los permisos
+decían «host solo para `music.youtube.com`»; las pruebas decían «806» (se
+quita el número, por la misma regla que el de las preferencias); el
+empaquetado prometía `dist/music-pip-1.0.0.zip` y una lista blanca sin
+`_locales/` (la ficha repetía esa lista incompleta); y el ejemplo de uso
+del revisor citaba `youtube-music-pip-0.1.0.zip`.
+
+**Las pruebas**: 9 en `revisar-zip.test.js`, con zips construidos a mano
+(el caso de la firma escondida dentro de un archivo que imita a `tools/`,
+campos extra, comentarios, un índice que apunta mal, lo que no es un zip) y
+una que lee los zips reales de `dist/` si existen; 2 en
+`andamiaje.test.js`. Dos de las del zip (campo extra y comentario de
+entrada) se añadieron ANTES de fijar la predicción, porque sin ellas dos
+mutantes habrían sobrevivido.
+
+**La mutación** (`tools/mutar-tanda-x.js`): 9 mutantes, todos muertos,
+**9 de 9 recuentos exactos**. NO MEDIDO: la primera ejecución del flujo en
+GitHub (hace falta un push, y eso lo decide el autor), ni por tanto que la
+suite pase entera en Linux.
+
+**La suite entera, por fin contada** (cierre de las tandas S a X, con
+permiso del autor): **973 de 973**, en Windows. Las tandas S a W habían
+dejado su total «sin contar», porque por decisión del autor en cada una
+solo se corrían sus archivos; esta es la cuenta que las cierra a todas.
 
 ## Pendiente (ver documento de arquitectura completo)
 

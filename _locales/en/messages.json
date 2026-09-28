@@ -1,4 +1,7 @@
 {
+  "abrir_desde_la_pagina": {
+    "message": "Click the PiP button on the music page"
+  },
   "abrir_letra_completa": {
     "message": "Open the full lyrics"
   },
@@ -275,6 +278,9 @@
   "guardado": {
     "message": "Saved."
   },
+  "idioma": {
+    "message": "en"
+  },
   "imagen_lata": {
     "message": "Make the image beat with the bass"
   },
@@ -506,6 +512,9 @@
   "quitar_silencio": {
     "message": "Unmute"
   },
+  "recargar_pestana_musical": {
+    "message": "Reload the music tab (F5)"
+  },
   "repetir": {
     "message": "Repeat"
   },
@@ -595,6 +604,9 @@
   },
   "temporizador_minutos": {
     "message": "Sleep timer: the music will pause in $1 minutes"
+  },
+  "tiempo_de_total": {
+    "message": "$1 of $2"
   },
   "unidad_seg": {
     "message": "sec"

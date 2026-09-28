@@ -1,7 +1,7 @@
 # Ficha de la Chrome Web Store — todo lo que se pega en el formulario
 
 Esta carpeta **no viaja en el zip** (el empaquetador usa lista blanca: `manifest.json`,
-`src`, `assets`). Es material para la consola de desarrollador:
+`_locales`, `src`, `assets`). Es material para la consola de desarrollador:
 https://chrome.google.com/webstore/devconsole
 
 ---
@@ -137,15 +137,20 @@ Cuando el usuario pulsa el icono de la barra, el service worker ejecuta una
 llamada mínima en la pestaña musical para abrir la ventana flotante conservando
 el gesto del usuario (la API Document Picture-in-Picture exige activación de
 usuario). Si no puede abrirse, se usa para señalar el botón de la página que sí
-funciona. No inyecta código remoto ni corre en otros sitios.
+funciona. Además, al instalar o actualizar la extensión, vuelve a cargar los
+propios scripts del paquete en las pestañas de los tres sitios que ya estaban
+abiertas, para que sigan funcionando sin recargarlas. No inyecta código remoto
+ni corre en otros sitios.
 ```
 
 ```
 When the user clicks the toolbar icon, the service worker runs a minimal call
 in the music tab to open the floating window while preserving the user gesture
 (the Document Picture-in-Picture API requires user activation). If it cannot
-open, it is used to highlight the in-page button that does work. It injects no
-remote code and runs on no other sites.
+open, it is used to highlight the in-page button that does work. Also, when the
+extension is installed or updated, it reloads the package's own scripts into
+already-open tabs of the three sites so they keep working without a reload. It
+injects no remote code and runs on no other sites.
 ```
 
 **Permisos de host (music.youtube.com, www.youtube.com, open.spotify.com)**

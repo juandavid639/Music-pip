@@ -1,4 +1,7 @@
 {
+  "abrir_desde_la_pagina": {
+    "message": "Pulsa el botón PiP de la página de música"
+  },
   "abrir_letra_completa": {
     "message": "Abrir la letra completa"
   },
@@ -275,6 +278,9 @@
   "guardado": {
     "message": "Guardado."
   },
+  "idioma": {
+    "message": "es"
+  },
   "imagen_lata": {
     "message": "Hacer que la imagen lata con los graves"
   },
@@ -506,6 +512,9 @@
   "quitar_silencio": {
     "message": "Quitar silencio"
   },
+  "recargar_pestana_musical": {
+    "message": "Recarga la pestaña de música (F5)"
+  },
   "repetir": {
     "message": "Repetir"
   },
@@ -595,6 +604,9 @@
   },
   "temporizador_minutos": {
     "message": "Temporizador de apagado: la música se pausará en $1 minutos"
+  },
+  "tiempo_de_total": {
+    "message": "$1 de $2"
   },
   "unidad_seg": {
     "message": "seg"

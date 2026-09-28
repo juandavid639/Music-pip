@@ -24,25 +24,177 @@ function esUrlSoportada(url) {
   return !!url && SITIOS_SOPORTADOS.some((s) => url.startsWith(s.prefijo));
 }
 
+/*
+ * LA PESTAÑA MUSICAL, recordada en storage.session y no solo en una
+ * variable (tanda T).
+ *
+ * Hasta la 1.0.1 vivia solo en `musicTabId`, y un service worker de MV3
+ * se duerme a los ~30 s sin eventos: al despertar la variable valia null,
+ * y como la rehidratacion solo corria al instalar y al arrancar Chrome,
+ * `findMusicTab` caia a `tabs[0]`. Con la musica en pausa (ninguna
+ * pestaña `audible`), Alt+Shift+K un minuto despues le daba al play de
+ * la PRIMERA pestaña soportada, que desde que www.youtube.com es sitio
+ * soportado puede ser un tutorial cualquiera.
+ *
+ * storage.session es justo la vida que hace falta: sobrevive al sueño del
+ * service worker y muere al reiniciar el navegador o actualizar la
+ * extension, que es cuando los ids de pestaña dejan de significar nada.
+ * NO va en STORAGE_KEYS a proposito: aquellas son de storage.local, las
+ * vigila Settings y las clasifica el censo de settings-recargas.test.js.
+ *
+ * La variable se queda como cache: `pestanaRecordada` solo va a storage
+ * la primera vez de cada despertar.
+ */
+const CLAVE_PESTANA = "pestanaMusical";
 let musicTabId = null;
+let pestanaLeida = false;
+
+async function pestanaRecordada() {
+  if (!pestanaLeida) {
+    try {
+      const guardado = await chrome.storage.session.get(CLAVE_PESTANA);
+      // Si alguien la fijo mientras se esperaba a storage, gana ese: es
+      // mas nuevo que lo guardado.
+      if (!pestanaLeida && typeof guardado[CLAVE_PESTANA] === "number") {
+        musicTabId = guardado[CLAVE_PESTANA];
+      }
+    } catch (err) {
+      // Sin storage.session (navegador viejo): queda la variable, como antes.
+    }
+    pestanaLeida = true;
+  }
+  return musicTabId;
+}
+
+function recordarPestana(id) {
+  musicTabId = typeof id === "number" ? id : null;
+  pestanaLeida = true;
+  try {
+    const escritura =
+      musicTabId === null
+        ? chrome.storage.session.remove(CLAVE_PESTANA)
+        : chrome.storage.session.set({ [CLAVE_PESTANA]: musicTabId });
+    Promise.resolve(escritura).catch(() => {});
+  } catch (err) {
+    // Igual que arriba: la variable sigue valiendo mientras el SW este despierto.
+  }
+}
 
 async function rehydrateMusicTab() {
   const tabs = await chrome.tabs.query({ url: PATRONES_DE_SITIO });
   if (tabs.length === 0) {
-    musicTabId = null;
+    recordarPestana(null);
     return;
   }
   const audible = tabs.find((t) => t.audible);
-  musicTabId = (audible || tabs[0]).id;
+  recordarPestana((audible || tabs[0]).id);
 }
 
 async function findMusicTab() {
   const tabs = await chrome.tabs.query({ url: PATRONES_DE_SITIO });
   if (tabs.length === 0) return null;
+  const recordada = await pestanaRecordada();
   const audible = tabs.find((t) => t.audible);
-  const chosen = audible || tabs.find((t) => t.id === musicTabId) || tabs[0];
-  musicTabId = chosen.id;
+  const chosen = audible || tabs.find((t) => t.id === recordada) || tabs[0];
+  recordarPestana(chosen.id);
   return chosen;
+}
+
+/*
+ * REINYECCION: dar content script a las pestañas que ya estaban abiertas.
+ *
+ * Chrome solo inyecta los content_scripts del manifiesto en las paginas que
+ * se cargan DESPUES de instalar o actualizar. Las que ya estaban abiertas se
+ * quedan sin nada (instalacion) o con un script huerfano (actualizacion), y
+ * el huerfano no sirve para abrir la ventana: `openPip` necesita la
+ * extension viva para cargar pip.html y se niega (pip.js, openPip). O sea
+ * que cada version publicada dejaba la extension MUERTA en todas las
+ * pestañas abiertas hasta un F5 que nadie sabia que tenia que dar: ni el
+ * icono, ni los atajos, ni el boton PiP de la pagina.
+ *
+ * La lista de archivos se lee del propio manifiesto: una copia aqui seria
+ * una segunda lista que no se entera cuando se añade un modulo.
+ *
+ * Solo se inyecta donde NO hay un script vivo en el mundo aislado actual y
+ * la pagina ya termino de cargar. La pagina que esta cargando la cubre el
+ * propio Chrome con el manifiesto al llegar a document_idle; inyectarle
+ * tambien aqui daria dos copias de todo en el mismo mundo. Las pestañas
+ * descartadas no tienen documento que inyectar.
+ *
+ * Lo que convive con el huerfano (la pestaña no se recarga): su observer
+ * sigue corriendo y su grafo de audio, si llego a ecualizar, sigue sonando
+ * con el ultimo ajuste; el mundo nuevo no puede volver a cruzar ese
+ * <video> (createMediaElementSource solo se hace una vez por elemento) y su
+ * ecualizador se queda sin efecto hasta el F5. Es la unica perdida, y solo
+ * para quien tenia el ecualizador encendido al actualizar. El boton PiP de
+ * la pagina lo adopta el mundo nuevo (pip.js, ensureLauncherButton).
+ */
+const ARCHIVOS_DE_CONTENIDO = (() => {
+  try {
+    const scripts = chrome.runtime.getManifest().content_scripts;
+    return (scripts && scripts[0] && scripts[0].js) || [];
+  } catch (err) {
+    return [];
+  }
+})();
+
+async function tieneScriptVivo(tabId) {
+  const [{ result } = {}] = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "ISOLATED",
+    func: () => Boolean(self.YTMPip && self.YTMPip.PipView)
+  });
+  return Boolean(result);
+}
+
+/** Devuelve "inyectada", "viva", "omitida" o "error". Nunca lanza. */
+async function inyectarSiFalta(tab) {
+  if (!tab || typeof tab.id !== "number") return "omitida";
+  if (tab.discarded || tab.status !== "complete") return "omitida";
+  if (ARCHIVOS_DE_CONTENIDO.length === 0) return "error";
+  try {
+    if (await tieneScriptVivo(tab.id)) return "viva";
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      world: "ISOLATED",
+      files: ARCHIVOS_DE_CONTENIDO
+    });
+    return "inyectada";
+  } catch (err) {
+    // Una pagina de error, una pestaña que se cerro a mitad: no hay nada
+    // que hacer y no es un fallo nuestro.
+    console.info("[YTMPip] No se pudo dar content script a la pestaña", tab.id, err);
+    return "error";
+  }
+}
+
+async function inyectarEnPestanasAbiertas() {
+  try {
+    const tabs = await chrome.tabs.query({ url: PATRONES_DE_SITIO });
+    return await Promise.all(tabs.map(inyectarSiFalta));
+  } catch (err) {
+    console.info("[YTMPip] No se pudieron repasar las pestañas abiertas", err);
+    return [];
+  }
+}
+
+/*
+ * Mandar un mensaje a la pestaña, y si nadie contesta, darle content script
+ * y probar UNA vez mas.
+ *
+ * Es la red para lo que `inyectarEnPestanasAbiertas` no alcanzo: la pestaña
+ * que estaba descartada o cargando al actualizar, o un fallo puntual. El
+ * error de "nadie al otro lado" (Receiving end does not exist) es justo el
+ * sintoma de una pestaña sin script vivo. Si la pestaña SI tenia script
+ * (`inyectarSiFalta` dice "viva"), el fallo era otro y se devuelve tal cual.
+ */
+async function enviarALaPestana(tab, mensaje) {
+  try {
+    return await chrome.tabs.sendMessage(tab.id, mensaje);
+  } catch (err) {
+    if ((await inyectarSiFalta(tab)) !== "inyectada") throw err;
+    return chrome.tabs.sendMessage(tab.id, mensaje);
+  }
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -56,25 +208,36 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       [STORAGE_KEYS.SELECTOR_SCHEMA_VERSION]: self.YTMPip.CONSTANTS.SELECTOR_SCHEMA_VERSION
     });
   }
-  rehydrateMusicTab();
+  // Primero el content script y despues la pestaña: rehidratar no lo
+  // necesita, pero asi la pestaña recordada ya tiene a quien hablarle.
+  if (details.reason === "install" || details.reason === "update") {
+    await inyectarEnPestanasAbiertas();
+  }
+  await rehydrateMusicTab();
 });
 
 chrome.runtime.onStartup.addListener(rehydrateMusicTab);
 
-chrome.tabs.onRemoved.addListener((tabId) => {
-  if (tabId === musicTabId) {
-    musicTabId = null;
-    chrome.storage.local.set({
-      [STORAGE_KEYS.LAST_KNOWN_STATE]: { connected: false }
-    });
-  }
+/*
+ * Cerrar la pestaña recordada deja constancia de que ya no hay musica. La
+ * comparacion es contra la RECORDADA y no contra la variable: cerrar la
+ * pestaña despierta al service worker, y recien despierto la variable vale
+ * null — la comparacion fallaba justo cuando mas falta hacia, y el menu de
+ * respaldo seguia pintando «conectado» con la cancion de una pestaña que ya
+ * no existia.
+ */
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  if (tabId !== (await pestanaRecordada())) return;
+  recordarPestana(null);
+  chrome.storage.local.set({
+    [STORAGE_KEYS.LAST_KNOWN_STATE]: { connected: false }
+  });
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (tabId !== musicTabId) return;
-  if (changeInfo.url && !esUrlSoportada(changeInfo.url)) {
-    musicTabId = null;
-  }
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  if (!changeInfo.url || esUrlSoportada(changeInfo.url)) return;
+  if (tabId !== (await pestanaRecordada())) return;
+  recordarPestana(null);
 });
 
 /*
@@ -140,14 +303,14 @@ async function destacarLanzadorEnPestana(tabId) {
  * donde sender.tab es undefined) se busca la pestaña musical.
  */
 async function focusSourceTab(senderTabId) {
-  const candidates = [senderTabId, musicTabId];
+  const candidates = [senderTabId, await pestanaRecordada()];
   for (const id of candidates) {
     if (typeof id !== "number") continue;
     try {
       const tab = await chrome.tabs.get(id);
       await chrome.tabs.update(id, { active: true });
       await chrome.windows.update(tab.windowId, { focused: true, drawAttention: true });
-      musicTabId = id;
+      recordarPestana(id);
       return { ok: true, tabId: id };
     } catch (err) {
       // Pestaña cerrada o inaccesible: se prueba el siguiente candidato.
@@ -201,27 +364,51 @@ async function abrirPipDesdeElNavegador(clickedTab, origen) {
       // MUSICA (no youtube.com: quien pulsa el icono de Music PiP quiere
       // musica) para que el usuario reproduzca algo antes de reintentar.
       await chrome.tabs.create({ url: URL_POR_DEFECTO });
-      return;
+      return "pestana-creada";
     }
-    const result = await openPipOnTab(target);
-    if (result === "opened") return;
-
-    if (result === "NotAllowedError") {
-      // No es un fallo que se pueda reintentar: la API exige un gesto en la
-      // propia pagina. Se destaca el boton que si lo es.
-      const destacado = await destacarLanzadorEnPestana(target.id);
-      console.info(
-        destacado
-          ? `[YTMPip] ${origen} no puede dar la activacion de usuario; se ha destacado el boton PiP de la pagina.`
-          : `[YTMPip] ${origen} no puede dar la activacion de usuario y tampoco hay boton PiP en la pagina; recarga la pestaña (F5).`
-      );
-      return;
-    }
-
-    console.warn("[YTMPip] No se pudo abrir el PiP desde la pestaña", result);
+    return await intentarAbrir(target, origen);
   } catch (err) {
     console.error(`[YTMPip] Fallo al abrir el PiP (${origen})`, err);
+    return "error";
   }
+}
+
+/*
+ * El intento de abrir sobre una pestaña YA elegida, con su plan B, y
+ * devolviendo QUE paso: "opened", "destacado" (se hizo parpadear el boton
+ * PiP de la pagina), "sin-lanzador" o el motivo del fallo.
+ *
+ * Existe aparte porque el menu (OPEN_PIP_REQUEST) tambien lo necesita y
+ * hasta la 1.0.1 no lo usaba: llamaba a `openPipOnTab` a pelo, tiraba el
+ * resultado y contestaba `ok: true` siempre. El clic en una pagina de la
+ * extension tampoco le da activacion a la pestaña, asi que lo normal era
+ * un NotAllowedError que el menu recibia como exito, sin plan B.
+ *
+ * "event-fallback" es la pestaña sin script vivo en este mundo aislado
+ * (abierta antes de instalar, o huerfana de una version anterior que la
+ * reinyeccion no alcanzo): se le da script y se reintenta una vez.
+ */
+async function intentarAbrir(target, origen) {
+  let result = await openPipOnTab(target);
+  if (result === "event-fallback" && (await inyectarSiFalta(target)) === "inyectada") {
+    result = await openPipOnTab(target);
+  }
+  if (result === "opened") return "opened";
+
+  if (result === "NotAllowedError") {
+    // No es un fallo que se pueda reintentar: la API exige un gesto en la
+    // propia pagina. Se destaca el boton que si lo es.
+    const destacado = await destacarLanzadorEnPestana(target.id);
+    console.info(
+      destacado
+        ? `[YTMPip] ${origen} no puede dar la activacion de usuario; se ha destacado el boton PiP de la pagina.`
+        : `[YTMPip] ${origen} no puede dar la activacion de usuario y tampoco hay boton PiP en la pagina; recarga la pestaña (F5).`
+    );
+    return destacado ? "destacado" : "sin-lanzador";
+  }
+
+  console.warn("[YTMPip] No se pudo abrir el PiP desde la pestaña", result);
+  return result || "error";
 }
 
 chrome.action.onClicked.addListener((clickedTab) => abrirPipDesdeElNavegador(clickedTab, "El icono"));
@@ -269,7 +456,7 @@ chrome.commands.onCommand.addListener(async (atajo, tab) => {
       console.info(`[YTMPip] Atajo "${atajo}" sin pestaña de YouTube Music: no se hace nada.`);
       return;
     }
-    await chrome.tabs.sendMessage(musical.id, createMessage(MESSAGE_TYPES.COMMAND, { command: createCommand(tipo) }));
+    await enviarALaPestana(musical, createMessage(MESSAGE_TYPES.COMMAND, { command: createCommand(tipo) }));
   } catch (err) {
     console.warn(`[YTMPip] El atajo "${atajo}" no llego a la pestaña musical`, err);
   }
@@ -279,21 +466,58 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
   switch (message.type) {
+    /*
+     * QUIEN ES LA PESTAÑA MUSICAL: la que SUENA, no la que carga.
+     *
+     * Hasta la 1.0.1, CONTENT_SCRIPT_READY se quedaba el puesto sin
+     * preguntar: abrir cualquier pagina de youtube.com bastaba para que
+     * los atajos dejaran de ir a la pestaña de musica. Ahora cargar solo
+     * da el puesto si esta vacante, y lo que lo gana es empezar a sonar
+     * (STATE_UPDATE con `playing`). La recordada es, asi, la ultima que
+     * sono, que es a quien se refiere un «pausa» o un «siguiente».
+     */
     case MESSAGE_TYPES.CONTENT_SCRIPT_READY: {
-      if (sender.tab) musicTabId = sender.tab.id;
-      sendResponse({ ok: true });
+      const id = sender.tab && sender.tab.id;
+      pestanaRecordada()
+        .then((recordada) => {
+          if (typeof id === "number" && recordada === null) recordarPestana(id);
+        })
+        .catch(() => {})
+        .then(() => sendResponse({ ok: true }));
       return true;
     }
 
+    /*
+     * Y el ultimo estado conocido solo lo escribe la pestaña recordada. Antes
+     * lo escribia cualquiera: una pestaña de youtube.com en la portada pisaba
+     * con su «sin reproduccion» la cancion que sonaba en la de Spotify, y el
+     * menu de respaldo pintaba lo que dijera la ultima en hablar.
+     */
     case MESSAGE_TYPES.STATE_UPDATE: {
-      chrome.storage.local.set({ [STORAGE_KEYS.LAST_KNOWN_STATE]: message.state });
-      sendResponse({ ok: true });
+      const id = sender.tab && sender.tab.id;
+      pestanaRecordada()
+        .then((recordada) => {
+          if (typeof id !== "number") return;
+          const suena = Boolean(message.state && message.state.playing);
+          if (id !== recordada) {
+            if (!suena && recordada !== null) return;
+            recordarPestana(id);
+          }
+          return chrome.storage.local.set({ [STORAGE_KEYS.LAST_KNOWN_STATE]: message.state });
+        })
+        .catch(() => {})
+        .then(() => sendResponse({ ok: true }));
       return true;
     }
 
     case MESSAGE_TYPES.TAB_DISCONNECTED: {
-      if (sender.tab && sender.tab.id === musicTabId) musicTabId = null;
-      sendResponse({ ok: true });
+      const id = sender.tab && sender.tab.id;
+      pestanaRecordada()
+        .then((recordada) => {
+          if (typeof id === "number" && id === recordada) recordarPestana(null);
+        })
+        .catch(() => {})
+        .then(() => sendResponse({ ok: true }));
       return true;
     }
 
@@ -309,14 +533,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: false, reason: "not_found" });
             return;
           }
-          return openPipOnTab(tab).then(() => sendResponse({ ok: true, tabId: tab.id }));
+          // `ok` dice si la ventana se abrio, no si se intento; `result`
+          // dice que paso si no (ver intentarAbrir).
+          return intentarAbrir(tab, "El menu").then((result) =>
+            sendResponse({ ok: result === "opened", result, tabId: tab.id })
+          );
         })
         .catch((err) => sendResponse({ ok: false, reason: String(err) }));
       return true;
     }
 
     case MESSAGE_TYPES.OPEN_FALLBACK_WINDOW: {
-      openFallbackWindow().then(() => sendResponse({ ok: true }));
+      // Sin el catch, un fallo de windows.create dejaba al emisor esperando
+      // una respuesta que no llegaba nunca ("message port closed").
+      openFallbackWindow()
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => sendResponse({ ok: false, reason: String(err) }));
       return true;
     }
 
@@ -337,9 +569,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: false, reason: "not_found" });
             return;
           }
-          return chrome.tabs
-            .sendMessage(tab.id, message)
-            .then((response) => sendResponse(response || { ok: true }));
+          return enviarALaPestana(tab, message).then((response) => sendResponse(response || { ok: true }));
         })
         .catch((err) => sendResponse({ ok: false, reason: String(err) }));
       return true;
@@ -353,7 +583,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               .get(STORAGE_KEYS.LAST_KNOWN_STATE)
               .then((res) => sendResponse({ state: res[STORAGE_KEYS.LAST_KNOWN_STATE] || { connected: false } }));
           }
-          return chrome.tabs.sendMessage(tab.id, message).then((response) => sendResponse(response));
+          return enviarALaPestana(tab, message).then((response) => sendResponse(response));
         })
         .catch((err) => sendResponse({ state: { connected: false }, error: String(err) }));
       return true;

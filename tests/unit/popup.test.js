@@ -54,6 +54,10 @@ function menu(respuesta, opciones = {}) {
        * demas rechaza, que es lo que hace sendMessage de verdad cuando
        * no hay nadie al otro lado.
        */
+      // Lo que contesta el service worker a "abrir la ventana" (tanda T).
+      if (opciones.respuestaAbrir && mensaje.type === "OPEN_PIP_REQUEST") {
+        return Promise.resolve(opciones.respuestaAbrir);
+      }
       if (opciones.fallanComandos && mensaje.type !== "REQUEST_CURRENT_STATE") {
         return Promise.reject(new Error("no hay nadie al otro lado"));
       }
@@ -489,4 +493,38 @@ test("cuando el comando SI llega no hay ni aviso ni apagon", async () => {
 
   assert.strictEqual(m.avisos.length, 0, "un comando que llego bien dejo un aviso");
   assert.strictEqual(m.siguiente.disabled, false, "un comando que llego bien apago los botones");
+});
+
+/* ------------------------------------------------------------------
+ * Abrir la ventana desde el menu: decir que paso (tanda T)
+ * ------------------------------------------------------------------ */
+
+test("REGRESION TANDA T: si Chrome no deja abrir desde el menu, el menu dice donde pulsar", async () => {
+  /*
+   * Hasta la 1.0.1 el service worker contestaba ok:true siempre y el menu
+   * ni miraba la respuesta. Lo normal desde aqui es un NotAllowedError y el
+   * parpadeo del boton PiP en una pestaña que el usuario no esta mirando.
+   */
+  const m = menu(SONANDO, { respuestaAbrir: { ok: false, result: "destacado" } });
+  await m.asentar();
+  m.abrir.click();
+  await m.asentar();
+  assert.match(m.estado.textContent, /botón PiP/);
+});
+
+test("sin boton en la pagina, el menu pide recargar la pestaña", async () => {
+  const m = menu(SONANDO, { respuestaAbrir: { ok: false, result: "sin-lanzador" } });
+  await m.asentar();
+  m.abrir.click();
+  await m.asentar();
+  assert.match(m.estado.textContent, /F5/);
+});
+
+test("si la ventana se abrio, el estado no se toca", async () => {
+  const m = menu(SONANDO, { respuestaAbrir: { ok: true, result: "opened" } });
+  await m.asentar();
+  const antes = m.estado.textContent;
+  m.abrir.click();
+  await m.asentar();
+  assert.equal(m.estado.textContent, antes);
 });

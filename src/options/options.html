@@ -927,7 +927,7 @@
       </div>
     </header>
 
-    <div class="ytmpip-pagina">
+    <main class="ytmpip-pagina">
       <!-- ================= LA VENTANA ================= -->
       <section id="seccion-ventana" class="ytmpip-tarjeta">
         <h2 data-t="tarjeta_ventana">La ventana flotante</h2>
@@ -951,6 +951,7 @@
           <iframe
             id="vistaPrevia"
             src="vista-previa.html?espectro=1"
+            tabindex="-1"
             width="340"
             height="200"
             title="Vista previa de la ventana flotante"
@@ -1859,9 +1860,13 @@
           no pasa por la página y YouTube no tiene panel de letra.
         </p>
       </section>
-    </div>
+    </main>
 
-    <p id="status"></p>
+    <!--
+      role="status" (tanda W): el «Guardado.» aparecía y se iba sin que un
+      lector de pantalla lo dijera. status ya implica aria-live="polite".
+    -->
+    <p id="status" role="status"></p>
 
     <!--
       settings.js se carga por sus funciones PURAS (partir/unir barras y

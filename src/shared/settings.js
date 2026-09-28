@@ -645,12 +645,33 @@
    * anotarTamano— y ademas fijar una cancion la escribe junto a EQUALIZER
    * en el mismo gesto, asi que dejarla dentro doblaria recargas igual que
    * EQUALIZER_LAST.
+   *
+   * Y las dos ultimas ni siquiera son del usuario: las escribe el service
+   * worker. LAST_KNOWN_STATE fue la que se nos escapo hasta la 1.0.1, y
+   * era la peor de todas: el service worker la reescribe con cada estado
+   * que cambia de firma, y la firma lleva el SEGUNDO de reproduccion
+   * (content-script.js, stateSignature). O sea, mientras sonaba musica,
+   * cada pestaña soportada releia TODAS las preferencias —las 200
+   * canciones del ecualizador incluidas— y la ventana volvia a aplicar
+   * tema, variables y ecualizador una vez por segundo, para quedarse
+   * exactamente igual. SELECTOR_SCHEMA_VERSION se escribe una vez al
+   * instalar y tampoco hay nada que aplicar.
+   *
+   * La lista sigue siendo de EXCLUSIONES y no una lista blanca, y a
+   * sabiendas: olvidar aqui una anotacion cuesta recargas de mas (lo que
+   * paso), olvidar una preferencia en una lista blanca costaria un ajuste
+   * que deja de aplicarse en vivo sin que nadie lo note. Lo primero lo
+   * vigila una prueba que exige clasificar TODAS las claves.
    */
+  const CLAVES_QUE_NO_SE_APLICAN = [
+    STORAGE_KEYS.PIP_LAST_SIZE,
+    STORAGE_KEYS.EQUALIZER_LAST,
+    STORAGE_KEYS.EQUALIZER_BY_SONG,
+    STORAGE_KEYS.SELECTOR_SCHEMA_VERSION,
+    STORAGE_KEYS.LAST_KNOWN_STATE
+  ];
   const CLAVES_QUE_SE_APLICAN = Object.values(STORAGE_KEYS).filter(
-    (key) =>
-      key !== STORAGE_KEYS.PIP_LAST_SIZE &&
-      key !== STORAGE_KEYS.EQUALIZER_LAST &&
-      key !== STORAGE_KEYS.EQUALIZER_BY_SONG
+    (key) => CLAVES_QUE_NO_SE_APLICAN.indexOf(key) === -1
   );
 
   function watch() {
@@ -700,7 +721,12 @@
     // La usa la pagina de opciones para deducir el desplegable del color
     // del halo de lo guardado: la MISMA regla que aplica la ventana, no
     // una copia con charAt escrita alli.
-    normalizarColorDeHalo
+    normalizarColorDeHalo,
+    // Si cambiar esta clave cambia algo que se ve (la lista de arriba, la
+    // que clasifica el censo de settings-recargas.test.js). La usa la
+    // pagina de opciones para repintarse cuando otro contexto escribe, sin
+    // una segunda copia de la clasificacion (tanda V).
+    seAplica: (clave) => CLAVES_QUE_SE_APLICAN.indexOf(clave) !== -1
   };
 
   watch();

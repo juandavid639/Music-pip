@@ -124,3 +124,70 @@ test("open() devuelve una promesa: es de lo que cuelga el service worker para at
   assert.equal(typeof devuelto.then, "function");
   return devuelto;
 });
+
+/* ==================================================================
+ * La tanda T: dos mundos en la misma pagina.
+ *
+ * Desde que el service worker reinyecta los content scripts al instalar y
+ * al actualizar, una pestaña que no se recargo tiene el mundo HUERFANO de
+ * la version anterior y el mundo VIVO de la nueva, con un solo DOM. El
+ * huerfano ya dejo su boton, y ese boton no abre nada (sin extension viva
+ * `openPip` se niega). Aqui el boton del huerfano se simula con uno
+ * cualquiera con el mismo id, que es todo lo que el mundo vivo puede ver
+ * de el: los listeners de otro mundo no se ven desde este.
+ * ================================================================== */
+
+function paginaConBotonAjeno(opciones = {}) {
+  const { win } = crearEntorno(
+    `<!doctype html><html><body><button id="${ID}">huerfano</button></body></html>`,
+    opciones
+  );
+  const ajeno = win.document.getElementById(ID);
+  cargar(
+    win,
+    "src/shared/constants.js",
+    "src/shared/textos.js",
+    "src/shared/messages.js",
+    "src/shared/ecualizador.js",
+    "src/shared/settings.js",
+    "src/content/adapter-registry.js",
+    "src/content/youtube-music-adapter.js",
+    "src/content/track-timeline.js",
+    "src/content/player-controller.js",
+    "src/content/audio-spectrum.js",
+    "src/shared/iconos.js",
+    "src/pip/pip.js"
+  );
+  // La reinyeccion solo toca paginas ya cargadas (readyState "complete"),
+  // donde pip.js pone el boton en el acto. En jsdom el documento recien
+  // hecho sigue en "loading" y lo dejaria para DOMContentLoaded: se hace
+  // aqui la llamada que en la pagina real ya habria ocurrido.
+  win.YTMPip.PipView.ensureLauncher();
+  return { win, doc: win.document, PipView: win.YTMPip.PipView, ajeno };
+}
+
+test("REGRESION TANDA T: el mundo vivo adopta el boton que dejo el huerfano", () => {
+  const p = paginaConBotonAjeno();
+  const botones = p.doc.querySelectorAll(`#${ID}`);
+  assert.equal(botones.length, 1, "dos botones PiP en la pagina");
+  assert.notStrictEqual(botones[0], p.ajeno, "sigue el boton del huerfano, que no abre nada");
+  assert.equal(p.ajeno.isConnected, false, "el boton del huerfano sigue colgado del DOM");
+  assert.equal(botones[0].textContent, "PiP");
+});
+
+test("adoptado el boton, las siguientes mutaciones no lo vuelven a cambiar", () => {
+  // El observer llama a ensureLauncher con cada lote de mutaciones: si el
+  // boton propio no se reconociera, se reharia en cada una.
+  const p = paginaConBotonAjeno();
+  const propio = p.doc.getElementById(ID);
+  p.PipView.ensureLauncher();
+  p.PipView.ensureLauncher();
+  assert.strictEqual(p.doc.getElementById(ID), propio);
+});
+
+test("un mundo HUERFANO no pone boton ni roba el ajeno (si no, los dos se lo quitarian para siempre)", () => {
+  const p = paginaConBotonAjeno({ contextoValido: false });
+  p.PipView.ensureLauncher();
+  assert.strictEqual(p.doc.getElementById(ID), p.ajeno, "el huerfano le quito el boton al mundo vivo");
+  assert.equal(p.doc.querySelectorAll(`#${ID}`).length, 1);
+});

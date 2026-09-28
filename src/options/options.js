@@ -836,25 +836,22 @@
       equalizer: ecualizador[STORAGE_KEYS.EQUALIZER],
       equalizerLast: ecualizador[STORAGE_KEYS.EQUALIZER_LAST]
     };
+    ultimaEscritura = Object.assign({}, ecualizador, halo, {
+      [STORAGE_KEYS.SEEK_SECONDS]: seekSeconds,
+      [STORAGE_KEYS.THEME]: fields.theme.value,
+      [STORAGE_KEYS.PIP_SIZE]: fields.pipSize.value,
+      [STORAGE_KEYS.DEFAULT_SECTION]: fields.defaultSection.value,
+      [STORAGE_KEYS.LYRICS_PREFERENCE]: fields.lyricsPreference.value,
+      [STORAGE_KEYS.VIDEO_PREFERENCE]: fields.videoPreference.value,
+      [STORAGE_KEYS.CANVAS_PREFERENCE]: fields.canvasPreference.value,
+      [STORAGE_KEYS.SPECTRUM_BARS]: barras,
+      [STORAGE_KEYS.SPECTRUM_FALL]: Number(fields.spectrumFall.value),
+      [STORAGE_KEYS.SPECTRUM_HEIGHT]: Number(fields.spectrumHeight.value),
+      [STORAGE_KEYS.SPECTRUM_COLOR]: unirColor(fields.spectrumColorMode.value, fields.spectrumColor.value, coloresElegidos()),
+      [STORAGE_KEYS.PIP_TRANSPARENCY]: Number(fields.pipTransparency.value)
+    });
     chrome.storage.local.set(
-      Object.assign(ecualizador, halo, {
-        [STORAGE_KEYS.SEEK_SECONDS]: seekSeconds,
-        [STORAGE_KEYS.THEME]: fields.theme.value,
-        [STORAGE_KEYS.PIP_SIZE]: fields.pipSize.value,
-        [STORAGE_KEYS.DEFAULT_SECTION]: fields.defaultSection.value,
-        [STORAGE_KEYS.LYRICS_PREFERENCE]: fields.lyricsPreference.value,
-        [STORAGE_KEYS.VIDEO_PREFERENCE]: fields.videoPreference.value,
-        [STORAGE_KEYS.CANVAS_PREFERENCE]: fields.canvasPreference.value,
-        [STORAGE_KEYS.SPECTRUM_BARS]: barras,
-        [STORAGE_KEYS.SPECTRUM_FALL]: Number(fields.spectrumFall.value),
-        [STORAGE_KEYS.SPECTRUM_HEIGHT]: Number(fields.spectrumHeight.value),
-        [STORAGE_KEYS.SPECTRUM_COLOR]: unirColor(
-          fields.spectrumColorMode.value,
-          fields.spectrumColor.value,
-          coloresElegidos()
-        ),
-        [STORAGE_KEYS.PIP_TRANSPARENCY]: Number(fields.pipTransparency.value)
-      }),
+      Object.assign({}, ultimaEscritura),
       () => {
         // Lo guardado puede no ser lo escrito: unirBarras acota. Se devuelve
         // a la casilla para que el usuario vea el numero que de verdad hay.
@@ -874,6 +871,54 @@
 
   Object.values(fields).forEach((field) => field.addEventListener("change", save));
   paletteInputs.forEach((input) => input.addEventListener("change", save));
+
+  /*
+   * LO QUE OTRO CONTEXTO ESCRIBE, TAMBIEN SE VE AQUI (tanda V).
+   *
+   * Esta pagina leia storage una vez al abrir y `save` escribe TODOS los
+   * campos en cada cambio. Con Preferencias abierta, pulsar el ✨ o el 🌌
+   * de la ventana, el interruptor del ecualizador, o que la memoria por
+   * cancion cambiara el ajuste al empezar otra cancion, se deshacia en
+   * silencio al tocar cualquier otra cosa de esta pagina: `save` volvia a
+   * escribir el valor viejo que seguia pintado aqui.
+   *
+   * Ahora un cambio de fuera repinta la pagina entera con `load`, que ya es
+   * la unica forma de convertir lo guardado en lo pintado. Dos filtros:
+   *  - Solo las claves que SE APLICAN, con la clasificacion de settings.js
+   *    (la que vigila su censo). Sin el, `lastKnownState` —que el service
+   *    worker reescribe cada segundo con musica— repintaria la pagina
+   *    debajo del raton sesenta veces por minuto.
+   *  - No el eco de lo que esta misma pagina acaba de escribir: Chrome avisa
+   *    tambien de las escrituras propias, y repintar con lo que ya esta
+   *    pintado no aporta nada y si puede mover un mando que el usuario
+   *    tiene cogido. Eco es que TODAS las claves cambiadas traen justo el
+   *    valor que se escribio.
+   */
+  let ultimaEscritura = {};
+
+  function esEco(cambios) {
+    return Object.keys(cambios).every(
+      (clave) =>
+        Object.prototype.hasOwnProperty.call(ultimaEscritura, clave) &&
+        JSON.stringify(cambios[clave].newValue) === JSON.stringify(ultimaEscritura[clave])
+    );
+  }
+
+  try {
+    if (chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((cambios, zona) => {
+        if (zona !== "local") return;
+        const visibles = Object.keys(cambios).filter((clave) => self.YTMPip.Settings.seAplica(clave));
+        if (visibles.length === 0) return;
+        const soloVisibles = {};
+        visibles.forEach((clave) => (soloVisibles[clave] = cambios[clave]));
+        if (esEco(soloVisibles)) return;
+        load();
+      });
+    }
+  } catch (err) {
+    // Contexto invalidado: la pagina sigue con lo que tiene pintado.
+  }
 
   /*
    * `input` ademas de `change`, y solo para la vista previa: el cuentagotas

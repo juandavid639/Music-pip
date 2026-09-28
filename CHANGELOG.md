@@ -4,6 +4,42 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Corregido
+
+- Tras actualizar la extensión, las pestañas de música que ya estaban
+  abiertas siguen funcionando sin recargarlas: el botón PiP de la
+  página, el icono y los atajos. Antes hacía falta un F5 que nadie
+  sabía que había que dar.
+- Los atajos de teclado van a la pestaña que estaba sonando, aunque
+  lleve un rato en pausa y haya otras pestañas de YouTube abiertas.
+- Abrir la ventana desde el menú, cuando Chrome no lo permite, dice
+  dónde pulsar en vez de no hacer nada.
+- La ventana ya no vuelve a aplicar todas las preferencias cada
+  segundo mientras suena música.
+- La barra de tiempo ya no se queda congelada al usar un atajo de
+  teclado justo después de hacer clic en ella, ni al reabrir la ventana
+  tras cerrarla a mitad de un arrastre (lo mismo con el volumen).
+- Al reabrir la ventana, la cola se ve aunque no haya cambiado, y la
+  canción que ya sonaba no se anuncia como si fuera nueva.
+- Un doble clic en el botón PiP ya no deja la ventana con los controles
+  duplicados.
+- Los lectores de pantalla leen la ventana, el menú y Preferencias con
+  la voz del idioma de sus textos, y la línea de letra en vivo se puede
+  abrir con el teclado.
+- Con Preferencias abierta, lo que se cambia desde la ventana flotante
+  (halo, fondo, ecualizador) ya no se deshace al tocar otra opción.
+- Fijar el ecualizador a una canción en una pestaña ya no borra lo
+  fijado en otra.
+- El ecualizador nunca intenta tocar el audio de un sitio que no lo
+  admite (protección extra para el modo vídeo de Spotify).
+- La vista previa de Preferencias sale en el idioma del navegador, usa
+  una canción de ejemplo inventada y ya no atrapa el foco del teclado.
+- Preferencias anuncia el «Guardado.» a los lectores de pantalla.
+- La política de privacidad enumera lo que se guarda en el navegador
+  y ya no promete un botón de restaurar que no existe.
+
 ## [1.0.1] — 2026-09-25
 
 ### Cambiado

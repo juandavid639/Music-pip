@@ -1,0 +1,37 @@
+# La suite entera en cada push a main y en cada pull request (tanda X).
+#
+# Hasta aqui la unica red era correr `npm test` a mano en el equipo del
+# autor, y la suite entera se reservaba para antes de empaquetar porque
+# tarda un par de minutos: justo el tipo de paso que se salta un dia con
+# prisa. Aqui corre sola y en otra maquina (Linux), que ademas vigila lo
+# que en Windows no se ve: mayusculas en rutas y finales de linea.
+#
+# Node 22 y no "lts/*": la version queda escrita y un cambio de LTS no
+# cambia el entorno de las pruebas sin que nadie lo decida. package.json
+# pide >=21 (ver `engines`: el patron de `npm test` lo expande node --test
+# solo desde la 21).
+#
+# Lo que NO hace: empaquetar. tools/empaquetar.ps1 es PowerShell de Windows
+# y el zip se sube a mano a la consola de la tienda.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

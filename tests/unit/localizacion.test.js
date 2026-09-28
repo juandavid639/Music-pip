@@ -36,9 +36,14 @@ const { EQUALIZER_PRESETS, EQUALIZER_BANDS, EQUALIZER_PRESET_LABELS } = require(
 const ES = JSON.parse(fs.readFileSync(path.join(RAIZ, "_locales", "es", "messages.json"), "utf8"));
 const EN = JSON.parse(fs.readFileSync(path.join(RAIZ, "_locales", "en", "messages.json"), "utf8"));
 
-/* Los tres documentos con texto marcado y los tres scripts que piden textos. */
+/*
+ * Los tres documentos con texto marcado y los scripts que piden textos. La
+ * vista previa de Preferencias entro en la tanda W: desde entonces pide
+ * textos al catalogo y viaja en el paquete, asi que sus claves tambien
+ * tienen que existir en los dos idiomas.
+ */
 const HTMLS = ["src/pip/pip.html", "src/popup/popup.html", "src/options/options.html"];
-const SCRIPTS = ["src/pip/pip.js", "src/popup/popup.js", "src/options/options.js"];
+const SCRIPTS = ["src/pip/pip.js", "src/popup/popup.js", "src/options/options.js", "src/options/vista-previa.js"];
 
 /*
  * Qué atributo del nodo respalda cada marca. Es la MISMA tabla que la de
@@ -362,4 +367,33 @@ test("LA CACHE ES EL PARACAIDAS DEL CONTEXTO INVALIDADO", () => {
     "adelantar_segundos",
     "otras sustituciones nunca resueltas no salen de la caché: caen a la clave, que se ve"
   );
+});
+
+test("REGRESION TANDA U: aplicar() declara el idioma del catalogo que contesto", () => {
+  /*
+   * Menu y Preferencias llevaban lang="es" escrito y la ventana ninguno:
+   * con Chrome en ingles, el lector de pantalla leia ingles con voz
+   * española. El idioma sale de la clave `idioma` del catalogo, no del
+   * navegador: con Chrome en frances el texto es el español por defecto.
+   */
+  const win = conTextos((w) => {
+    w.chrome.i18n = { getMessage: (clave) => (clave === "idioma" ? "en" : "") };
+  });
+  win.YTMPip.Textos.aplicar(win.document);
+  assert.equal(win.document.documentElement.getAttribute("lang"), "en");
+});
+
+test("sin catalogo que conteste, el lang del HTML se queda como estaba", () => {
+  const win = conTextos((w) => {
+    delete w.chrome.i18n;
+  });
+  win.document.documentElement.setAttribute("lang", "es");
+  win.YTMPip.Textos.aplicar(win.document);
+  assert.equal(win.document.documentElement.getAttribute("lang"), "es");
+});
+
+test("cada catalogo declara SU idioma en la clave `idioma`", () => {
+  // La unica clave cuyo valor tiene que coincidir con el nombre de su carpeta.
+  assert.equal(ES.idioma.message, "es");
+  assert.equal(EN.idioma.message, "en");
 });

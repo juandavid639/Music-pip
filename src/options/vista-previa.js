@@ -24,6 +24,17 @@ const FOTOGRAMA =
      </svg>`
   );
 
+/*
+ * Como el t() de pip.js, pero con el ESPAÑOL de respaldo en vez de la
+ * clave pelada. La ventana nunca corre sin catalogo; este marco si: la
+ * rejilla de tools/vista-previa.html lo sirve fuera de la extension, sin
+ * chrome.i18n, y ahi «conectado» a secas seria un fallo que no es.
+ */
+function t(clave, subs, respaldo) {
+  const texto = self.YTMPip.Textos ? self.YTMPip.Textos.t(clave, subs) : clave;
+  return texto === clave ? respaldo : texto;
+}
+
 const parametros = new URLSearchParams(location.search);
 const conVideo = parametros.has("video");
 // Modo karaoke: la cancion no tiene video pero si letra sincronizada,
@@ -111,16 +122,33 @@ fetch("../pip/pip.html")
   .then((html) => {
     document.body.innerHTML = html;
     // Lo primero, igual que en cacheElements: los emoji del HTML no
-    // se llegan a ver ni un fotograma.
+    // se llegan a ver ni un fotograma. Y los textos al idioma del
+    // navegador, por la misma puerta que usa la ventana.
     self.YTMPip.Iconos.pintarTodos(document);
+    if (self.YTMPip.Textos) self.YTMPip.Textos.aplicar(document);
+    /*
+     * INERTE, y a proposito (tanda W). Son unos treinta botones de verdad
+     * que no hacen nada: quien navegaba Preferencias con el teclado entraba
+     * en ellos uno por uno y el lector los anunciaba como botones. Con el
+     * cuerpo inerte ni reciben foco ni salen en el arbol de accesibilidad;
+     * el iframe conserva su title («Vista previa de la ventana flotante»),
+     * que es todo lo que hay que decir de el. El iframe lleva ademas
+     * tabindex="-1" en options.html para no ser una parada de tabulador.
+     */
+    document.body.inert = true;
     const root = document.getElementById("ytmpip-root");
     root.className = "";
 
-    document.getElementById("ytmpip-status").textContent = "Conectado";
-    document.getElementById("ytmpip-title").textContent =
-      'Ginger Root - "Weather" (Official Music Video)';
-    document.getElementById("ytmpip-artist").textContent = "Ginger Root";
-    document.getElementById("ytmpip-album").textContent = "Rikki";
+    document.getElementById("ytmpip-status").textContent = t("conectado", undefined, "Conectado");
+    /*
+     * Una cancion INVENTADA (tanda W). Aqui habia titulo, artista, album y
+     * cuatro versos de una cancion real, y este archivo viaja en el paquete
+     * publicado: letra ajena distribuida sin permiso por un ejemplo. Los
+     * versos de abajo se escribieron para esta vista previa.
+     */
+    document.getElementById("ytmpip-title").textContent = "Luz de madrugada";
+    document.getElementById("ytmpip-artist").textContent = "Los Ejemplos";
+    document.getElementById("ytmpip-album").textContent = "Maqueta";
     document.getElementById("ytmpip-artwork").src = PORTADA;
 
     const fondo = document.getElementById("ytmpip-backdrop");
@@ -139,10 +167,10 @@ fetch("../pip/pip.html")
     vol.style.setProperty("--ytmpip-played", "70%");
 
     const VERSOS = [
-      "Sorry, don't want you to visit, no",
-      "I've been on my own since the day that I was born",
-      "And I don't need anybody, no",
-      "Tell me why you keep on calling me at night"
+      "Se enciende la ciudad cuando te vas",
+      "y el reloj no sabe esperar",
+      "canto bajito para no despertar",
+      "a la luna que se quiere quedar"
     ];
 
     /*
@@ -161,7 +189,7 @@ fetch("../pip/pip.html")
       });
       lineas.hidden = false;
       document.getElementById("ytmpip-lyrics-text").hidden = true;
-      document.getElementById("ytmpip-lyrics-source").textContent = "Letra: Better Lyrics";
+      document.getElementById("ytmpip-lyrics-source").textContent = t("fuente", ["Better Lyrics"], "Fuente: Better Lyrics");
       document.getElementById("ytmpip-lyrics-panel").hidden = false;
       document.getElementById("ytmpip-lyrics-toggle").setAttribute("aria-expanded", "true");
     } else if (conLetra && !conVideo) {

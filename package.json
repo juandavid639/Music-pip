@@ -2,6 +2,9 @@
   "name": "music-pip",
   "version": "1.0.1",
   "private": true,
+  "engines": {
+    "node": ">=21"
+  },
   "description": "Pruebas y utilidades de desarrollo. La extension NO se compila: se carga tal cual desde la raiz del proyecto.",
   "scripts": {
     "test": "node --test \"tests/**/*.test.js\"",

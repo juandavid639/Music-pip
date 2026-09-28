@@ -26,6 +26,13 @@
     <link rel="stylesheet" href="../pip/pip.css" />
     <script src="../shared/constants.js"></script>
     <!--
+      Los textos, por el mismo módulo que la ventana (tanda W): sin él, con
+      Chrome en inglés la vista previa seguía en español y dejaba de ser
+      «lo que se verá». Fuera de la extensión (la rejilla de tools/) no hay
+      chrome.i18n y se queda el español del HTML, que es el plan B de siempre.
+    -->
+    <script src="../shared/textos.js"></script>
+    <!--
       Los iconos REALES, del mismo módulo que usa la ventana. Sin esto el
       marco seguiría enseñando los emoji y dejaría de servir para lo único
       que sirve: mirar cómo queda de verdad a cada tamaño.

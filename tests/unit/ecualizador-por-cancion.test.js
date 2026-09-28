@@ -588,3 +588,89 @@ test("EL CABLE ENTERO: la cancion fijada del DOM enciende el ecualizador y la si
     "al cambiar a una cancion sin fijar hay que devolver lo de antes"
   );
 });
+
+/* ==================================================================
+ * La tanda V: dos pestañas, una memoria
+ * ================================================================== */
+
+/*
+ * Una pestaña con un storage que AVISA, como el de Chrome. `ajeno` es otra
+ * pestaña escribiendo: storage cambia y llega el aviso.
+ */
+async function pestanaConStorage(guardado = {}) {
+  const { win } = crearEntorno(undefined);
+  ventanas.push(win);
+  const almacen = Object.assign({}, guardado);
+  const oyentes = [];
+  const avisar = (valores, zona = "local") => {
+    const cambios = {};
+    for (const k of Object.keys(valores)) cambios[k] = { newValue: valores[k] };
+    oyentes.forEach((fn) => fn(cambios, zona));
+  };
+  win.chrome.storage = {
+    local: {
+      get: async () => JSON.parse(JSON.stringify(almacen)),
+      set: async (valores) => {
+        Object.assign(almacen, JSON.parse(JSON.stringify(valores)));
+        avisar(valores);
+      }
+    },
+    onChanged: { addListener: (fn) => oyentes.push(fn) }
+  };
+  cargar(
+    win,
+    "src/shared/constants.js",
+    "src/shared/textos.js",
+    "src/shared/messages.js",
+    "src/shared/ecualizador.js",
+    "src/shared/settings.js",
+    "src/content/ecualizador-por-cancion.js"
+  );
+  const M = win.YTMPip.EcualizadorPorCancion;
+  await win.YTMPip.Settings.load();
+  await M.cargar();
+  return {
+    win,
+    M,
+    almacen,
+    ajeno(valores, zona) {
+      if (zona === undefined || zona === "local") Object.assign(almacen, valores);
+      avisar(valores, zona);
+    }
+  };
+}
+
+test("REGRESION TANDA V: fijar en una pestaña no borra lo que fijo la otra", async () => {
+  const p = await pestanaConStorage();
+  // La OTRA pestaña fija «Tania» despues de que esta cargara su memoria.
+  p.ajeno({ equalizerBySong: [["Tania\nJoe Arroyo", "voz"]] });
+
+  // Y esta fija la suya.
+  p.M.alSonar({ title: "Rebelión", artist: "Joe Arroyo" });
+  p.M.recordar();
+
+  const claves = p.almacen.equalizerBySong.map((par) => par[0]);
+  assert.ok(claves.includes("Tania\nJoe Arroyo"), "se perdio la cancion que fijo la otra pestaña");
+  assert.ok(claves.includes("Rebelión\nJoe Arroyo"));
+});
+
+test("lo que fija otra pestaña se sabe aqui en cuanto suena esa cancion", async () => {
+  const p = await pestanaConStorage();
+  p.ajeno({ equalizerBySong: [["Tania\nJoe Arroyo", "voz"]] });
+  p.M.alSonar({ title: "Tania", artist: "Joe Arroyo" });
+  assert.strictEqual(p.M.guardada(), "voz");
+});
+
+test("lo que llega de otra pestaña pasa por el mismo saneado que la carga", async () => {
+  const p = await pestanaConStorage();
+  p.ajeno({ equalizerBySong: [["Tania\nJoe Arroyo", "esto no es un ajuste"], ["", "voz"]] });
+  p.M.alSonar({ title: "Tania", artist: "Joe Arroyo" });
+  assert.strictEqual(p.M.guardada(), null);
+});
+
+test("un aviso de otra zona de storage no toca la memoria", async () => {
+  const p = await pestanaConStorage();
+  p.ajeno({ equalizerBySong: [["Tania\nJoe Arroyo", "voz"]] }, "sync");
+  p.M.alSonar({ title: "Tania", artist: "Joe Arroyo" });
+  assert.strictEqual(p.M.guardada(), null);
+});

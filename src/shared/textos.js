@@ -103,6 +103,23 @@
    */
   function aplicar(doc) {
     if (!doc || typeof doc.querySelectorAll !== "function") return;
+    /*
+     * Y el idioma del documento, para que el lector de pantalla pronuncie
+     * con la voz que toca (tanda U). Menu y Preferencias llevaban
+     * lang="es" escrito y la ventana flotante ninguno, asi que con Chrome
+     * en ingles se leia ingles con voz española.
+     *
+     * Sale del CATALOGO (la clave `idioma`) y no de getUILanguage() a
+     * proposito: lo que hay que declarar es el idioma del texto que se ve,
+     * y con Chrome en frances el texto es el español del idioma por
+     * defecto. Solo el catalogo que contesto sabe en que idioma contesto.
+     * Si no contesta nadie, el lang del HTML se queda, igual que su texto.
+     */
+    const raiz = doc.documentElement;
+    if (raiz) {
+      const idioma = mensaje("idioma");
+      if (idioma !== null) raiz.setAttribute("lang", idioma);
+    }
     for (const [marca, escribir] of MARCAS) {
       for (const el of doc.querySelectorAll("[" + marca + "]")) {
         const texto = mensaje(el.getAttribute(marca));

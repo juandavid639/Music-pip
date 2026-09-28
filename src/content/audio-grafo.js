@@ -109,9 +109,25 @@
    * Con `mediaKeys` la pista viene cifrada y el navegador entrega silencio al
    * grafo a proposito. Ahi cruzar la puerta no es que no sirva: es que deja al
    * usuario sin musica hasta que recargue.
+   *
+   * Y el adaptador tiene que DECLARAR que su sitio lo admite (tanda V). La
+   * guarda de `mediaKeys` mira el elemento en un instante, y el cifrado
+   * puede llegar DESPUES: en el modo video de Spotify hay un <video> real
+   * que se midio con mediaKeys puesto, pero nadie midio el orden, y si el
+   * observer lo ve antes de que la pagina le ponga las claves la puerta se
+   * cruzaria con un elemento que minutos despues sonaria en silencio hasta
+   * recargar. Spotify declara `audioGrafo: false` justo por eso, y hasta
+   * aqui nadie lo consultaba antes de la unica puerta que no tiene vuelta.
+   * Sin capacidades publicadas (sin adaptador activo) no se veta: la
+   * decision sigue siendo la del elemento, como antes.
    */
   function puedeEcualizarse(video) {
-    return Boolean(video) && !video.mediaKeys && hayWebAudio();
+    return Boolean(video) && !video.mediaKeys && hayWebAudio() && sitioLoAdmite();
+  }
+
+  function sitioLoAdmite() {
+    const caps = YTMPip.Capacidades;
+    return !caps || caps.audioGrafo !== false;
   }
 
   /** Si este elemento ya paso por createMediaElementSource. */

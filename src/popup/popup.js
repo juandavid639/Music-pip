@@ -178,10 +178,25 @@
   els.openPip.addEventListener("click", () => {
     // Mismo criterio que sendCommand: si la peticion de abrir la ventana
     // no llega, el menu lo dice en vez de quedarse callado.
-    chrome.runtime.sendMessage(createMessage(MESSAGE_TYPES.OPEN_PIP_REQUEST)).catch((err) => {
-      console.warn("[YTMPip] La peticion de abrir la ventana no llego", err);
-      render({ connected: false });
-    });
+    chrome.runtime
+      .sendMessage(createMessage(MESSAGE_TYPES.OPEN_PIP_REQUEST))
+      .then((respuesta) => {
+        /*
+         * Y si llega pero la ventana NO se abrio, tambien se dice (tanda T).
+         * Hasta la 1.0.1 el service worker contestaba `ok: true` siempre y
+         * aqui ni se miraba. Lo normal desde el menu es que Chrome no deje
+         * abrirla (el clic no ocurrio en la pagina) y el service worker haga
+         * parpadear el boton PiP de la pestaña: sin esta frase, parpadea en
+         * una pestaña que el usuario no esta mirando.
+         */
+        const que = respuesta && respuesta.ok === false ? respuesta.result : null;
+        if (que === "destacado") els.status.textContent = t("abrir_desde_la_pagina");
+        else if (que === "sin-lanzador") els.status.textContent = t("recargar_pestana_musical");
+      })
+      .catch((err) => {
+        console.warn("[YTMPip] La peticion de abrir la ventana no llego", err);
+        render({ connected: false });
+      });
   });
 
   refreshState();

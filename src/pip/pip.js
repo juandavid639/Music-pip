@@ -2807,6 +2807,9 @@
     els.seekPreview.style.left = `${pulgar / 2 + ratio * (ancho - pulgar)}px`;
   }
 
+  // Las que un <input type="range"> atiende por su cuenta.
+  const TECLAS_DEL_DESLIZADOR = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"];
+
   function wireSeekBar() {
     if (!els.seek) return;
 
@@ -2816,7 +2819,18 @@
     };
 
     els.seek.addEventListener("pointerdown", empezar);
-    els.seek.addEventListener("keydown", empezar);
+    /*
+     * Con el teclado, solo las teclas que MUEVEN el deslizador empiezan un
+     * arrastre (tanda U). Antes cualquiera lo hacia: con el foco en la
+     * barra tras un clic, Espacio, K, M o N son atajos de la ventana (no
+     * flechas, asi que atajoPara no se las deja al deslizador), el valor no
+     * cambia, `change` no llega nunca y `seeking` se quedaba en true hasta
+     * que el foco se fuera. Con N se veia la cancion nueva con la barra y
+     * el contador congelados.
+     */
+    els.seek.addEventListener("keydown", (event) => {
+      if (TECLAS_DEL_DESLIZADOR.indexOf(event.key) !== -1) empezar();
+    });
 
     els.seek.addEventListener("input", () => {
       seeking = true;
@@ -2852,6 +2866,11 @@
 
     els.seek.addEventListener("pointerup", terminar);
     els.seek.addEventListener("pointercancel", terminar);
+    // Y soltar la tecla, por lo mismo que soltar el puntero: Inicio en el
+    // segundo cero o Fin al final no cambian el valor y `change` no llega.
+    // Con el teclado `input` y `change` se disparan al PULSAR, asi que al
+    // soltar ya no queda nada en curso que proteger.
+    els.seek.addEventListener("keyup", terminar);
     // Si el puntero se va sin soltar dentro, no dejamos el estado colgado.
     els.seek.addEventListener("blur", terminar);
   }
@@ -3321,9 +3340,19 @@
 
     if (els.nowLine) {
       // La linea actual es la miniatura de la letra: un clic la despliega.
-      els.nowLine.addEventListener("click", () => {
+      const desplegar = () => {
         lyricsClosedByUser = false;
         setLyricsVisible(true);
+      };
+      els.nowLine.addEventListener("click", desplegar);
+      // Y con teclado, como las lineas de la letra: el HTML la declara
+      // role="button" con tabindex, y un boton que solo oye al raton no es
+      // un boton (tanda U). Espacio no llega a pausar: atajoPara se lo deja
+      // a lo que tenga rol de boton.
+      els.nowLine.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        desplegar();
       });
     }
     // El ⤢ ahora es lo unico que cambia el TAMAÑO de la ventana a peticion
@@ -3360,7 +3389,35 @@
     sendMessageSafe(createMessage(MESSAGE_TYPES.OPEN_FALLBACK_WINDOW));
   }
 
-  async function openPip() {
+  /*
+   * UNA apertura en curso como mucho (tanda U).
+   *
+   * La guarda de "ya hay ventana" de abajo no protege el hueco en que
+   * requestWindow() esta pendiente: `pipWindow` todavia no apunta a nada.
+   * Dos peticiones seguidas (un doble clic en el boton, o el boton y el
+   * evento del icono a la vez) pedian dos ventanas; Chrome cierra la
+   * primera, pero la continuacion de la primera llamada seguia con la
+   * variable global, que ya era la SEGUNDA, y la cableaba dos veces:
+   * listeners duplicados (Espacio pausaba y reanudaba: «no hace nada»),
+   * dos latidos y una suscripcion a preferencias perdida para siempre al
+   * pisarse `unsubscribeSettings`.
+   *
+   * La segunda peticion recibe la MISMA promesa, asi que quien espere sigue
+   * enterandose de como acabo. La llamada de dentro es sincrona hasta su
+   * primer await, y ese primer await es requestWindow(): envolverla no
+   * gasta la activacion de usuario.
+   */
+  let aperturaEnCurso = null;
+
+  function openPip() {
+    if (aperturaEnCurso) return aperturaEnCurso;
+    aperturaEnCurso = abrirVentana().finally(() => {
+      aperturaEnCurso = null;
+    });
+    return aperturaEnCurso;
+  }
+
+  async function abrirVentana() {
     // Abrir una ventana nueva si necesita la extension viva: pip.html y
     // pip.css se cargan como web_accessible_resources.
     if (!YTMPip.isContextValid()) {
@@ -3424,6 +3481,25 @@
     anotarTamanoTimer = null;
     // Y la cuenta atras de los mandos, por lo mismo.
     quietoTimer = null;
+    /*
+     * Y las cuatro que se quedaron fuera de esta lista hasta la tanda U,
+     * que no apuntan a nada de la ventana vieja sino que RECUERDAN algo de
+     * ella, y por eso nadie las echo de menos:
+     *  - `seeking` y `changingVolume`: cerrar con el flag puesto (Ctrl+W a
+     *    mitad de un arrastre) hacia nacer la ventana nueva con la barra o
+     *    el volumen congelados.
+     *  - `lastQueueSignature`: con la ventana cerrada `render` no llega a
+     *    `renderQueue`, asi que la firma seguia siendo la de la vieja. Si la
+     *    cola no habia cambiado, la plantilla nueva se quedaba con su «la
+     *    cola no esta a la vista» aunque hubiera canciones.
+     *  - `lastSongKey`: cerrar, dejar que cambie la cancion y reabrir hacia
+     *    que la PRIMERA cancion de la ventana nueva se anunciara y se
+     *    animara como un cambio, contra lo que dice alCambiarDeCancion.
+     */
+    seeking = false;
+    changingVolume = false;
+    lastQueueSignature = null;
+    lastSongKey = "";
 
     // Ventana nueva, letra desde cero: los elementos de la anterior
     // murieron con su documento.
@@ -3985,10 +4061,9 @@
      * vivo por culpa de lo muerto.
      */
     els.seek.disabled = !linea.seekable || !saltosPosiblesAhora();
-    els.seek.setAttribute(
-      "aria-valuetext",
-      `${formatTime(linea.elapsed)} de ${formatTime(linea.duration)}`
-    );
+    // Por el catalogo, como todo lo que oye el usuario: aqui habia un «de»
+    // escrito a mano y el lector decia «1:02 de 3:40» tambien en ingles.
+    els.seek.setAttribute("aria-valuetext", t("tiempo_de_total", [formatTime(linea.elapsed), formatTime(linea.duration)]));
     paintSlider(els.seek);
     els.currentTime.textContent = formatTime(linea.elapsed);
   }
@@ -4361,8 +4436,32 @@
    */
   const LAUNCHER_ID = "ytmpip-launcher";
 
+  /*
+   * El boton que puso ESTE mundo, para distinguirlo de uno con el mismo id
+   * que puso otro (tanda T).
+   *
+   * Desde que el service worker reinyecta los content scripts al actualizar,
+   * una pestaña que no se recargo tiene DOS mundos aislados: el huerfano de
+   * la version anterior y el vivo. El DOM es el mismo para los dos, y el
+   * huerfano ya dejo su boton puesto. Con la comprobacion de siempre (¿hay
+   * algo con este id?) el vivo no ponia el suyo, y el que se veia era el
+   * del huerfano, cuyo `openPip` se niega sin extension: un boton que no
+   * abre nada, justo despues de actualizar.
+   *
+   * Por eso el vivo ADOPTA: si el boton con ese id no es el suyo, lo
+   * sustituye por el suyo en el mismo sitio. Y el huerfano no hace nada:
+   * sin extension viva ni pone boton ni roba el ajeno. Sin esa segunda
+   * mitad, un huerfano con este mismo codigo (de la 1.0.2 en adelante)
+   * robaria el boton de vuelta en cada mutacion y los dos observers se
+   * pasarian la vida quitandoselo. El huerfano de la 1.0.1 no necesita
+   * la guarda: su comprobacion solo mira el id, lo encuentra y se calla.
+   */
+  let lanzadorPropio = null;
+
   function ensureLauncherButton() {
-    if (!document.body || document.getElementById(LAUNCHER_ID)) return;
+    if (!document.body || !YTMPip.isContextValid()) return;
+    const existente = document.getElementById(LAUNCHER_ID);
+    if (existente && existente === lanzadorPropio) return;
 
     const btn = document.createElement("button");
     btn.id = LAUNCHER_ID;
@@ -4393,7 +4492,9 @@
       openPip().catch((err) => console.error("[YTMPip] No se pudo abrir el PiP", err));
     });
 
-    document.body.appendChild(btn);
+    lanzadorPropio = btn;
+    if (existente) existente.replaceWith(btn);
+    else document.body.appendChild(btn);
   }
 
   /*

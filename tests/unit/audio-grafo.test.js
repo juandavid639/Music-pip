@@ -577,3 +577,36 @@ test("sin ecualizador no hay nodo de analisis: el espectro se queda con su copia
   Grafo.apagar();
   assert.strictEqual(Grafo.nodoDeAnalisis(), null);
 });
+
+/* ==================================================================
+ * La tanda V: el sitio tiene que admitirlo
+ * ================================================================== */
+
+test("REGRESION TANDA V: un sitio que declara audioGrafo:false no cruza la puerta aunque el elemento parezca limpio", () => {
+  /*
+   * El caso que la guarda de mediaKeys no ve: el <video> del modo video de
+   * Spotify antes de que la pagina le ponga las claves. Sin cifrado AUN,
+   * pero en un sitio que ya dijo que su audio no admite Web Audio.
+   */
+  const { win, Grafo, Ecualizador, ctx, video } = montaje();
+  win.YTMPip.Capacidades = { audioGrafo: false };
+  const v = video();
+
+  assert.strictEqual(Grafo.puedeEcualizarse(v), false);
+  assert.strictEqual(Grafo.montar(v, Ecualizador.plan("graves")), false);
+  assert.strictEqual(ctx(), null, "se creo un contexto de audio en un sitio que dijo que no");
+  assert.strictEqual(Grafo.cruzado(v), false);
+});
+
+test("un sitio que lo admite cruza como siempre", () => {
+  const { win, Grafo, Ecualizador, video } = montaje();
+  win.YTMPip.Capacidades = { audioGrafo: true };
+  const v = video();
+  assert.strictEqual(Grafo.montar(v, Ecualizador.plan("graves")), true);
+  assert.strictEqual(Grafo.cruzado(v), true);
+});
+
+test("sin capacidades publicadas no se veta: decide el elemento, como antes", () => {
+  const { Grafo, video } = montaje();
+  assert.strictEqual(Grafo.puedeEcualizarse(video()), true);
+});

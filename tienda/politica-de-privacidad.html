@@ -15,7 +15,7 @@
 <body>
 
 <h1>Music PiP — Política de privacidad</h1>
-<p class="fecha">Última actualización: 23 de septiembre de 2026</p>
+<p class="fecha">Última actualización: 28 de septiembre de 2026</p>
 
 <h2>Lo esencial</h2>
 <p><strong>Music PiP no recopila, no almacena en servidores, no transmite y no
@@ -23,24 +23,36 @@ vende ningún dato personal.</strong> No hay analítica, no hay cuentas, no hay
 servidores propios: la extensión no hace ni una sola petición de red propia.</p>
 
 <h2>Qué se guarda y dónde</h2>
-<p>Las preferencias de la extensión (tema, tamaño de la ventana, ajustes del
-ecualizador, halo, atajos y similares) se guardan exclusivamente en tu navegador
-mediante <code>chrome.storage.local</code>. Esos datos nunca salen de tu equipo
-y se borran al desinstalar la extensión. También puedes borrarlos antes desde
-la página de Preferencias restaurando los valores de fábrica.</p>
+<p>Todo lo que la extensión guarda se guarda exclusivamente en tu navegador,
+mediante <code>chrome.storage.local</code>. Son tres cosas:</p>
+<ul>
+  <li><strong>Tus preferencias</strong>: tema, tamaño de la ventana, ajustes del
+  ecualizador, halo, espectro y similares.</li>
+  <li><strong>El último estado de reproducción</strong>: título, artista,
+  carátula, letra y cola de la canción que estaba sonando. Se sobrescribe con
+  cada canción y sirve para que la ventana de respaldo sepa qué mostrar.</li>
+  <li><strong>Las canciones a las que fijas un ajuste del ecualizador</strong>:
+  su título y artista, junto al ajuste elegido, hasta un máximo de 200 (al
+  pasar de ahí se olvida la más antigua). Solo se guardan las que fijas tú con
+  la chincheta, y puedes quitar cada una con la misma chincheta.</li>
+</ul>
+<p>Nada de eso sale nunca de tu equipo, y todo se borra al desinstalar la
+extensión.</p>
 
 <h2>Qué lee la extensión</h2>
 <p>Para funcionar, el código lee de la propia pestaña de música
 (music.youtube.com, www.youtube.com u open.spotify.com) la información que la
 página ya muestra: título, artista, carátula, letra y estado de reproducción.
-Esa lectura ocurre solo en tu navegador, solo mientras la pestaña está abierta,
-y no se registra ni se envía a ninguna parte.</p>
+Esa lectura ocurre solo en tu navegador y no se envía a ninguna parte. Lo
+único que queda guardado de ella es lo descrito arriba.</p>
 
 <h2>Permisos</h2>
 <ul>
   <li><strong>storage</strong>: guardar tus preferencias en local.</li>
   <li><strong>scripting</strong>: abrir la ventana flotante cuando pulsas el
-  icono de la barra, conservando tu gesto de usuario.</li>
+  icono de la barra, conservando tu gesto de usuario, y volver a cargar el
+  código de la propia extensión en las pestañas de música ya abiertas al
+  instalarla o actualizarla.</li>
   <li><strong>Acceso a los tres sitios de música</strong>: leer los metadatos y
   manejar los controles que esas páginas ya ofrecen. La extensión no se carga
   en ningún otro sitio.</li>
@@ -58,7 +70,7 @@ Para cualquier duda: <strong>juandavidcmbs@gmail.com</strong></p>
 <hr>
 
 <h1>Music PiP — Privacy Policy</h1>
-<p class="fecha">Last updated: September 23, 2026</p>
+<p class="fecha">Last updated: September 28, 2026</p>
 
 <h2>The essentials</h2>
 <p><strong>Music PiP does not collect, store on servers, transmit, or sell any
@@ -66,24 +78,35 @@ personal data.</strong> No analytics, no accounts, no servers of its own: the
 extension makes not a single network request of its own.</p>
 
 <h2>What is stored and where</h2>
-<p>The extension's preferences (theme, window size, equalizer settings, halo,
-shortcuts and the like) are stored exclusively in your browser via
-<code>chrome.storage.local</code>. That data never leaves your machine and is
-deleted when you uninstall the extension. You can also clear it earlier from
-the Options page by restoring the defaults.</p>
+<p>Everything the extension stores is stored exclusively in your browser, via
+<code>chrome.storage.local</code>. There are three things:</p>
+<ul>
+  <li><strong>Your preferences</strong>: theme, window size, equalizer
+  settings, halo, spectrum and the like.</li>
+  <li><strong>The last playback state</strong>: title, artist, artwork, lyrics
+  and queue of the song that was playing. It is overwritten with every song and
+  lets the fallback window know what to show.</li>
+  <li><strong>The songs you pin an equalizer setting to</strong>: their title
+  and artist, along with the chosen setting, up to 200 (beyond that the oldest
+  one is forgotten). Only the ones you pin yourself are stored, and you can
+  unpin each one with the same pin button.</li>
+</ul>
+<p>None of it ever leaves your machine, and all of it is deleted when you
+uninstall the extension.</p>
 
 <h2>What the extension reads</h2>
 <p>To work, the code reads from your music tab (music.youtube.com,
 www.youtube.com or open.spotify.com) the information the page already shows:
 title, artist, artwork, lyrics and playback state. That reading happens only in
-your browser, only while the tab is open, and is neither logged nor sent
-anywhere.</p>
+your browser and is never sent anywhere. The only part of it that stays stored
+is what is described above.</p>
 
 <h2>Permissions</h2>
 <ul>
   <li><strong>storage</strong>: save your preferences locally.</li>
   <li><strong>scripting</strong>: open the floating window when you click the
-  toolbar icon, preserving your user gesture.</li>
+  toolbar icon, preserving your user gesture, and reload the extension's own
+  code into already-open music tabs when it is installed or updated.</li>
   <li><strong>Access to the three music sites</strong>: read metadata and drive
   the controls those pages already offer. The extension loads nowhere else.</li>
 </ul>

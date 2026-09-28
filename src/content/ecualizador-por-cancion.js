@@ -269,6 +269,44 @@
     }
   }
 
+  /*
+   * LO QUE FIJA OTRA PESTAÑA, TAMBIEN SE SABE AQUI (tanda V).
+   *
+   * La memoria se cargaba una vez por pestaña y `persistir` escribe el
+   * mapa ENTERO. Con YouTube Music y YouTube abiertos a la vez, fijar una
+   * cancion en una pestaña borraba en storage lo que se hubiera fijado en
+   * la otra desde que esta cargo: cada una reescribia su copia vieja.
+   *
+   * Ahora cada escritura de la clave, venga de donde venga, sustituye la
+   * copia de esta pestaña, pasada por el MISMO saneado que la carga. El
+   * eco de la escritura propia trae lo que ya habia: sustituir por lo mismo
+   * no cambia nada, y distinguirlo seria codigo para no hacer nada.
+   *
+   * `actual` NO se toca, a diferencia de la carga: la cancion que suena en
+   * esta pestaña sigue siendo la misma, y `guardada()` ya responde con la
+   * memoria nueva en cuanto la ventana lo pregunte.
+   *
+   * Lo que sigue pudiendo pasar, dicho claro: dos pestañas fijando en el
+   * mismo instante (antes de que llegue el aviso de la otra) se quedan con
+   * la ultima escritura. Es un hueco de milisegundos y un clic humano.
+   *
+   * Y lo que NO se toca a proposito: que fijar en una pestaña cambie como
+   * suena la otra. El ecualizador es UNO para toda la extension (la clave
+   * EQUALIZER), y la memoria por cancion escribe ahi por diseño.
+   */
+  function vigilar() {
+    const KEY = YTMPip.CONSTANTS.STORAGE_KEYS.EQUALIZER_BY_SONG;
+    try {
+      if (!chrome.storage || !chrome.storage.onChanged) return;
+      chrome.storage.onChanged.addListener((cambios, zona) => {
+        if (zona !== "local" || !cambios[KEY]) return;
+        memoria = normalizarMemoria(cambios[KEY].newValue);
+      });
+    } catch (err) {
+      // Contexto invalidado: esta pestaña sigue con su copia.
+    }
+  }
+
   YTMPip.EcualizadorPorCancion = {
     claveDe,
     alSonar,
@@ -281,5 +319,6 @@
     cargar
   };
 
+  vigilar();
   cargar();
 })(typeof self !== "undefined" ? self : globalThis);
