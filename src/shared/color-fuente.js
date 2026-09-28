@@ -217,9 +217,80 @@
     return mezclarHsl(actual, objetivo, pasoDeSuavizado(dt));
   }
 
+  /*
+   * ============ EL TEMA «DE LA CARATULA» (tanda Y) ============
+   *
+   * Luminancia relativa de WCAG 2.x, la misma cuenta que usa la prueba de
+   * accesibilidad para el contraste. Aqui se usa para ELEGIR el acento, no
+   * para comprobarlo: la prueba lo comprueba por su cuenta con su propia
+   * copia, que es lo que la hace un vigilante y no un eco.
+   */
+  function luminancia(rgb) {
+    const lineal = (canal) => {
+      const c = canal / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lineal(rgb[0]) + 0.7152 * lineal(rgb[1]) + 0.0722 * lineal(rgb[2]);
+  }
+
+  /**
+   * Del color de la fuente, los dos colores del tema: `{ fondo, acento }`,
+   * cada uno [r, g, b]. `null` si no hay color (la ventana vuelve al tema
+   * oscuro de siempre).
+   *
+   * El acento busca la LUMINANCIA fijada (ver THEME_ACCENT_LUMINANCE en
+   * constants.js) moviendo solo la luz: con el tono y la saturacion fijos la
+   * luminancia sube con la luz, asi que una biseccion la encuentra. Veinte
+   * vueltas dejan la luz a una millonesima; el redondeo a enteros de los
+   * canales pesa mas que eso.
+   *
+   * Pura.
+   */
+  function temaDeLaFuente(hsl) {
+    if (!hsl) return null;
+    const P = YTMPip.Paleta;
+    const fondo = P.hslARgb({
+      h: hsl.h,
+      s: Math.min(AJUSTES.THEME_BG_SAT_MAX, hsl.s),
+      l: AJUSTES.THEME_BG_LIGHT
+    });
+    const s = Math.max(AJUSTES.THEME_ACCENT_SAT_MIN, hsl.s);
+    let abajo = 0;
+    let arriba = 1;
+    for (let vuelta = 0; vuelta < 20; vuelta++) {
+      const medio = (abajo + arriba) / 2;
+      if (luminancia(P.hslARgb({ h: hsl.h, s, l: medio })) < AJUSTES.THEME_ACCENT_LUMINANCE) abajo = medio;
+      else arriba = medio;
+    }
+    return { fondo, acento: P.hslARgb({ h: hsl.h, s, l: arriba }) };
+  }
+
+  /**
+   * Si pasar de `anterior` a `nuevo` merece repintar el tema. Con video el
+   * tono baila unos grados en cada muestra, y un fondo que tiembla es peor
+   * que no tener tema: solo cuenta un cambio de verdad (ver THEME_*_STEP).
+   * Aparecer o desaparecer el color cuenta siempre.
+   *
+   * Pura.
+   */
+  function cambiaElTema(anterior, nuevo) {
+    if (!anterior || !nuevo) return anterior !== nuevo;
+    const dh = Math.abs(anterior.h - nuevo.h) % 360;
+    const distanciaDeTono = Math.min(dh, 360 - dh);
+    return (
+      distanciaDeTono >= AJUSTES.THEME_HUE_STEP ||
+      Math.abs(anterior.s - nuevo.s) >= AJUSTES.THEME_SAT_STEP ||
+      Math.abs(anterior.l - nuevo.l) >= AJUSTES.THEME_LIGHT_STEP
+    );
+  }
+
   YTMPip.ColorFuente = {
     deImagen,
     acercar,
+    // El tema «De la caratula»: el calculo y la regla de cuando repintar.
+    temaDeLaFuente,
+    cambiaElTema,
+    luminancia,
     // Los tres pasos por separado, para que cuando el color salga raro se
     // pueda saber si el fallo esta en el recuento, en el umbral o en la
     // normalizacion, sin tener que deducirlo del resultado final.

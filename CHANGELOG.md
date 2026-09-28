@@ -4,6 +4,25 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Añadido
+
+- Dos temas nuevos para la ventana: **Automático**, que sigue el claro u
+  oscuro del sistema, y **Del vídeo o la carátula**, que tiñe la ventana
+  entera con el color de lo que suena (manteniendo el texto legible con
+  cualquier color).
+- Las barras de sonido tienen dos formas nuevas: una **onda** y un
+  **anillo** de rayos alrededor de la carátula. Se eligen en
+  Preferencias y funcionan con todos los modos de color.
+- La carátula puede verse como un **disco de vinilo** que gira mientras
+  suena la música (sin girar si el sistema pide menos movimiento).
+- Al cambiar de canción, la carátula se funde con la nueva en vez de
+  cambiar de golpe (y sin quedarse un instante en blanco).
+- El icono de la barra de Chrome enseña si la música suena (▶) o está
+  en pausa (❚❚), o los minutos que le quedan al temporizador. Se puede
+  apagar en Preferencias.
+
 ## [1.0.2] — 2026-09-28
 
 ### Corregido

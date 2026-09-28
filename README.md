@@ -7208,6 +7208,256 @@ que un usuario note, y el cambio tocaría el bucle y el estado guardado (y
 por tanto la política). Si algún día cambia el bucle, se repite la medición
 con el mismo guion antes y después.
 
+## Cuatro temas (la tanda Y: «Automático» y la ventana teñida con el color de lo que suena)
+
+Primera función nueva desde la 1.0.2, de la lista de mejoras visuales
+que eligió el autor (V1). El tema de la ventana pasa de dos respuestas a
+cuatro: **Oscuro**, **Claro**, **Automático** (el del sistema) y **Del vídeo
+o la carátula**, que tiñe la ventana entera con el color de lo que suena.
+La cuarta reutiliza la palabra `source` y el texto del catálogo que ya
+usan el halo y el espectro para esta misma idea.
+
+**Automático** pregunta al sistema con `prefers-color-scheme` al aplicar
+las preferencias, y `openPip` deja escuchando el cambio en la propia
+ventana (la consulta muere con ella, como sus temporizadores). No hay una
+segunda puerta: el cambio del sistema vuelve a pasar por `applySettings`.
+
+**La ventana teñida** es el TERCER cliente del muestreo del color, después
+del espectro y del halo (tanda M), y no añade muestreo nuevo. Dos
+decisiones la sostienen:
+
+1. **Una sola variable de canales.** El fondo, el velo general y el velo de
+   la cabecera repetían `15, 15, 15` a mano cada uno. Ahora salen de
+   `--ytmpip-bg-rgb` (`rgba(var(--ytmpip-bg-rgb), 0.55)`, lo mismo en el
+   tema claro), así que teñir la ventana es escribir DOS variables en línea
+   sobre `<html>`: esos canales y el acento. Sin color, o con otro tema,
+   se quitan y gana la hoja: la ausencia es el mecanismo, como en el halo.
+   La prueba de accesibilidad aprendió a resolver `var()` como la cascada.
+2. **El acento se elige por luminancia, no por luz.** El acento se usa como
+   texto («Sin conexión» en la cabecera) y como fondo de la tinta blanca
+   del botón grande, y la tanda N dejó escrito que el rojo pasa AA sin
+   margen. Un color de carátula cualquiera no pasaría: con la misma luz
+   HSL, un azul es tres veces más oscuro que un amarillo a ojos de WCAG.
+   Así que se conserva el tono y se busca la luz que da **luminancia 0,28**
+   (una bisección en `ColorFuente.temaDeLaFuente`), el hueco que dejan las
+   dos reglas: por abajo, «Sin conexión» bajo el peor velo (unos 0,25); por
+   arriba, la tinta blanca del botón (unos 0,30). El fondo es el tono casi
+   negro (luz 0,07) y poco saturado, para que todas las cuentas del tema
+   oscuro sigan valiendo.
+
+**El baile del vídeo.** Con vídeo, el muestreo lee un fotograma cada 400 ms y
+el tono baila unos grados (4 de media, medido en la tanda M). El halo lo
+absorbe con una `transition`; el fondo no puede, porque una variable CSS
+sin registrar no se anima, y un fondo que tiembla es peor que ningún tema.
+`ColorFuente.cambiaElTema` solo repinta si el tono se mueve 12° o más (por
+encima del baile, por debajo de una franja de voto de 15°), o si cambian
+mucho la saturación o la luz.
+
+**Comprobado a ojo** en la vista previa, escribiendo a mano las dos
+variables: fondo, velos, barra de progreso, volumen, botón grande y halo
+siguen al color. La primera captura enseñó el halo aún rojo: era su
+`transition` de 600 ms a medio camino.
+
+**Las pruebas**: 14 en `pip-tema.test.js` (`openPip` de verdad con las
+preferencias sembradas y un `matchMedia` de mentira) y 2 en
+`accesibilidad.test.js`. La central recorre los 24 tonos de la votación con
+tres saturaciones y las dos luces extremas de `normalizarLuz` (144 colores)
+y les hace las MISMAS cuentas que a los temas fijos: texto, tenue y acento
+sobre el fondo, tinta del botón sobre el acento, y el estado y «Sin
+conexión» bajo el peor velo, en reposo y en el escenario. Todos pasan.
+
+**La mutación** (`tools/mutar-tanda-y.js`): 12 mutantes, todos muertos,
+recuentos exactos contra una predicción **refijada por escrito** tras una
+primera pasada que dejó dos lecciones:
+- **OneDrive bloqueó `constants.js` justo al restaurarlo**, y el archivo
+  se quedó mutado (`THEME_ACCENT_LUMINANCE` en 0,4) hasta devolverlo a mano.
+  El arnés de esta tanda escribe ahora con reintentos. Los arneses viejos
+  siguen sin ellos: es un riesgo conocido de trabajar dentro de OneDrive.
+- **Un mutante sobrevivió con razón**: la prueba de reabrir cerraba con
+  `pagehide`, que ya destiñe por otro camino, así que el olvido de
+  `openPip` no lo vigilaba nadie. Ahora la prueba es la de la ventana que
+  muere sin despedirse, que es el caso para el que existe. Y otro mutante
+  mutó la llamada equivocada, porque su texto aparecía dos veces (el
+  script lo avisó con «OJO» y lo pasé por alto): cayeron 3 en vez de 1.
+
+NO MEDIDO en vivo: si `prefers-color-scheme` de la ventana flotante sigue
+al sistema en Chrome de verdad, y el primer tinte con una carátula real.
+
+## Tres formas para el espectro (la tanda Z: barras, onda y anillo)
+
+Segunda mejora visual elegida (V4). Además de las barras de siempre, el
+espectro puede dibujarse como una **onda** o como un **anillo de rayos
+alrededor de la carátula**. Es una preferencia nueva, `spectrumStyle`
+(`bars` de serie, `wave`, `ring`), en su propia clave y no como un modo
+más del color: forma y color son dos preguntas, y los cinco modos de color
+(tema, propio, arcoíris, paleta y «de la fuente») valen con las tres
+formas. En Preferencias va la primera de la sección del espectro, porque
+decide qué son las de debajo: «cuántas barras» es también cuántos puntos
+de la onda o cuántos rayos. El censo de `settings-recargas.test.js` obligó
+a clasificarla (preferencia que se aplica en vivo), y la prueba de ida y
+vuelta de las preferencias la aprendió con un valor distinto del de serie.
+
+**La geometría es pura y está probada**: `puntosDeOnda` (un punto por
+barra, centrado en su franja; el silencio a un píxel, como las barras,
+para que se vea una línea y no nada) y `rayosDelAnillo` (dos rayos por
+barra en espejo: los graves arriba, los agudos abajo, porque un círculo no
+tiene izquierda y repartir las barras en la vuelta entera dejaría graves y
+agudos pegados). El dibujo usa esas listas: la onda con curvas
+cuadráticas y un relleno tenue (con color por barra, un degradado con una
+parada por barra, porque una línea no puede cambiar de color a mitad), y
+el anillo con trazos redondeados.
+
+**Un solo lienzo.** En modo anillo el mismo `<canvas>` pasa a ocupar la
+ventana entera (una clase y una regla en `pip.css`) y el dibujo mide en
+cada fotograma dónde está la carátula, porque la maquetación la mueve. Si
+no está a la vista (vídeo, letra en grande), vuelve a barras en la banda
+de abajo que dice la altura del espectro.
+
+**Lo que enseñó mirarlo.** No hay forma de ver esto en la vista previa de
+Preferencias (pinta sus propias barras de mentira), así que se montó una
+página temporal que carga el `pip.js` real con un `chrome` de mentira; ya
+está borrada. Mirar la primera versión del anillo enseñó que **los rayos
+pintaban sobre las esquinas de la carátula**: el círculo de salida (la
+mitad del lado) queda dentro del cuadrado en las esquinas, y el lienzo
+está por encima de la portada. Ahora el cuadrado de la carátula se
+recorta del dibujo (`clip` con `evenodd`) y los rayos parecen salir de
+detrás. Con el disco de vinilo de la tanda siguiente el círculo encaja.
+**Limitación a la vista**: en la ventana compacta la carátula está pegada
+al borde izquierdo y el anillo se corta por ese lado; luce en la ampliada,
+con la carátula centrada.
+
+**Las pruebas**: 11 nuevas en `pip-espectro.test.js` (con un contexto 2d
+que APUNTA las órdenes, porque jsdom no pinta), 1 en
+`opciones-en-vivo.test.js` (cargar y guardar la forma, añadida ANTES de
+fijar la predicción porque sin ella dos mutantes habrían sobrevivido) y el
+round-trip de `settings.test.js`.
+
+**La mutación** (`tools/mutar-tanda-z.js`, con el arnés de reintentos de
+la tanda Y): 12 mutantes, todos muertos, **12 de 12 recuentos exactos**.
+NO MEDIDO: las tres formas con audio de verdad en la ventana flotante, y
+el coste por fotograma del anillo (más trazos que las barras; la medición
+de rendimiento se puede repetir con `tools/diagnostico-rendimiento.js`).
+
+## La carátula en disco de vinilo (la tanda AA)
+
+Tercera mejora visual elegida (V5). Preferencia nueva `coverStyle`
+(`square` de serie, `vinyl`): la carátula se vuelve un disco —círculo,
+agujero en el centro, borde oscuro— que **gira mientras suena**. Casi todo
+es CSS; `pip.js` solo pone dos clases en la raíz: `ytmpip-vinilo` (la
+preferencia) y `ytmpip-sonando` (el estado, que no dice nada del disco y
+sirve a cualquier otra cosa que quiera moverse solo con música).
+
+Tres decisiones:
+- **El giro es la propiedad `rotate` y no `transform`.** La portada ya
+  late con los graves escalando por `transform` (tanda J); una animación
+  de `transform: rotate()` pisaría ese `scale` y el disco dejaría de latir
+  mientras gira. `rotate` se compone con `transform`: comprobado en la
+  vista previa, `rotate` avanzando y `transform` escalando a la vez.
+- **Una vuelta cada 8 s**, no a 33⅓ rpm (1,8 s): una portada girando como
+  un disco de verdad marea, y lo que se busca es que se note que suena.
+- **El agujero es una máscara** (transparente en el centro), no un
+  círculo pintado encima: deja ver lo que hay detrás, que es lo que se ve
+  a través del agujero de un disco.
+
+Con «reducir movimiento» el disco no gira. En modo vídeo la carátula no
+está y el escenario no se redondea. Y el anillo de la tanda Z recorta un
+**círculo** en vez del cuadrado cuando la carátula es un disco: con el
+cuadrado quedaba un hueco en las diagonales entre el disco y el arranque
+de los rayos.
+
+**Lo que enseñó mirarlo.** La primera prueba a ojo en la vista previa (con
+las dos clases puestas a mano) enseñó un **cuadrado girando**, recortado
+por el escenario en forma de hexágono. La regla de la ventana ampliada
+(`#ytmpip-root.expanded .ytmpip-artwork`, radio de 10 px) tenía la misma
+especificidad que la del disco y ganaba por ir después en la hoja. Las
+reglas del disco llevan ahora `.ytmpip-stage` en medio, y una prueba
+compara las dos especificidades.
+
+**Las pruebas**: 7 en `pip-vinilo.test.js` (las clases de la raíz con la
+ventana montada; la hoja leída como texto para las decisiones: `rotate` y
+no `transform`, parado de serie y en marcha al sonar, la máscara, menos
+movimiento y la especificidad), 1 en `pip-espectro.test.js` (el recorte
+circular del anillo), 1 en `opciones-en-vivo.test.js` y el round-trip.
+
+**La mutación** (`tools/mutar-tanda-aa.js`): 12 mutantes, todos muertos,
+**12 de 12 recuentos exactos**. NO MEDIDO: el disco con una carátula real
+y audio de verdad en la ventana flotante, y en la ventana compacta (la
+vista previa se miró ampliada).
+
+## El fundido entre carátulas (la tanda AB)
+
+Cuarta mejora visual elegida (V6). Cambiar el `src` de la portada la
+cambiaba de golpe, y además con un instante vacío mientras llegaba la
+nueva. Ahora `cambiarCaratula` deja la vieja encima como una **copia
+«saliente»** mientras la nueva se descarga, y solo cuando la nueva se puede
+pintar (`decode()`) la copia se desvanece en 400 ms y se va. Nunca hay
+hueco: o se ve la vieja entera, o las dos fundiéndose.
+
+Guardas, cada una con su porqué:
+- **La misma URL no hace nada.** `render` corre con cada estado, cuatro
+  veces por segundo con música, y reasignaba la portada cada vez: sin esta
+  guarda habría una copia nueva cada 250 ms.
+- La primera portada no funde (no hay de dónde venir), y con **«reducir
+  movimiento»** no hay fundido, solo el cambio.
+- La copia no lleva `id` (serían dos elementos con el mismo), lleva
+  `aria-hidden` (el lector leería dos portadas) y lleva en línea
+  `animation: none` y el `rotate` que tuviera la original: con el disco de
+  vinilo, la copia giraría desde cero y se vería saltar hacia atrás. En
+  línea porque la regla del disco lleva un id y una clase no le gana.
+- Si `decode()` falla (una URL rota), la copia se va igual: una portada
+  rota no se arregla dejando la anterior encima para siempre.
+
+**El fondo difuminado no necesitaba nada.** La hoja ya declaraba
+`transition: background-image 420ms` en `.ytmpip-backdrop`, y Chrome sabe
+fundir imágenes de fondo: se comprobó en vez de suponerlo, con
+`getAnimations()` en plena transición (`background-image running`).
+
+**Comprobado en Chrome** con el `pip.js` real (página temporal, borrada):
+la copia con la carátula vieja, el desvanecido tras `decode()`, la copia
+fuera al medio segundo, y ninguna copia al reasignar la misma URL.
+
+**Las pruebas**: 7 en `pip-fundido.test.js`. jsdom no carga imágenes ni
+tiene `decode()`; el código trata «sin decode» como «lista ya», que es lo
+que deja probar el reparto de la copia.
+
+**La mutación** (`tools/mutar-tanda-ab.js`): 12 mutantes, todos muertos,
+**12 de 12 recuentos exactos**. NO MEDIDO: el fundido con carátulas reales
+de YouTube Music (que tardan más en llegar que un SVG en línea).
+
+## El estado en el icono de la barra (la tanda AC)
+
+Quinta y última mejora elegida (V8). Sobre el icono de la extensión, una
+etiqueta corta: **▶** si suena, **❚❚** en pausa, o **los minutos que le
+quedan al temporizador**, que mandan sobre lo demás porque son lo único que
+caduca (redondeados hacia arriba, como en la ventana: «30′» con 29,5
+minutos). Sin música, nada.
+
+**La pinta el service worker**, porque es quien ya recibe el estado de la
+pestaña recordada (tanda T), y la pinta con el MISMO estado que guarda: el
+icono y el menú de respaldo no pueden contar dos cosas distintas, y una
+pestaña que no es la recordada no toca el icono. Cerrar la pestaña lo
+limpia. No pide permisos: `setBadgeText` viene con el icono.
+
+**El color**: el acento cuando suena y gris en pausa. El rojo se toma de
+`COLOR_SUGGESTED`, que ya es una de las seis copias del acento que vigila
+la prueba de la tanda N; escribirlo a mano habría sido una séptima copia
+fuera del censo.
+
+**Se puede apagar** en Preferencias («Estado en el icono»), encendido de
+serie: una etiqueta fija sobre un icono no le gusta a todo el mundo.
+Cambiarla se ve al momento: el service worker escucha la clave y repinta
+con el último estado guardado. La lee una vez por despertar y la mantiene
+al día con ese mismo oyente, en vez de leer storage con cada estado.
+
+**Las pruebas**: 6 en `service-worker.test.js` (el banco apunta lo que se
+pinta en el icono; el color va un paso asíncrono detrás del texto y la
+primera versión de una prueba miraba demasiado pronto), 1 en
+`opciones-en-vivo.test.js` y el round-trip de las preferencias.
+
+**La mutación** (`tools/mutar-tanda-ac.js`): 12 mutantes, todos muertos,
+**12 de 12 recuentos exactos**. NO MEDIDO: cómo se ven ▶ y ❚❚ en la
+etiqueta real de Chrome (el tamaño de los glifos depende del sistema).
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

@@ -219,6 +219,17 @@
   let haloSigueLaFuente = false;
 
   /*
+   * El TERCER cliente del color de la fuente (tanda Y): el tema «De la
+   * caratula». Misma razon que haloSigueLaFuente para ser variable de
+   * modulo: el pintor corre desde el muestreo, sin settings a mano; la
+   * escribe applySettings. `temaPintado` es el color con el que se tiño la
+   * ventana por ultima vez, para no repintar el fondo por un baile de
+   * cuatro grados entre dos fotogramas (ColorFuente.cambiaElTema).
+   */
+  let temaSigueLaFuente = false;
+  let temaPintado = null;
+
+  /*
    * UN SOLO rAF PARA LOS DOS. Antes esta variable se llamaba
    * `espectroFrame` y la cadena la mantenia viva el propio dibujado. Con dos
    * efectos serian dos cadenas compitiendo, cada una llamando a
@@ -971,6 +982,66 @@
     return Math.max(BARRAS_MIN, Math.min(BARRAS_MAX, Math.floor(ancho / ANCHO_POR_BARRA)));
   }
 
+  /* ---------- Las otras dos formas del espectro (tanda Z) ----------
+   *
+   * Las barras de siempre se pintan en dibujarEspectro con un fillRect por
+   * barra. La onda y el anillo necesitan geometria, y la geometria vive
+   * aqui, pura, para poder probarla sin un canvas: jsdom no pinta, pero una
+   * lista de puntos se puede comprobar numero a numero.
+   */
+
+  /**
+   * Los puntos de la ONDA: uno por barra, centrado en su franja, a la altura
+   * que le toca. El dibujo los une con curvas y rellena por debajo.
+   *
+   * Una barra a cero sigue midiendo un pixel, como en las barras: una onda
+   * que se hunde hasta el borde desaparece, y un silencio tiene que verse
+   * como una linea plana abajo, no como nada. Pura.
+   */
+  function puntosDeOnda(barras, ancho, alto) {
+    const n = barras.length;
+    if (!n) return [];
+    const paso = ancho / n;
+    return barras.map((valor, i) => ({
+      x: (i + 0.5) * paso,
+      y: alto - Math.max(1, (valor / 255) * alto)
+    }));
+  }
+
+  /**
+   * Los rayos del ANILLO alrededor de la caratula: dos por barra, en espejo.
+   *
+   * Las barras van de graves a agudos, y un circulo no tiene «izquierda»:
+   * repartirlas en la vuelta entera dejaria los graves y los agudos
+   * pegados arriba. Asi que ocupan media vuelta —de arriba (-90°) a abajo
+   * por la derecha— y se repiten en espejo por la izquierda: los graves
+   * arriba, los agudos abajo, y el dibujo simetrico, que es como se lee
+   * un anillo. Cada rayo sale del borde (`radio`) hacia fuera, con largo
+   * proporcional a su barra y minimo de un pixel, como las barras.
+   *
+   * `i` es la barra de la que sale, para el color por barra. Pura.
+   */
+  function rayosDelAnillo(barras, cx, cy, radio, largoMax) {
+    const n = barras.length;
+    const rayos = [];
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n;
+      const largo = Math.max(1, (barras[i] / 255) * largoMax);
+      for (const angulo of [-Math.PI / 2 + t * Math.PI, -Math.PI / 2 - t * Math.PI]) {
+        const cos = Math.cos(angulo);
+        const sin = Math.sin(angulo);
+        rayos.push({
+          i,
+          x1: cx + radio * cos,
+          y1: cy + radio * sin,
+          x2: cx + (radio + largo) * cos,
+          y2: cy + (radio + largo) * sin
+        });
+      }
+    }
+    return rayos;
+  }
+
   /* ---------- El arcoiris giratorio ("RGB", como los gamer) ----------
    *
    * Dos movimientos a la vez, y hacen falta los dos:
@@ -1233,7 +1304,7 @@
        */
       if (borrowedVideo.readyState < 2 || !borrowedVideo.videoWidth) return;
       colorFuenteObjetivo = colorDe(borrowedVideo, "video");
-      pintarColorFuenteEnHalo();
+      repartirColorFuente();
       return;
     }
     pedirColorDeLaPortada();
@@ -1258,6 +1329,46 @@
    * mande, se vuelve al del tema, y quitarla es ademas el mismo mecanismo
    * con el que "accent" funciona desde la tanda del color.
    */
+  /**
+   * Un color nuevo de la fuente, a todos los que lo siguen sin bucle propio:
+   * el halo y el tema. El espectro no esta aqui: lo recoge en su fotograma.
+   */
+  function repartirColorFuente() {
+    pintarColorFuenteEnHalo();
+    pintarColorFuenteEnTema();
+  }
+
+  /**
+   * Tiñe la ventana con el color de la fuente, o la devuelve al tema oscuro.
+   *
+   * Escribe DOS variables en linea sobre <html> —los canales del fondo y el
+   * acento— y el resto lo sigue solo: el fondo y los dos velos salen de
+   * --ytmpip-bg-rgb en pip.css, y el halo y todo lo que usa el acento caen
+   * a --ytmpip-accent. Sin color (o sin el tema puesto) las dos SE QUITAN y
+   * gana el :root de la hoja: la ausencia es el mecanismo, como en el halo.
+   *
+   * No repinta por cualquier cosa: con video el tono baila entre muestras,
+   * y ese baile no mueve el fondo (ColorFuente.cambiaElTema).
+   */
+  function pintarColorFuenteEnTema() {
+    if (!pipWindow || pipWindow.closed) return;
+    const objetivo = temaSigueLaFuente ? colorFuenteObjetivo : null;
+    // Nada pintado y nada que pintar: ni se pregunta (applySettings pasa por
+    // aqui con cualquier tema, y no todo contexto carga color-fuente.js).
+    if (!objetivo && !temaPintado) return;
+    if (!YTMPip.ColorFuente.cambiaElTema(temaPintado, objetivo)) return;
+    temaPintado = objetivo;
+    const raiz = pipWindow.document.documentElement;
+    const tema = YTMPip.ColorFuente.temaDeLaFuente(objetivo);
+    if (tema) {
+      raiz.style.setProperty("--ytmpip-bg-rgb", tema.fondo.join(", "));
+      raiz.style.setProperty("--ytmpip-accent", "rgb(" + tema.acento.join(", ") + ")");
+    } else {
+      raiz.style.removeProperty("--ytmpip-bg-rgb");
+      raiz.style.removeProperty("--ytmpip-accent");
+    }
+  }
+
   function pintarColorFuenteEnHalo() {
     if (!haloSigueLaFuente || !els.halo) return;
     if (colorFuenteObjetivo) {
@@ -1304,7 +1415,7 @@
       // seria un color equivocado con toda la apariencia de ser el bueno.
       if (portadaSondeada !== url) return;
       colorFuenteObjetivo = colorDe(sonda, "portada");
-      pintarColorFuenteEnHalo();
+      repartirColorFuente();
     };
     sonda.onerror = () => {
       /*
@@ -1315,7 +1426,7 @@
        */
       if (portadaSondeada !== url) return;
       colorFuenteObjetivo = null;
-      pintarColorFuenteEnHalo();
+      repartirColorFuente();
     };
     sonda.src = url;
   }
@@ -1343,7 +1454,8 @@
   function sincronizarColorFuente(visible, settings) {
     const alguienQuiere =
       (visible && settings.spectrumColor === MODO_FUENTE) ||
-      (settings.haloPreference !== "hidden" && settings.haloColor === MODO_FUENTE);
+      (settings.haloPreference !== "hidden" && settings.haloColor === MODO_FUENTE) ||
+      settings.theme === MODO_FUENTE;
     if (!alguienQuiere) {
       pararMuestreoFuente();
       return;
@@ -1389,9 +1501,10 @@
      * halo se quedaria brillando con el color de la cancion que sonaba al
      * apagar el muestreo — exactamente la mentira que este olvido existe
      * para no contar. Si el halo no sigue a la fuente (un hex suyo, o el
-     * acento), el pintor se abstiene y su color ni se toca.
+     * acento), el pintor se abstiene y su color ni se toca. Y lo mismo el
+     * tema: sin color, la ventana vuelve al oscuro de siempre.
      */
-    pintarColorFuenteEnHalo();
+    repartirColorFuente();
   }
 
   /**
@@ -1502,19 +1615,147 @@
       // repartiria las barras por el tiempo que tarda en pintarse el
       // fotograma en vez de por su posicion.
       const ahora = ciclico ? (pipWindow.performance || Date).now() : 0;
+      /*
+       * El color de la barra `i`, para las tres formas. Con un color fijo
+       * devuelve null: ya esta puesto en fillStyle (arriba) y no hay nada
+       * que cambiar barra a barra.
+       */
+      const colorDeBarra = (i) =>
+        ciclico
+          ? "hsl(" + matizRgb(ahora, i, barras.length) + ", 100%, 60%)"
+          : paleta
+            ? YTMPip.Paleta.colorDePaleta(paleta, i, barras.length)
+            : null;
 
-      for (let i = 0; i < barras.length; i++) {
-        if (ciclico) {
-          contexto.fillStyle = "hsl(" + matizRgb(ahora, i, barras.length) + ", 100%, 60%)";
-        } else if (paleta) {
-          contexto.fillStyle = YTMPip.Paleta.colorDePaleta(paleta, i, barras.length);
+      const forma = preferencias.spectrumStyle;
+      const caratula = forma === "ring" ? cajaDeLaCaratula(caja, escala) : null;
+
+      if (forma === "wave") {
+        dibujarOnda(contexto, barras, ancho, alto, escala, colorDeBarra);
+      } else if (caratula) {
+        dibujarAnillo(contexto, barras, caratula, escala, colorDeBarra, ancho, alto);
+      } else {
+        /*
+         * Las barras de siempre. Tambien son el plan B del anillo cuando la
+         * caratula no esta a la vista (video, letra en grande): el lienzo
+         * del anillo ocupa la ventana entera, asi que las barras se quedan
+         * en la banda de abajo que diria la altura del espectro.
+         */
+        const banda = forma === "ring" ? Math.round((alto * preferencias.spectrumHeight) / 100) : alto;
+        for (let i = 0; i < barras.length; i++) {
+          const color = colorDeBarra(i);
+          if (color) contexto.fillStyle = color;
+          const altura = Math.max(1, (barras[i] / 255) * banda);
+          contexto.fillRect(i * paso, alto - altura, grosor, altura);
         }
-        const altura = Math.max(1, (barras[i] / 255) * alto);
-        contexto.fillRect(i * paso, alto - altura, grosor, altura);
       }
     }
 
     return true;
+  }
+
+  /**
+   * Donde esta la caratula DENTRO del lienzo, en pixeles del lienzo, o null
+   * si no esta a la vista (oculta o sin tamaño). Se mide en cada fotograma
+   * porque la maquetacion la mueve: cambiar de tamaño la ventana, la linea
+   * en vivo que aparece, el modo solo caratula.
+   */
+  function cajaDeLaCaratula(caja, escala) {
+    const img = els.artwork;
+    if (!img || img.hidden || !img.getBoundingClientRect) return null;
+    const a = img.getBoundingClientRect();
+    if (!(a.width > 0) || !(a.height > 0)) return null;
+    return {
+      cx: (a.left + a.width / 2 - caja.left) * escala,
+      cy: (a.top + a.height / 2 - caja.top) * escala,
+      lado: Math.max(a.width, a.height) * escala,
+      // En disco de vinilo (tanda AA) la caratula es un circulo, y el
+      // recorte del anillo tiene que serlo tambien.
+      redonda: Boolean(els.root && els.root.classList.contains("ytmpip-vinilo"))
+    };
+  }
+
+  /*
+   * La onda: la linea une los puntos con curvas (cada punto es el control y
+   * el medio con el siguiente el destino, la receta clasica para una curva
+   * suave que pasa cerca de todos), y debajo se rellena con el mismo color
+   * mas tenue. Con color por barra el trazo es un degradado a lo ancho con
+   * una parada por barra: la onda es UNA linea y no puede cambiar de color
+   * a mitad.
+   */
+  function dibujarOnda(contexto, barras, ancho, alto, escala, colorDeBarra) {
+    const puntos = puntosDeOnda(barras, ancho, alto);
+    if (colorDeBarra(0)) {
+      const degradado = contexto.createLinearGradient(0, 0, ancho, 0);
+      puntos.forEach((p, i) => degradado.addColorStop(p.x / ancho, colorDeBarra(i)));
+      contexto.fillStyle = degradado;
+    }
+    contexto.strokeStyle = contexto.fillStyle;
+    contexto.lineWidth = 2 * escala;
+    contexto.lineJoin = "round";
+
+    contexto.beginPath();
+    contexto.moveTo(0, puntos[0].y);
+    for (let i = 0; i < puntos.length - 1; i++) {
+      const mx = (puntos[i].x + puntos[i + 1].x) / 2;
+      const my = (puntos[i].y + puntos[i + 1].y) / 2;
+      contexto.quadraticCurveTo(puntos[i].x, puntos[i].y, mx, my);
+    }
+    contexto.lineTo(ancho, puntos[puntos.length - 1].y);
+    contexto.stroke();
+
+    contexto.lineTo(ancho, alto);
+    contexto.lineTo(0, alto);
+    contexto.closePath();
+    contexto.globalAlpha = 0.35;
+    contexto.fill();
+    contexto.globalAlpha = 1;
+  }
+
+  /*
+   * El anillo: rayos redondeados desde un circulo un poco mayor que la
+   * caratula. El radio es la mitad del lado mas un margen, y no la media
+   * diagonal: con la diagonal los rayos empezarian lejos del centro de cada
+   * lado y la caratula quedaria flotando en un hueco. Las esquinas
+   * redondeadas de la portada tapan la diferencia; con el disco de vinilo
+   * (tanda AA) el circulo encaja justo.
+   *
+   * EL CUADRADO DE LA CARATULA SE RECORTA del dibujo. El lienzo esta por
+   * encima de la portada, y en las esquinas el circulo queda DENTRO del
+   * cuadrado: sin el recorte, los rayos pintaban sobre las esquinas de la
+   * imagen (se vio en la primera prueba a ojo). Con el recorte parecen
+   * salir de detras de la portada.
+   */
+  function dibujarAnillo(contexto, barras, caratula, escala, colorDeBarra, ancho, alto) {
+    const radio = caratula.lado / 2 + 4 * escala;
+    const rayos = rayosDelAnillo(barras, caratula.cx, caratula.cy, radio, caratula.lado * 0.3);
+    contexto.save();
+    contexto.beginPath();
+    contexto.rect(0, 0, ancho, alto);
+    if (caratula.redonda) {
+      /*
+       * Con el disco de vinilo el agujero es el CIRCULO: recortar el
+       * cuadrado dejaria un hueco en las diagonales entre el disco y el
+       * arranque de los rayos, que salen justo del borde del disco.
+       */
+      contexto.moveTo(caratula.cx + caratula.lado / 2, caratula.cy);
+      contexto.arc(caratula.cx, caratula.cy, caratula.lado / 2, 0, 2 * Math.PI);
+    } else {
+      contexto.rect(caratula.cx - caratula.lado / 2, caratula.cy - caratula.lado / 2, caratula.lado, caratula.lado);
+    }
+    contexto.clip("evenodd");
+    contexto.lineWidth = Math.max(1, Math.min(4 * escala, (Math.PI * radio) / barras.length - escala));
+    contexto.lineCap = "round";
+    contexto.strokeStyle = contexto.fillStyle;
+    for (const rayo of rayos) {
+      const color = colorDeBarra(rayo.i);
+      if (color) contexto.strokeStyle = color;
+      contexto.beginPath();
+      contexto.moveTo(rayo.x1, rayo.y1);
+      contexto.lineTo(rayo.x2, rayo.y2);
+      contexto.stroke();
+    }
+    contexto.restore();
   }
 
   /**
@@ -2251,11 +2492,42 @@
     els.root.style.setProperty("--ytmpip-opacidad", String(opacidadDelPip(transparencia, sonando)));
   }
 
+  /**
+   * Si la ventana va en claro. «Automatico» sigue al sistema; «De la
+   * caratula» parte siempre del oscuro (sus cuentas de contraste se hicieron
+   * contra el fondo oscuro, ver THEME_* en constants.js). Pura.
+   */
+  function temaClaro(tema, sistemaClaro) {
+    if (tema === "light") return true;
+    if (tema === "auto") return Boolean(sistemaClaro);
+    return false;
+  }
+
+  function sistemaEnClaro() {
+    try {
+      return Boolean(
+        pipWindow && pipWindow.matchMedia && pipWindow.matchMedia("(prefers-color-scheme: light)").matches
+      );
+    } catch (err) {
+      return false;
+    }
+  }
+
   // Preferencias -> UI. Se llama al abrir y en cada cambio en storage.
   function applySettings(settings) {
     if (!pipWindow || pipWindow.closed || !els.root) return;
 
-    pipWindow.document.documentElement.classList.toggle("ytmpip-theme-light", settings.theme === "light");
+    /*
+     * El tema, con sus cuatro respuestas (tanda Y). «Automatico» pregunta al
+     * sistema en el momento —y openPip deja escuchando el cambio—; «De la
+     * caratula» parte del oscuro y lo tiñe el pintor de mas abajo, en cuanto
+     * sincronizarColorFuente haya encendido el muestreo.
+     */
+    temaSigueLaFuente = settings.theme === MODO_FUENTE;
+    pipWindow.document.documentElement.classList.toggle(
+      "ytmpip-theme-light",
+      temaClaro(settings.theme, sistemaEnClaro())
+    );
 
     const seek = settings.seekSeconds;
     els.seekForward.setAttribute("aria-label", t("adelantar_segundos", [seek]));
@@ -2289,6 +2561,14 @@
      * pondria a pintar con el nombre del modo como si fuera un color.
      */
     els.root.style.setProperty("--ytmpip-spectrum-height", settings.spectrumHeight + "%");
+    /*
+     * El anillo (tanda Z) necesita el lienzo en la ventana ENTERA: los rayos
+     * salen de la caratula, que esta arriba, y el lienzo de siempre es solo
+     * la banda de abajo. Las otras dos formas se quedan en la banda.
+     */
+    if (els.spectrum) els.spectrum.classList.toggle("ytmpip-espectro-anillo", settings.spectrumStyle === "ring");
+    // La caratula en disco de vinilo (tanda AA): todo lo demas es CSS.
+    els.root.classList.toggle("ytmpip-vinilo", settings.coverStyle === "vinyl");
     els.root.style.setProperty(
       "--ytmpip-spectrum-color",
       YTMPip.Settings.partirColor(settings.spectrumColor).modo === "custom"
@@ -2308,6 +2588,9 @@
      * este guardado en `Settings.get()`.
      */
     sincronizarColorFuente(Boolean(els.spectrum && !els.spectrum.hidden), settings);
+    // Despues de la puerta del muestreo, que ya tiene color si lo habia:
+    // tiñe con el, o destiñe si el tema dejo de ser «De la caratula».
+    pintarColorFuenteEnTema();
 
     // El atenuado depende ADEMAS de si la musica esta sonando, asi que el
     // valor lo pone render(); aqui solo se le pide que lo repase, porque
@@ -3500,6 +3783,10 @@
     changingVolume = false;
     lastQueueSignature = null;
     lastSongKey = "";
+    // El tinte de la ventana anterior murio con su <html>; la memoria de
+    // «con que color la teñi» no, y sin olvidarla la ventana nueva se
+    // quedaria sin teñir hasta que el color cambiara doce grados.
+    temaPintado = null;
 
     // Ventana nueva, letra desde cero: los elementos de la anterior
     // murieron con su documento.
@@ -3523,6 +3810,20 @@
     watchWindowSize();
     applyLayout();
     applySettings(YTMPip.Settings.get());
+    /*
+     * «Automatico»: cambiar el sistema de claro a oscuro con la ventana
+     * abierta la cambia con el. La consulta es de ESTA ventana y muere con
+     * ella, como sus temporizadores. Se repasan las preferencias enteras en
+     * vez de tocar la clase aqui: una sola puerta decide el tema.
+     */
+    try {
+      const consulta = pipWindow.matchMedia && pipWindow.matchMedia("(prefers-color-scheme: light)");
+      if (consulta && consulta.addEventListener) {
+        consulta.addEventListener("change", () => applySettings(YTMPip.Settings.get()));
+      }
+    } catch (err) {
+      // Sin matchMedia (jsdom) el «Automatico» se queda con lo que vio al abrir.
+    }
 
     // "Seccion abierta por defecto": si es letras, se abre el panel (lo
     // que ademas fuerza el modo ampliado) y se pide a YouTube Music que
@@ -4151,6 +4452,75 @@
     }, 200);
   }
 
+  /*
+   * ---------- EL FUNDIDO ENTRE CARATULAS (tanda AB) ----------
+   *
+   * Cambiar el `src` de la portada la cambiaba de golpe, y ademas con un
+   * instante vacio mientras llegaba la nueva. Ahora la vieja se queda encima
+   * como una COPIA («saliente») mientras la nueva se descarga, y solo cuando
+   * la nueva esta lista para pintarse la copia se desvanece y se va. Nunca
+   * hay hueco: o se ve la vieja entera, o las dos fundiendose.
+   *
+   * Tres guardas, las tres con motivo:
+   *  - La MISMA url no hace nada. render corre con cada estado (cuatro veces
+   *    por segundo con musica) y reasigna la portada cada vez: sin esta
+   *    guarda habria una copia nueva cada 250 ms.
+   *  - La PRIMERA portada no funde: no hay nada de lo que venir.
+   *  - Con «reducir movimiento» no hay fundido, solo el cambio.
+   *
+   * La copia lleva en linea `animation: none` y el `rotate` que tuviera la
+   * original: con el disco de vinilo (tanda AA) la copia giraria desde cero
+   * y se veria saltar hacia atras mientras se desvanece. En linea porque la
+   * regla del disco lleva un id y una clase de la hoja no le gana.
+   */
+  const FUNDIDO_MS = 400;
+
+  function cambiarCaratula(nueva) {
+    const img = els.artwork;
+    if (!img) return;
+    const vieja = img.getAttribute("src");
+    if (vieja === nueva) return;
+    img.src = nueva;
+    if (!vieja || !pipWindow || menosMovimiento()) return;
+
+    const escenario = img.parentNode;
+    if (!escenario) return;
+    escenario.querySelectorAll(".ytmpip-saliente").forEach((c) => c.remove());
+    const copia = img.cloneNode(false);
+    copia.removeAttribute("id");
+    copia.src = vieja;
+    copia.alt = "";
+    copia.setAttribute("aria-hidden", "true");
+    copia.classList.add("ytmpip-saliente");
+    copia.style.animation = "none";
+    try {
+      const giro = pipWindow.getComputedStyle(img).rotate;
+      if (giro && giro !== "none") copia.style.rotate = giro;
+    } catch (err) {
+      // Sin estilos calculados (jsdom) la copia sale sin girar: da igual.
+    }
+    img.after(copia);
+
+    const irse = () => {
+      if (!copia.isConnected) return;
+      copia.classList.add("ytmpip-desvaneciendo");
+      pipWindow.setTimeout(() => copia.remove(), FUNDIDO_MS + 100);
+    };
+    // decode() espera a que la nueva se pueda PINTAR, no solo a que llegue.
+    // Si falla (url rota) la copia se va igual: una portada rota no se
+    // arregla dejando la anterior encima para siempre.
+    const lista = typeof img.decode === "function" ? img.decode() : Promise.resolve();
+    Promise.resolve(lista).then(irse, irse);
+  }
+
+  function menosMovimiento() {
+    try {
+      return Boolean(pipWindow.matchMedia && pipWindow.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function render(state) {
     lastState = state;
     if (!pipWindow || pipWindow.closed || !els.root) return;
@@ -4247,7 +4617,7 @@
     els.album.textContent = state.album || "";
 
     const art = state.artworkUrl || getURLSafe("assets/placeholders/artwork.svg");
-    els.artwork.src = art;
+    cambiarCaratula(art);
     els.artwork.alt = state.title ? t("portada_de", [state.title]) : t("sin_portada");
     if (els.backdrop) {
       // Se reutiliza la portada ya descargada: sin peticion extra.
@@ -4260,6 +4630,13 @@
     els.playPause.setAttribute("aria-label", state.playing ? t("pausar") : t("reproducir"));
     Iconos.poner(els.playPause, state.playing ? "pausar" : "reproducir");
     aplicarAtenuado(state.playing, YTMPip.Settings.get().pipTransparency);
+    /*
+     * «Esta sonando», como clase de la raiz (tanda AA): el disco de vinilo
+     * solo gira mientras suena, y quien lo para es la hoja de estilos
+     * (animation-play-state). La clase no dice nada del disco: cualquier
+     * otra cosa que quiera moverse solo con musica puede colgarse de ella.
+     */
+    els.root.classList.toggle("ytmpip-sonando", Boolean(state.playing));
 
     renderExtras(state);
     renderLyrics(state.lyrics || {});
@@ -4290,6 +4667,8 @@
     timelineFor: timelineFor,
     activeLyricAt: activeLyricAt,
     barrasParaAncho: barrasParaAncho,
+    puntosDeOnda: puntosDeOnda,
+    rayosDelAnillo: rayosDelAnillo,
     matizRgb: matizRgb,
     opacidadDelPip: opacidadDelPip,
 
@@ -4395,6 +4774,9 @@
         colorFuenteObjetivo = hsl;
       },
       colorFuentePintado: () => colorFuenteActual,
+      temaClaro: temaClaro,
+      cambiarCaratula: cambiarCaratula,
+      repartirColorFuente: repartirColorFuente,
       sincronizarColorFuente: sincronizarColorFuente,
       // El bucle de verdad, para poder pasarle un reloj y comprobar que el
       // pulso llega a la variable CSS sin esperar a un rAF real.

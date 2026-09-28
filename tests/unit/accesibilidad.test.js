@@ -236,6 +236,29 @@ function variablesDe(selector) {
   return variables;
 }
 
+/*
+ * Sustituye los var(--x) de un tema por el valor de --x EN ESE TEMA, como
+ * hace el navegador sobre <html>. Existe desde la tanda Y: el fondo y los
+ * dos velos salen ahora de --ytmpip-bg-rgb (canales sueltos), y sin
+ * resolverlo las cuentas leerian «rgba(var(...» y no un color. Se resuelve
+ * sobre el tema YA MEZCLADO (el claro encima del oscuro), que es lo que
+ * hace la cascada: cada velo se lee con los canales del tema que gana.
+ */
+function resolver(tema) {
+  const resuelto = {};
+  for (const [nombre, valor] of Object.entries(tema)) {
+    let v = valor;
+    for (let vuelta = 0; vuelta < 5 && /var\(--/.test(v); vuelta++) {
+      v = v.replace(/var\(--([a-z-]+)\)/g, (todo, otra) => {
+        assert.ok(otra in tema, `--${nombre} usa --${otra}, que el tema no define`);
+        return tema[otra];
+      });
+    }
+    resuelto[nombre] = v;
+  }
+  return resuelto;
+}
+
 test("EL CONTRASTE DE LOS DOS TEMAS PASA WCAG AA, CON LAS CUENTAS HECHAS", () => {
   const raiz = variablesDe(":root");
   const claro = variablesDe("html.ytmpip-theme-light");
@@ -259,8 +282,8 @@ test("EL CONTRASTE DE LOS DOS TEMAS PASA WCAG AA, CON LAS CUENTAS HECHAS", () =>
   for (const [nombre, tema, portadaExtrema] of [
     // El peor disco posible para cada tema: portada blanca pura contra el
     // tema oscuro, negra pura contra el claro.
-    ["oscuro", Object.assign({}, raiz), [255, 255, 255]],
-    ["claro", Object.assign({}, raiz, claro), [0, 0, 0]]
+    ["oscuro", resolver(Object.assign({}, raiz)), [255, 255, 255]],
+    ["claro", resolver(Object.assign({}, raiz, claro)), [0, 0, 0]]
   ]) {
     const bg = colorDe(tema["ytmpip-bg"]).rgb;
     const texto = colorDe(tema["ytmpip-text"]).rgb;
@@ -389,8 +412,8 @@ test("EL ESTADO BAJO EL VELO LOCAL PASA AA EN LOS OCHO PEORES CASOS", () => {
     "premisa: el escenario enseña MÁS portada; si esto cambia, el peor caso es otro");
 
   for (const [nombre, tema, portadaExtrema] of [
-    ["oscuro", Object.assign({}, raiz), [255, 255, 255]],
-    ["claro", Object.assign({}, raiz, claro), [0, 0, 0]]
+    ["oscuro", resolver(Object.assign({}, raiz)), [255, 255, 255]],
+    ["claro", resolver(Object.assign({}, raiz, claro)), [0, 0, 0]]
   ]) {
     const bg = colorDe(tema["ytmpip-bg"]).rgb;
     const tenue = colorDe(tema["ytmpip-text-dim"]).rgb;
@@ -429,8 +452,8 @@ test("EL VELO MUERE ANTES DEL TITULO", () => {
 
   const colas = [];
   for (const [nombre, velo] of [
-    ["oscuro", raiz["ytmpip-velo-cabecera"]],
-    ["claro", claro["ytmpip-velo-cabecera"]]
+    ["oscuro", resolver(Object.assign({}, raiz))["ytmpip-velo-cabecera"]],
+    ["claro", resolver(Object.assign({}, raiz, claro))["ytmpip-velo-cabecera"]]
   ]) {
     const tramos = velo.match(/rgba?\([^)]*\)/g);
     assert.ok(tramos && tramos.length >= 2, `el velo del tema ${nombre} perdió sus tramos`);
@@ -453,4 +476,99 @@ test("EL VELO MUERE ANTES DEL TITULO", () => {
       `tema ${nombre}: la cola del degradado (${cola}px) y el desborde (${desborde[1]}px) tienen que medir lo mismo: el desvanecido vive entero en lo que asoma`
     );
   }
+});
+
+/* ---------- El tema «De la carátula» (tanda Y) ---------- */
+
+test("EL TEMA DE LA CARATULA PASA LAS MISMAS CUENTAS PARA CUALQUIER COLOR", () => {
+  /*
+   * El tema teñido no tiene UN color que comprobar: tiene los que salgan de
+   * las portadas. Se recorren los 24 tonos de la votacion con tres
+   * saturaciones y las dos luces extremas que deja normalizarLuz, y a cada
+   * uno se le hacen las MISMAS cuentas que a los dos temas fijos: texto,
+   * tenue y acento sobre el fondo, la tinta blanca del boton grande sobre
+   * el acento, y el estado y «Sin conexion» bajo el peor velo de la
+   * cabecera, en reposo y con la letra en el escenario.
+   *
+   * El tema se construye como lo hace la ventana: el :root de la hoja con
+   * las dos variables que escribe pip.js encima (--ytmpip-bg-rgb y
+   * --ytmpip-accent), resuelto por la cascada.
+   */
+  const { win } = crearEntorno(undefined);
+  cargar(win, "src/shared/constants.js", "src/shared/paleta.js", "src/shared/color-fuente.js");
+  const ColorFuente = win.YTMPip.ColorFuente;
+
+  const raiz = variablesDe(":root");
+  const fondoReposo = Number(raiz["ytmpip-fondo"]);
+  const fondoEscenario = Number(variablesDe("#ytmpip-root.ytmpip-lyrics-stage")["ytmpip-fondo"]);
+  const bloqueBoton = PIP_CSS.slice(PIP_CSS.indexOf("#ytmpip-play-pause {"));
+  const tintaBoton = colorDe(bloqueBoton.slice(0, bloqueBoton.indexOf("}")).match(/color:\s*([^;]+);/)[1]).rgb;
+
+  let casos = 0;
+  for (let h = 0; h < 360; h += 15) {
+    for (const s of [0.5, 0.8, 1]) {
+      for (const l of [0.45, 0.62]) {
+        const t = ColorFuente.temaDeLaFuente({ h, s, l });
+        const tema = resolver(
+          Object.assign({}, raiz, {
+            "ytmpip-bg-rgb": t.fondo.join(", "),
+            "ytmpip-accent": "rgb(" + t.acento.join(", ") + ")"
+          })
+        );
+        const nombre = `hsl(${h}, ${s}, ${l})`;
+        const bg = colorDe(tema["ytmpip-bg"]).rgb;
+        const texto = colorDe(tema["ytmpip-text"]).rgb;
+        const tenue = colorDe(tema["ytmpip-text-dim"]).rgb;
+        const acento = colorDe(tema["ytmpip-accent"]).rgb;
+
+        assert.ok(contraste(texto, bg) >= 4.5, `${nombre}: texto/fondo ${contraste(texto, bg).toFixed(2)}`);
+        assert.ok(contraste(tenue, bg) >= 4.5, `${nombre}: tenue/fondo ${contraste(tenue, bg).toFixed(2)}`);
+        assert.ok(contraste(acento, bg) >= 3, `${nombre}: acento/fondo ${contraste(acento, bg).toFixed(2)}`);
+        assert.ok(
+          contraste(tintaBoton, acento) >= 3,
+          `${nombre}: tinta del boton/acento ${contraste(tintaBoton, acento).toFixed(2)}`
+        );
+
+        const veloArriba = colorDe(tema["ytmpip-scrim"].match(/rgba?\([^)]*\)/g)[0]);
+        const veloLocal = colorDe(tema["ytmpip-velo-cabecera"].match(/rgba?\([^)]*\)/g)[0]);
+        // Los dos velos SIGUEN al fondo teñido: si alguno volviera a llevar
+        // sus canales escritos a mano, la ventana quedaria teñida con un
+        // velo gris encima, y las cuentas de abajo se harian con otro color.
+        assert.deepStrictEqual(veloArriba.rgb, bg, `${nombre}: el velo general no sigue al fondo`);
+        assert.deepStrictEqual(veloLocal.rgb, bg, `${nombre}: el velo de la cabecera no sigue al fondo`);
+        for (const [modo, fondoPortada] of [["reposo", fondoReposo], ["escenario", fondoEscenario]]) {
+          const conPortada = sobre([255, 255, 255], fondoPortada, bg);
+          const bajoElGeneral = sobre(veloArriba.rgb, veloArriba.alfa, conPortada);
+          const cabecera = sobre(veloLocal.rgb, veloLocal.alfa, bajoElGeneral);
+          assert.ok(contraste(tenue, cabecera) >= 4.5, `${nombre}, ${modo}: estado ${contraste(tenue, cabecera).toFixed(2)}`);
+          assert.ok(
+            contraste(acento, cabecera) >= 4.5,
+            `${nombre}, ${modo}: «sin conexion» ${contraste(acento, cabecera).toFixed(2)}`
+          );
+        }
+        casos++;
+      }
+    }
+  }
+  assert.strictEqual(casos, 24 * 3 * 2, "premisa: se recorrieron todos los colores");
+  win.close();
+});
+
+test("el tema teñido CONSERVA el tono de la fuente en el fondo y en el acento", () => {
+  // Sin esto, un tema que devolviera siempre el gris de :root pasaria todas
+  // las cuentas de arriba sin teñir nada.
+  const { win } = crearEntorno(undefined);
+  cargar(win, "src/shared/constants.js", "src/shared/paleta.js", "src/shared/color-fuente.js");
+  const { temaDeLaFuente } = win.YTMPip.ColorFuente;
+  const { rgbAHsl } = win.YTMPip.Paleta;
+  for (const h of [0, 120, 240]) {
+    const t = temaDeLaFuente({ h, s: 0.8, l: 0.5 });
+    for (const [cual, rgb] of [["fondo", t.fondo], ["acento", t.acento]]) {
+      const tono = rgbAHsl({ r: rgb[0], g: rgb[1], b: rgb[2] }).h;
+      const d = Math.min(Math.abs(tono - h), 360 - Math.abs(tono - h));
+      assert.ok(d <= 8, `${cual} de hsl(${h}): tono ${tono.toFixed(0)}`);
+    }
+  }
+  assert.strictEqual(temaDeLaFuente(null), null, "sin color no hay tema teñido");
+  win.close();
 });

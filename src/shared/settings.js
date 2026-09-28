@@ -407,6 +407,9 @@
         DEFAULT_SETTINGS.spectrumHeight
       ),
       spectrumColor: normalizarColor(stored[STORAGE_KEYS.SPECTRUM_COLOR]),
+      spectrumStyle: pick(stored[STORAGE_KEYS.SPECTRUM_STYLE], ["bars", "wave", "ring"], DEFAULT_SETTINGS.spectrumStyle),
+      coverStyle: pick(stored[STORAGE_KEYS.COVER_STYLE], ["square", "vinyl"], DEFAULT_SETTINGS.coverStyle),
+      badgePreference: pick(stored[STORAGE_KEYS.BADGE_PREFERENCE], ["shown", "hidden"], DEFAULT_SETTINGS.badgePreference),
       pipTransparency: entero(
         stored[STORAGE_KEYS.PIP_TRANSPARENCY],
         PIP_LIMITS.TRANSPARENCY_MIN,
@@ -429,7 +432,12 @@
        */
       equalizer: YTMPip.Ecualizador.normalizar(stored[STORAGE_KEYS.EQUALIZER]),
       equalizerLast: ultimoEcualizador(stored[STORAGE_KEYS.EQUALIZER_LAST]),
-      theme: pick(stored[STORAGE_KEYS.THEME], ["dark", "light"], DEFAULT_SETTINGS.theme),
+      /*
+       * Cuatro temas desde la tanda Y: los dos de siempre, «auto» (el del
+       * sistema) y «source» (la ventana teñida con el color de lo que suena,
+       * la misma palabra que usan el halo y el espectro para lo mismo).
+       */
+      theme: pick(stored[STORAGE_KEYS.THEME], ["dark", "light", "auto", "source"], DEFAULT_SETTINGS.theme),
       /*
        * "last" es el tercer valor, no una casilla aparte de "recordar el
        * tamaño". Una casilla suelta convertiria una sola pregunta —de que

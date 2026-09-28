@@ -908,3 +908,155 @@ test("si el audio deja de poder medirse, el espectro se apaga sin dejar el boton
   assert.strictEqual(v.boton.hidden, true, "el boton sigue ofreciendo lo que ya no se puede dar");
   assert.strictEqual(v.lienzo.hidden, true, "el canvas se queda a la vista pintando una linea plana");
 });
+
+/* ==================================================================
+ * La tanda Z: las otras dos formas (onda y anillo)
+ * ================================================================== */
+
+/*
+ * Un contexto 2d que APUNTA lo que se le pide. jsdom no pinta, asi que lo
+ * que se comprueba es la orden: que la onda traza curvas y no rectangulos,
+ * que el anillo traza rayos, y cuantos.
+ */
+function contextoQueApunta() {
+  const c = {
+    ordenes: [],
+    fillStyle: "",
+    strokeStyle: "",
+    lineWidth: 1,
+    globalAlpha: 1,
+    paradas: []
+  };
+  for (const orden of ["clearRect", "fillRect", "beginPath", "moveTo", "lineTo", "quadraticCurveTo", "stroke", "fill", "closePath", "save", "restore", "rect", "clip"]) {
+    c[orden] = (...args) => c.ordenes.push([orden, ...args]);
+  }
+  c.createLinearGradient = () => ({ addColorStop: (pos, color) => c.paradas.push([pos, color]) });
+  c.cuantas = (orden) => c.ordenes.filter((o) => o[0] === orden).length;
+  return c;
+}
+
+async function conForma(forma, extra = {}) {
+  const v = ventana({ storage: Object.assign({ spectrumStyle: forma }, extra) });
+  await v.win.YTMPip.Settings.load();
+  conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
+  v.PipView.onStateUpdate(sinVideo());
+  v.banco.pulsarEspectro();
+  v.Espectro.leerBarras = () => [255, 128, 0, 64];
+  const ctx = contextoQueApunta();
+  v.lienzo.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 100 });
+  v.lienzo.getContext = () => ctx;
+  v.banco.aplicarPreferencias(v.win.YTMPip.Settings.get());
+  v.ctx = ctx;
+  v.caratula = v.doc.getElementById("ytmpip-artwork");
+  return v;
+}
+
+test("puntosDeOnda: uno por barra, centrado en su franja, a su altura, y el silencio a un pixel", () => {
+  const v = ventana();
+  const p = v.PipView.puntosDeOnda([255, 0, 51], 300, 100);
+  assert.strictEqual(p.length, 3);
+  assert.deepStrictEqual(p.map((q) => q.x), [50, 150, 250]);
+  assert.strictEqual(p[0].y, 0, "la barra llena llega arriba del todo");
+  assert.strictEqual(p[1].y, 99, "el silencio se ve como una linea abajo, no como nada");
+  assert.strictEqual(p[2].y, 80);
+  assert.strictEqual(v.PipView.puntosDeOnda([], 300, 100).length, 0);
+});
+
+test("rayosDelAnillo: dos por barra en espejo, desde el borde, graves arriba y agudos abajo", () => {
+  const v = ventana();
+  const rayos = v.PipView.rayosDelAnillo([255, 0], 100, 100, 50, 40);
+  assert.strictEqual(rayos.length, 4);
+  for (const r of rayos) {
+    const d = Math.hypot(r.x1 - 100, r.y1 - 100);
+    assert.ok(Math.abs(d - 50) < 1e-9, "cada rayo sale del borde del circulo");
+  }
+  const largo = (r) => Math.hypot(r.x2 - r.x1, r.y2 - r.y1);
+  assert.ok(Math.abs(largo(rayos[0]) - 40) < 1e-9, "barra llena = largo entero");
+  assert.ok(Math.abs(largo(rayos[2]) - 1) < 1e-9, "barra vacia = un pixel");
+  // Espejo: los dos rayos de una barra son simetricos respecto al eje vertical.
+  assert.ok(Math.abs(rayos[0].x1 - 100 + (rayos[1].x1 - 100)) < 1e-9);
+  assert.ok(Math.abs(rayos[0].y1 - rayos[1].y1) < 1e-9);
+  // Graves (barra 0) en la mitad de arriba, agudos (la ultima) en la de abajo.
+  assert.ok(rayos[0].y1 < 100 && rayos[2].y1 > 100);
+});
+
+test("REGRESION TANDA Z: la onda traza curvas y no rectangulos", async () => {
+  const v = await conForma("wave");
+  v.fotogramas.pop()();
+  assert.strictEqual(v.ctx.cuantas("fillRect"), 0, "se pintaron barras en vez de la onda");
+  assert.strictEqual(v.ctx.cuantas("quadraticCurveTo"), 3, "una curva entre cada par de puntos");
+  assert.strictEqual(v.ctx.cuantas("stroke"), 1);
+  assert.strictEqual(v.ctx.cuantas("fill"), 1, "y el relleno de debajo");
+});
+
+test("la onda con color por barra lleva un degradado con una parada por barra", async () => {
+  const v = await conForma("wave", { spectrumColor: "rgb" });
+  v.fotogramas.pop()();
+  assert.strictEqual(v.ctx.paradas.length, 4);
+  for (const [, color] of v.ctx.paradas) assert.match(color, /^hsl\(/);
+});
+
+test("REGRESION TANDA Z: el anillo, con la caratula a la vista, traza dos rayos por barra alrededor de ella", async () => {
+  const v = await conForma("ring");
+  v.caratula.getBoundingClientRect = () => ({ left: 60, top: 10, width: 80, height: 80 });
+  v.fotogramas.pop()();
+  assert.strictEqual(v.ctx.cuantas("fillRect"), 0);
+  assert.strictEqual(v.ctx.cuantas("stroke"), 8, "cuatro barras, ocho rayos");
+  // El primer rayo arranca en el borde del circulo alrededor del centro de
+  // la caratula (100, 50), no del lienzo.
+  const primero = v.ctx.ordenes.find((o) => o[0] === "moveTo");
+  const d = Math.hypot(primero[1] - 100, primero[2] - 50);
+  assert.ok(d > 40 && d < 50, `el rayo empieza a ${d.toFixed(1)} px del centro de la caratula`);
+});
+
+test("REGRESION TANDA Z: el anillo recorta el cuadrado de la caratula (los rayos no pintan sus esquinas)", async () => {
+  // Visto en la primera prueba a ojo: el circulo de salida queda DENTRO del
+  // cuadrado en las esquinas, y el lienzo esta encima de la portada.
+  const v = await conForma("ring");
+  v.caratula.getBoundingClientRect = () => ({ left: 60, top: 10, width: 80, height: 80 });
+  v.fotogramas.pop()();
+  const rects = v.ctx.ordenes.filter((o) => o[0] === "rect");
+  assert.deepStrictEqual(rects.map((o) => o.slice(1)), [[0, 0, 200, 100], [60, 10, 80, 80]], "el agujero es la caratula");
+  assert.deepStrictEqual(v.ctx.ordenes.find((o) => o[0] === "clip"), ["clip", "evenodd"]);
+  const i = v.ctx.ordenes.findIndex((o) => o[0] === "clip");
+  const j = v.ctx.ordenes.findIndex((o) => o[0] === "stroke");
+  assert.ok(i < j, "el recorte va antes de los rayos");
+  assert.strictEqual(v.ctx.cuantas("save"), v.ctx.cuantas("restore"), "el recorte no se queda puesto para el fotograma siguiente");
+});
+
+test("el anillo sin caratula a la vista vuelve a barras, en la banda de abajo", async () => {
+  const v = await conForma("ring", { spectrumHeight: 30 });
+  v.caratula.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });
+  v.fotogramas.pop()();
+  const barras = v.ctx.ordenes.filter((o) => o[0] === "fillRect");
+  assert.strictEqual(barras.length, 4);
+  const alturaMaxima = Math.max(...barras.map((o) => o[4]));
+  assert.strictEqual(alturaMaxima, 30, "la barra llena ocupa la banda (30 %), no la ventana entera");
+});
+
+test("el anillo pone el lienzo en la ventana entera; las otras formas lo dejan en su banda", async () => {
+  const v = await conForma("ring");
+  assert.strictEqual(v.lienzo.classList.contains("ytmpip-espectro-anillo"), true);
+  v.banco.aplicarPreferencias(Object.assign({}, v.win.YTMPip.Settings.get(), { spectrumStyle: "wave" }));
+  assert.strictEqual(v.lienzo.classList.contains("ytmpip-espectro-anillo"), false);
+});
+
+test("la hoja tiene la regla del lienzo a pantalla completa", () => {
+  const hoja = fs.readFileSync(path.join(RAIZ, "src/pip/pip.css"), "utf8");
+  const i = hoja.indexOf(".ytmpip-spectrum.ytmpip-espectro-anillo {");
+  assert.notStrictEqual(i, -1);
+  const bloque = hoja.slice(i, hoja.indexOf("}", i));
+  assert.match(bloque, /top:\s*0/);
+  assert.match(bloque, /height:\s*100%/);
+});
+
+test("REGRESION TANDA AA: con el disco de vinilo el anillo recorta un CIRCULO, no el cuadrado", async () => {
+  const v = await conForma("ring", { coverStyle: "vinyl" });
+  v.caratula.getBoundingClientRect = () => ({ left: 60, top: 10, width: 80, height: 80 });
+  v.ctx.arc = (...args) => v.ctx.ordenes.push(["arc", ...args]);
+  v.fotogramas.pop()();
+  const arco = v.ctx.ordenes.find((o) => o[0] === "arc");
+  assert.ok(arco, "el agujero no es un circulo");
+  assert.deepStrictEqual(arco.slice(1, 4), [100, 50, 40], "centro y radio del disco");
+  assert.strictEqual(v.ctx.ordenes.filter((o) => o[0] === "rect").length, 1, "solo el rectangulo del lienzo, no el de la caratula");
+});

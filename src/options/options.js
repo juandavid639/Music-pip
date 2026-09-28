@@ -85,6 +85,12 @@
     spectrumBarsCount: document.getElementById("spectrumBarsCount"),
     spectrumFall: document.getElementById("spectrumFall"),
     spectrumHeight: document.getElementById("spectrumHeight"),
+    // La forma del espectro (tanda Z): barras, onda o anillo.
+    spectrumStyle: document.getElementById("spectrumStyle"),
+    // La caratula en disco de vinilo (tanda AA).
+    coverStyle: document.getElementById("coverStyle"),
+    // El estado en el icono de la barra (tanda AC).
+    badgePreference: document.getElementById("badgePreference"),
     spectrumColorMode: document.getElementById("spectrumColorMode"),
     spectrumColor: document.getElementById("spectrumColor"),
     spectrumPaletteCount: document.getElementById("spectrumPaletteCount"),
@@ -420,8 +426,27 @@
 
   function pintarMuestraAcento() {
     if (!accentSwatch) return;
-    const delTema = acentos ? acentos[fields.theme.value] : null;
+    /*
+     * Los dos temas de la tanda Y no tienen un acento propio en la hoja:
+     * «Automatico» usa el del tema que tenga ahora el sistema, y «Del video
+     * o la caratula» no tiene UN color —depende de lo que suene—, asi que
+     * la muestra lo dice con un degradado de tonos en vez de mentir con uno.
+     */
+    if (fields.theme.value === "source") {
+      accentSwatch.style.background = "linear-gradient(90deg, #ff0000, #ffcc00, #00cc66, #0099ff, #aa44ff)";
+      return;
+    }
+    const tema = fields.theme.value === "auto" ? (sistemaEnClaro() ? "light" : "dark") : fields.theme.value;
+    const delTema = acentos ? acentos[tema] : null;
     accentSwatch.style.background = delTema || SPECTRUM_LIMITS.COLOR_SUGGESTED;
+  }
+
+  function sistemaEnClaro() {
+    try {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+    } catch (err) {
+      return false;
+    }
   }
 
   /* ---------- La vista previa de la paleta ---------- */
@@ -781,6 +806,9 @@
 
       fields.spectrumFall.value = stored[STORAGE_KEYS.SPECTRUM_FALL] ?? DEFAULT_SETTINGS.spectrumFall;
       fields.spectrumHeight.value = stored[STORAGE_KEYS.SPECTRUM_HEIGHT] ?? DEFAULT_SETTINGS.spectrumHeight;
+      fields.spectrumStyle.value = stored[STORAGE_KEYS.SPECTRUM_STYLE] ?? DEFAULT_SETTINGS.spectrumStyle;
+      fields.coverStyle.value = stored[STORAGE_KEYS.COVER_STYLE] ?? DEFAULT_SETTINGS.coverStyle;
+      fields.badgePreference.value = stored[STORAGE_KEYS.BADGE_PREFERENCE] ?? DEFAULT_SETTINGS.badgePreference;
       fields.pipTransparency.value =
         stored[STORAGE_KEYS.PIP_TRANSPARENCY] ?? DEFAULT_SETTINGS.pipTransparency;
 
@@ -847,6 +875,9 @@
       [STORAGE_KEYS.SPECTRUM_BARS]: barras,
       [STORAGE_KEYS.SPECTRUM_FALL]: Number(fields.spectrumFall.value),
       [STORAGE_KEYS.SPECTRUM_HEIGHT]: Number(fields.spectrumHeight.value),
+      [STORAGE_KEYS.SPECTRUM_STYLE]: fields.spectrumStyle.value,
+      [STORAGE_KEYS.COVER_STYLE]: fields.coverStyle.value,
+      [STORAGE_KEYS.BADGE_PREFERENCE]: fields.badgePreference.value,
       [STORAGE_KEYS.SPECTRUM_COLOR]: unirColor(fields.spectrumColorMode.value, fields.spectrumColor.value, coloresElegidos()),
       [STORAGE_KEYS.PIP_TRANSPARENCY]: Number(fields.pipTransparency.value)
     });

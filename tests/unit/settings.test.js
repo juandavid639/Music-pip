@@ -51,6 +51,10 @@ test("valores validos: se respetan tal cual", async () => {
     spectrumFall: 30,
     spectrumHeight: 60,
     spectrumColor: "#00ff88",
+    // "ring" y no "bars" (el de serie), por lo mismo que los de arriba.
+    spectrumStyle: "ring",
+    coverStyle: "vinyl",
+    badgePreference: "hidden",
     pipTransparency: 55,
     /*
      * Se guarda una lista de ganancias A MANO y no el nombre de un preset,

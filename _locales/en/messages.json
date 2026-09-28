@@ -191,6 +191,12 @@
   "fila_canvas_ayuda": {
     "message": "The short video Spotify gives some songs, as the window's background. It also turns on and off with the window's 🌌 button."
   },
+  "fila_caratula": {
+    "message": "Artwork"
+  },
+  "fila_caratula_ayuda": {
+    "message": "The record spins while the music plays."
+  },
   "fila_color": {
     "message": "Color"
   },
@@ -217,6 +223,18 @@
   },
   "fila_difuminar_ayuda": {
     "message": "It turns transparent to stay out of the way and shows fully again when you move the mouse over it. At 0 it never fades; 80 is almost invisible."
+  },
+  "fila_estado_icono": {
+    "message": "Status on the icon"
+  },
+  "fila_estado_icono_ayuda": {
+    "message": "▶ or ❚❚ on the toolbar icon, or the minutes left on the sleep timer."
+  },
+  "fila_forma_espectro": {
+    "message": "Shape"
+  },
+  "fila_forma_espectro_ayuda": {
+    "message": "The ring surrounds the artwork; with video or big lyrics it goes back to bars."
   },
   "fila_halo": {
     "message": "Light halo"
@@ -371,6 +389,9 @@
   "opcion_a_mi_gusto": {
     "message": "My own"
   },
+  "opcion_automatico": {
+    "message": "Automatic"
+  },
   "opcion_barras_auto": {
     "message": "As many as fit"
   },
@@ -379,6 +400,12 @@
   },
   "opcion_canvas_no": {
     "message": "Don't show it (the usual background)"
+  },
+  "opcion_caratula_cuadrada": {
+    "message": "Square"
+  },
+  "opcion_caratula_vinilo": {
+    "message": "Vinyl record"
   },
   "opcion_claro": {
     "message": "Light"
@@ -404,6 +431,15 @@
   "opcion_eq_apagado": {
     "message": "Off (don't touch the sound)"
   },
+  "opcion_forma_anillo": {
+    "message": "Ring"
+  },
+  "opcion_forma_barras": {
+    "message": "Bars"
+  },
+  "opcion_forma_onda": {
+    "message": "Wave"
+  },
   "opcion_grande": {
     "message": "Large (380 × 560)"
   },
@@ -415,6 +451,12 @@
   },
   "opcion_halo_latido": {
     "message": "Pulsing with the music"
+  },
+  "opcion_icono_no": {
+    "message": "Don't show it"
+  },
+  "opcion_icono_ver": {
+    "message": "Show it"
   },
   "opcion_letra": {
     "message": "The lyrics"

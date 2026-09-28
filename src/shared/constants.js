@@ -66,6 +66,23 @@
       SPECTRUM_FALL: "spectrumFall",
       SPECTRUM_HEIGHT: "spectrumHeight",
       SPECTRUM_COLOR: "spectrumColor",
+      /*
+       * LA FORMA del espectro (tanda Z): "bars" (las barras de siempre),
+       * "wave" (una onda) o "ring" (rayos alrededor de la caratula). Clave
+       * propia y no un modo mas de SPECTRUM_COLOR: forma y color son dos
+       * preguntas, y cualquier color vale con cualquier forma.
+       */
+      SPECTRUM_STYLE: "spectrumStyle",
+      /*
+       * COMO SE VE LA CARATULA (tanda AA): "square" (la de siempre) o
+       * "vinyl" (un disco que gira mientras suena).
+       */
+      COVER_STYLE: "coverStyle",
+      /*
+       * EL ESTADO EN EL ICONO DE LA BARRA (tanda AC): "shown" pinta ▶, ❚❚ o
+       * los minutos del temporizador sobre el icono; "hidden" lo deja limpio.
+       */
+      BADGE_PREFERENCE: "badgePreference",
       PIP_TRANSPARENCY: "pipTransparency",
       /*
        * UNA sola clave para el ecualizador, y lleva dentro tres respuestas
@@ -182,6 +199,9 @@
       spectrumFall: 12,
       spectrumHeight: 34,
       spectrumColor: "source",
+      spectrumStyle: "bars",
+      coverStyle: "square",
+      badgePreference: "shown",
 
       /*
        * Cuanto se atenua la ventana MIENTRAS SUENA la musica, en porcentaje.
@@ -405,7 +425,45 @@
          * —nunca baja— porque un color muy saturado no molesta y rebajarlo
          * seria quitarle a la fuente lo que si tenia.
          */
-        OUT_SAT_MIN: 0.5
+        OUT_SAT_MIN: 0.5,
+        /*
+         * ============ EL TEMA «DE LA CARATULA» (tanda Y) ============
+         *
+         * El tercer cliente del mismo color: la ventana entera se tiñe. Dos
+         * piezas y nada mas, porque el fondo y los dos velos salen de una sola
+         * variable de canales (--ytmpip-bg-rgb en pip.css):
+         *
+         *   - EL FONDO: el tono de la fuente, casi negro y poco saturado. Casi
+         *     negro porque todo el contraste del tema oscuro (texto, tenue,
+         *     velos) se hizo contra el #0f0f0f, y un fondo de la misma luz
+         *     conserva esas cuentas; poco saturado porque un fondo chillon
+         *     cansa a los tres minutos.
+         *   - EL ACENTO: el tono de la fuente con la LUMINANCIA fija, y no la
+         *     luz. Es lo que hace que cualquier tono pase las cuentas: con la
+         *     misma luz HSL un azul es tres veces mas oscuro que un amarillo a
+         *     ojos de WCAG. Luminancia 0,28 porque cabe en la ventana que
+         *     dejan las dos reglas que lo acorralan: por abajo, «Sin conexion»
+         *     sobre el peor velo de la cabecera pide >= 4,5 (unos 0,25); por
+         *     arriba, la tinta blanca del boton grande sobre el acento pide
+         *     >= 3 (hasta unos 0,30). La prueba de accesibilidad hace esas
+         *     cuentas para los 24 tonos.
+         */
+        THEME_BG_LIGHT: 0.07,
+        THEME_BG_SAT_MAX: 0.35,
+        THEME_ACCENT_SAT_MIN: 0.6,
+        THEME_ACCENT_LUMINANCE: 0.28,
+        /*
+         * CUANTO TIENE QUE MOVERSE EL COLOR PARA REPINTAR EL TEMA. Con video
+         * el muestreo lee un fotograma nuevo cada 400 ms y el tono baila (se
+         * midio 4 grados de media, 13 de maximo, en la tanda M). El halo se
+         * lo puede permitir porque lo suaviza una transition; el fondo de la
+         * ventana no (una variable CSS sin registrar no se anima), y un fondo
+         * que tiembla es peor que ningun tema. Doce grados: por encima del
+         * baile medio, por debajo de una franja de voto (15).
+         */
+        THEME_HUE_STEP: 12,
+        THEME_SAT_STEP: 0.15,
+        THEME_LIGHT_STEP: 0.1
       }
     },
 

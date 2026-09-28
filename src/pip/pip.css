@@ -1,6 +1,15 @@
 :root {
   color-scheme: dark;
-  --ytmpip-bg: #0f0f0f;
+  /*
+   * El fondo del tema, en CANALES y no en color (tanda Y). De esta variable
+   * salen el fondo, el velo general y el velo de la cabecera, que antes
+   * repetian «15, 15, 15» a mano cada uno. El tema «De la caratula» solo
+   * tiene que escribir esta y el acento (en linea sobre <html>) para teñir
+   * la ventana entera; con una sola copia no puede quedar un velo del gris
+   * de siempre sobre un fondo teñido.
+   */
+  --ytmpip-bg-rgb: 15, 15, 15;
+  --ytmpip-bg: rgb(var(--ytmpip-bg-rgb));
   --ytmpip-surface: rgba(255, 255, 255, 0.09);
   --ytmpip-surface-hover: rgba(255, 255, 255, 0.18);
   --ytmpip-text: #f1f1f1;
@@ -10,7 +19,7 @@
   --ytmpip-accent: #ff0000;
   --ytmpip-border: rgba(255, 255, 255, 0.12);
   --ytmpip-track: rgba(255, 255, 255, 0.22);
-  --ytmpip-scrim: linear-gradient(180deg, rgba(15, 15, 15, 0.55) 0%, rgba(15, 15, 15, 0.88) 100%);
+  --ytmpip-scrim: linear-gradient(180deg, rgba(var(--ytmpip-bg-rgb), 0.55) 0%, rgba(var(--ytmpip-bg-rgb), 0.88) 100%);
   /*
    * El velo LOCAL de la cabecera. El velo general es debil arriba a
    * proposito (la letra en grande quiere ver la caratula), pero con una
@@ -29,9 +38,9 @@
    */
   --ytmpip-velo-cabecera: linear-gradient(
     180deg,
-    rgba(15, 15, 15, 0.94) 0,
-    rgba(15, 15, 15, 0.94) calc(100% - 12px),
-    rgba(15, 15, 15, 0) 100%
+    rgba(var(--ytmpip-bg-rgb), 0.94) 0,
+    rgba(var(--ytmpip-bg-rgb), 0.94) calc(100% - 12px),
+    rgba(var(--ytmpip-bg-rgb), 0) 100%
   );
   /*
    * El relleno del contenido, en variables porque el velo de la cabecera lo
@@ -57,7 +66,8 @@
  */
 html.ytmpip-theme-light {
   color-scheme: light;
-  --ytmpip-bg: #ffffff;
+  --ytmpip-bg-rgb: 255, 255, 255;
+  --ytmpip-bg: rgb(var(--ytmpip-bg-rgb));
   --ytmpip-surface: rgba(0, 0, 0, 0.07);
   --ytmpip-surface-hover: rgba(0, 0, 0, 0.14);
   --ytmpip-text: #0f0f0f;
@@ -65,13 +75,13 @@ html.ytmpip-theme-light {
   --ytmpip-accent: #d32f2f;
   --ytmpip-border: rgba(0, 0, 0, 0.12);
   --ytmpip-track: rgba(0, 0, 0, 0.18);
-  --ytmpip-scrim: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.92) 100%);
+  --ytmpip-scrim: linear-gradient(180deg, rgba(var(--ytmpip-bg-rgb), 0.72) 0%, rgba(var(--ytmpip-bg-rgb), 0.92) 100%);
   /* 0.85 y no 0.78: el gris claro parte con menos contraste y pide mas velo. */
   --ytmpip-velo-cabecera: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.85) 0,
-    rgba(255, 255, 255, 0.85) calc(100% - 12px),
-    rgba(255, 255, 255, 0) 100%
+    rgba(var(--ytmpip-bg-rgb), 0.85) 0,
+    rgba(var(--ytmpip-bg-rgb), 0.85) calc(100% - 12px),
+    rgba(var(--ytmpip-bg-rgb), 0) 100%
   );
 }
 
@@ -557,6 +567,68 @@ button:has(.ytmpip-ico) {
   }
 }
 
+/* ---------- LA CARÁTULA EN DISCO DE VINILO (tanda AA) ----------
+ *
+ * Un círculo con el agujero del centro, un borde oscuro de disco, y que
+ * gira mientras suena. Todo aquí: pip.js solo pone dos clases en la raíz,
+ * `ytmpip-vinilo` (la preferencia) y `ytmpip-sonando` (el estado).
+ *
+ * EL GIRO ES `rotate` Y NO `transform`, y es lo que importa de esta
+ * regla. La portada ya late con los graves escalando por `transform`
+ * (arriba): una animación de `transform: rotate()` pisaría ese `scale` y
+ * el disco dejaría de latir mientras gira. La propiedad `rotate` suelta se
+ * compone con `transform` en vez de sustituirlo, así que el disco gira Y
+ * late a la vez.
+ *
+ * Una vuelta cada 8 s, no a 33⅓ rpm (1,8 s): una portada girando a la
+ * velocidad de un disco de verdad marea, y lo que se busca es que se note
+ * que suena, no reproducir un tocadiscos.
+ *
+ * El agujero es una máscara (transparente en el centro), no un círculo
+ * pintado encima: así deja ver lo que haya detrás —el escenario o el fondo
+ * difuminado—, que es lo que se ve a través del agujero de un disco.
+ *
+ * Solo sin vídeo: en modo vídeo la carátula no está (display: none) y el
+ * escenario lo ocupa el vídeo, que no se redondea.
+ *
+ * LAS REGLAS DE LA CARÁTULA LLEVAN `.ytmpip-stage` EN MEDIO a propósito:
+ * con la especificidad de `#ytmpip-root.expanded .ytmpip-artwork` (la de la
+ * ventana ampliada, más abajo en la hoja) empataban y ganaba esa por orden,
+ * con su radio de 10 px: la primera prueba a ojo enseñó un cuadrado girando
+ * recortado por el escenario en vez de un disco.
+ */
+@keyframes ytmpip-girar {
+  to {
+    rotate: 360deg;
+  }
+}
+
+#ytmpip-root.ytmpip-vinilo:not(.ytmpip-video-mode) .ytmpip-stage {
+  border-radius: 50%;
+  background: transparent;
+}
+
+#ytmpip-root.ytmpip-vinilo .ytmpip-stage .ytmpip-artwork {
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.85), 0 6px 18px rgba(0, 0, 0, 0.35);
+  -webkit-mask-image: radial-gradient(circle, transparent 0 6%, #000 6.5%);
+  mask-image: radial-gradient(circle, transparent 0 6%, #000 6.5%);
+  animation: ytmpip-girar 8s linear infinite;
+  animation-play-state: paused;
+}
+
+#ytmpip-root.ytmpip-vinilo.ytmpip-sonando .ytmpip-stage .ytmpip-artwork {
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ytmpip-root.ytmpip-vinilo .ytmpip-stage .ytmpip-artwork {
+    animation: none;
+  }
+}
+
 /* ---------- EL HALO DE LUZ DEL BORDE ----------
  *
  * HACIA DENTRO, no hacia fuera, y no es elección estética: la ventana
@@ -691,6 +763,17 @@ button:has(.ytmpip-ico) {
   width: 100%;
   pointer-events: none;
   opacity: 0.85;
+}
+
+/*
+ * El anillo alrededor de la caratula (tanda Z): el mismo lienzo, en la
+ * ventana entera. pip.js mide donde esta la caratula en cada fotograma y
+ * dibuja alrededor; si no esta a la vista, pinta las barras en la banda
+ * de abajo que dice --ytmpip-spectrum-height, como la forma de siempre.
+ */
+.ytmpip-spectrum.ytmpip-espectro-anillo {
+  top: 0;
+  height: 100%;
 }
 
 /*
@@ -837,6 +920,26 @@ button:has(.ytmpip-ico) {
 }
 
 /* Transicion suave al cambiar de cancion */
+/*
+ * EL FUNDIDO ENTRE CARÁTULAS (tanda AB). La copia de la portada anterior
+ * se queda encima de la nueva, en el mismo sitio, y se desvanece cuando la
+ * nueva ya se puede pintar (pip.js, cambiarCaratula). `inset: 0` con
+ * `margin: auto` la centra igual que el escenario centra a la original,
+ * tanto con la portada a todo el hueco (compacta) como con su tamaño
+ * propio (ampliada).
+ */
+.ytmpip-stage > .ytmpip-artwork.ytmpip-saliente {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+.ytmpip-stage > .ytmpip-artwork.ytmpip-saliente.ytmpip-desvaneciendo {
+  opacity: 0;
+}
+
 .ytmpip-info.ytmpip-changing {
   opacity: 0;
   transform: translateY(4px);

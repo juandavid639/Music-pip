@@ -9,7 +9,7 @@
 importScripts("../shared/constants.js", "../shared/messages.js");
 
 const { MESSAGE_TYPES, COMMAND_TYPES, createMessage, createCommand } = self.YTMPip;
-const { STORAGE_KEYS, DEFAULT_SETTINGS, PIP_DIMENSIONS, SITIOS_SOPORTADOS, URL_POR_DEFECTO } =
+const { STORAGE_KEYS, DEFAULT_SETTINGS, PIP_DIMENSIONS, SITIOS_SOPORTADOS, URL_POR_DEFECTO, SPECTRUM_LIMITS } =
   self.YTMPip.CONSTANTS;
 
 /*
@@ -197,6 +197,79 @@ async function enviarALaPestana(tab, mensaje) {
   }
 }
 
+/*
+ * EL ESTADO EN EL ICONO DE LA BARRA (tanda AC).
+ *
+ * Sobre el icono de la extension, una etiqueta corta: ▶ si suena, ❚❚ si esta
+ * en pausa, o los minutos que le quedan al temporizador de apagado, que
+ * mandan sobre lo demas (son lo unico que caduca). Sin musica, nada.
+ *
+ * La pinta el service worker porque es quien ya recibe el estado de la
+ * pestaña recordada (tanda T): se pinta con el MISMO estado que se guarda,
+ * asi que icono y menu no pueden contar dos cosas distintas. No pide
+ * permisos: setBadgeText viene con el icono.
+ *
+ * El color es el acento cuando suena y gris en pausa. El rojo se toma de
+ * COLOR_SUGGESTED, que ya es una de las seis copias del acento que vigila la
+ * prueba de la tanda N: escribirlo aqui a mano seria una septima copia fuera
+ * del censo.
+ */
+function textoDelIcono(estado) {
+  if (!estado || !estado.connected) return "";
+  const temporizador = estado.sleepTimer;
+  if (temporizador && temporizador.remainingMs > 0) {
+    return Math.ceil(temporizador.remainingMs / 60000) + "′";
+  }
+  return estado.playing ? "▶" : "❚❚";
+}
+
+function colorDelIcono(estado) {
+  return estado && estado.playing ? SPECTRUM_LIMITS.COLOR_SUGGESTED : "#5f6368";
+}
+
+// null = aun sin leer en este despertar; se lee una vez y lo mantiene al
+// dia el oyente de storage de abajo.
+let iconoPermitido = null;
+
+async function iconoEncendido() {
+  if (iconoPermitido === null) {
+    try {
+      const guardado = await chrome.storage.local.get(STORAGE_KEYS.BADGE_PREFERENCE);
+      iconoPermitido = guardado[STORAGE_KEYS.BADGE_PREFERENCE] !== "hidden";
+    } catch (err) {
+      iconoPermitido = true;
+    }
+  }
+  return iconoPermitido;
+}
+
+async function pintarIcono(estado) {
+  const texto = (await iconoEncendido()) ? textoDelIcono(estado) : "";
+  try {
+    await chrome.action.setBadgeText({ text: texto });
+    if (texto) await chrome.action.setBadgeBackgroundColor({ color: colorDelIcono(estado) });
+  } catch (err) {
+    // Sin icono que pintar (navegador sin la API): no es un fallo de nadie.
+  }
+}
+
+/*
+ * Apagar o encender la etiqueta en Preferencias se ve al momento, con el
+ * ultimo estado guardado, sin esperar a que cambie la cancion.
+ */
+try {
+  chrome.storage.onChanged.addListener((cambios, zona) => {
+    if (zona !== "local" || !cambios[STORAGE_KEYS.BADGE_PREFERENCE]) return;
+    iconoPermitido = cambios[STORAGE_KEYS.BADGE_PREFERENCE].newValue !== "hidden";
+    chrome.storage.local
+      .get(STORAGE_KEYS.LAST_KNOWN_STATE)
+      .then((guardado) => pintarIcono(guardado[STORAGE_KEYS.LAST_KNOWN_STATE]))
+      .catch(() => {});
+  });
+} catch (err) {
+  // Sin storage.onChanged: la preferencia se aplicara en el proximo estado.
+}
+
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     await chrome.storage.local.set({
@@ -232,6 +305,8 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   chrome.storage.local.set({
     [STORAGE_KEYS.LAST_KNOWN_STATE]: { connected: false }
   });
+  // Sin pestaña no hay nada que contar en el icono.
+  pintarIcono(null);
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
@@ -503,6 +578,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!suena && recordada !== null) return;
             recordarPestana(id);
           }
+          // El icono se pinta con el MISMO estado que se guarda (tanda AC).
+          pintarIcono(message.state);
           return chrome.storage.local.set({ [STORAGE_KEYS.LAST_KNOWN_STATE]: message.state });
         })
         .catch(() => {})

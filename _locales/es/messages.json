@@ -191,6 +191,12 @@
   "fila_canvas_ayuda": {
     "message": "El vídeo corto que Spotify pone a algunas canciones, de fondo en la ventana. También se enciende y se apaga con el botón 🌌 de la ventana."
   },
+  "fila_caratula": {
+    "message": "Carátula"
+  },
+  "fila_caratula_ayuda": {
+    "message": "El disco gira mientras suena la música."
+  },
   "fila_color": {
     "message": "Color"
   },
@@ -217,6 +223,18 @@
   },
   "fila_difuminar_ayuda": {
     "message": "Se vuelve transparente para no estorbar y se ve entera otra vez al pasarle el ratón por encima. Con 0 no se difumina nunca; 80 es casi invisible."
+  },
+  "fila_estado_icono": {
+    "message": "Estado en el icono"
+  },
+  "fila_estado_icono_ayuda": {
+    "message": "▶ o ❚❚ sobre el icono de la barra, o los minutos que le quedan al temporizador."
+  },
+  "fila_forma_espectro": {
+    "message": "Forma"
+  },
+  "fila_forma_espectro_ayuda": {
+    "message": "El anillo rodea la carátula; con vídeo o con la letra en grande vuelve a barras."
   },
   "fila_halo": {
     "message": "Halo de luz"
@@ -371,6 +389,9 @@
   "opcion_a_mi_gusto": {
     "message": "A mi gusto"
   },
+  "opcion_automatico": {
+    "message": "Automático"
+  },
   "opcion_barras_auto": {
     "message": "Las que quepan"
   },
@@ -379,6 +400,12 @@
   },
   "opcion_canvas_no": {
     "message": "No verlo (el fondo de siempre)"
+  },
+  "opcion_caratula_cuadrada": {
+    "message": "Cuadrada"
+  },
+  "opcion_caratula_vinilo": {
+    "message": "Disco de vinilo"
   },
   "opcion_claro": {
     "message": "Claro"
@@ -404,6 +431,15 @@
   "opcion_eq_apagado": {
     "message": "Apagado (no tocar el sonido)"
   },
+  "opcion_forma_anillo": {
+    "message": "Anillo"
+  },
+  "opcion_forma_barras": {
+    "message": "Barras"
+  },
+  "opcion_forma_onda": {
+    "message": "Onda"
+  },
   "opcion_grande": {
     "message": "Grande (380 × 560)"
   },
@@ -415,6 +451,12 @@
   },
   "opcion_halo_latido": {
     "message": "Latiendo con la música"
+  },
+  "opcion_icono_no": {
+    "message": "No enseñarlo"
+  },
+  "opcion_icono_ver": {
+    "message": "Enseñarlo"
   },
   "opcion_letra": {
     "message": "La letra"

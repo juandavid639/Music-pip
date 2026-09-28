@@ -49,7 +49,7 @@ function pestana(id, url, extra = {}) {
 function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", fallaVentana = false } = {}) {
   const oyentes = {};
   const ev = (nombre) => ({ addListener: (fn) => (oyentes[nombre] = oyentes[nombre] || []).push(fn) });
-  const registro = { enviados: [], inyecciones: [], destacados: [], ventanas: [], creadas: [], avisos: [] };
+  const registro = { enviados: [], inyecciones: [], destacados: [], ventanas: [], creadas: [], avisos: [], insignias: [], colores: [] };
 
   const pick = (almacen, claves) => {
     if (claves == null) return Object.assign({}, almacen);
@@ -93,6 +93,7 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
         get: async (k) => pick(local, k),
         set: async (o) => void Object.assign(local, o)
       },
+      onChanged: ev("almacen"),
       session: {
         get: async (k) => pick(sesion, k),
         set: async (o) => void Object.assign(sesion, o),
@@ -139,7 +140,12 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
       },
       update: async () => ({})
     },
-    action: { onClicked: ev("icono") },
+    action: {
+      onClicked: ev("icono"),
+      // El icono con estado (tanda AC): se apunta lo que se le pinta.
+      setBadgeText: async ({ text }) => void registro.insignias.push(text),
+      setBadgeBackgroundColor: async ({ color }) => void registro.colores.push(color)
+    },
     commands: { onCommand: ev("atajo") }
   };
 
@@ -158,6 +164,7 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
 
   return {
     registro,
+    contexto,
     sesion,
     local,
     pestanas,
@@ -391,4 +398,66 @@ test("REGRESION TANDA T: si la ventana de respaldo no se puede crear, el que la 
   const r = await w.mensaje("OPEN_FALLBACK_WINDOW");
   assert.notStrictEqual(r, SIN_RESPUESTA, "el emisor se quedo esperando para siempre");
   assert.strictEqual(r.ok, false);
+});
+
+/* ==================================================================
+ * 5. El estado en el icono de la barra (tanda AC)
+ * ================================================================== */
+
+const ultima = (lista) => lista[lista.length - 1];
+
+test("textoDelIcono: nada sin musica, ▶ si suena, ❚❚ en pausa, y el temporizador manda", () => {
+  const { contexto } = trabajador();
+  const t = contexto.textoDelIcono;
+  assert.strictEqual(t(null), "");
+  assert.strictEqual(t({ connected: false, playing: true }), "");
+  assert.strictEqual(t({ connected: true, playing: true }), "▶");
+  assert.strictEqual(t({ connected: true, playing: false }), "❚❚");
+  assert.strictEqual(t({ connected: true, playing: true, sleepTimer: { remainingMs: 29.5 * 60000 } }), "30′", "los minutos se redondean hacia arriba, como en la ventana");
+  assert.strictEqual(t({ connected: true, playing: false, sleepTimer: { remainingMs: 0 } }), "❚❚", "un temporizador vencido no cuenta");
+});
+
+test("REGRESION TANDA AC: el estado de la pestaña recordada se pinta en el icono, con su color", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 } });
+  // El color va un paso asincrono detras del texto: un turno de espera.
+  const asentar = () => new Promise((r) => setTimeout(r, 0));
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  await asentar();
+  assert.strictEqual(ultima(w.registro.insignias), "▶");
+  assert.strictEqual(ultima(w.registro.colores), w.contexto.self.YTMPip.CONSTANTS.SPECTRUM_LIMITS.COLOR_SUGGESTED);
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: false } }, 7);
+  await asentar();
+  assert.strictEqual(ultima(w.registro.insignias), "❚❚");
+  assert.strictEqual(ultima(w.registro.colores), "#5f6368");
+});
+
+test("una pestaña que no es la recordada no pinta el icono (icono y menu cuentan lo mismo)", async () => {
+  const w = trabajador({ pestanas: [pestana(3, YT), pestana(7, YTM)], sesion: { pestanaMusical: 7 } });
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: false } }, 3);
+  assert.strictEqual(w.registro.insignias.length, 0);
+});
+
+test("con la preferencia apagada el icono queda limpio", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 }, local: { badgePreference: "hidden" } });
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  assert.strictEqual(ultima(w.registro.insignias), "");
+});
+
+test("cambiar la preferencia repinta al momento con el ultimo estado guardado", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 } });
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  await w.disparar("almacen", { badgePreference: { newValue: "hidden" } }, "local");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(ultima(w.registro.insignias), "", "apagarla no limpio el icono");
+  await w.disparar("almacen", { badgePreference: { newValue: "shown" } }, "local");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(ultima(w.registro.insignias), "▶", "encenderla no lo volvio a pintar");
+});
+
+test("cerrar la pestaña recordada limpia el icono", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 } });
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  await w.disparar("cerrar", 7);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(ultima(w.registro.insignias), "");
 });

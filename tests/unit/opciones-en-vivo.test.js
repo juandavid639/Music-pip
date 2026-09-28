@@ -154,3 +154,24 @@ test("los cambios de otra zona de storage no repintan", () => {
   p.ajeno({ theme: "light" }, "sync");
   assert.strictEqual(p.lecturas(), antes);
 });
+
+test("la forma del espectro (tanda Z) se carga de lo guardado y se guarda al elegirla", () => {
+  const p = abrir({ spectrumStyle: "ring" });
+  assert.strictEqual(p.$("spectrumStyle").value, "ring", "la pagina no enseña la forma guardada");
+  p.elegir("spectrumStyle", "wave");
+  assert.strictEqual(p.almacen.spectrumStyle, "wave", "elegir la forma no la guardo");
+});
+
+test("la caratula (tanda AA) se carga de lo guardado y se guarda al elegirla", () => {
+  const p = abrir({ coverStyle: "vinyl" });
+  assert.strictEqual(p.$("coverStyle").value, "vinyl");
+  p.elegir("coverStyle", "square");
+  assert.strictEqual(p.almacen.coverStyle, "square");
+});
+
+test("el estado en el icono (tanda AC) se carga de lo guardado y se guarda al elegirlo", () => {
+  const p = abrir({ badgePreference: "hidden" });
+  assert.strictEqual(p.$("badgePreference").value, "hidden");
+  p.elegir("badgePreference", "shown");
+  assert.strictEqual(p.almacen.badgePreference, "shown");
+});

@@ -1018,10 +1018,65 @@
           <div class="ytmpip-pildoras" role="group" data-para="theme" aria-label="Colores" data-t-aria="fila_colores">
             <button type="button" data-valor="dark" aria-pressed="true" data-t="opcion_oscuro">Oscuro</button>
             <button type="button" data-valor="light" aria-pressed="false" data-t="opcion_claro">Claro</button>
+            <button type="button" data-valor="auto" aria-pressed="false" data-t="opcion_automatico">Automático</button>
+            <button type="button" data-valor="source" aria-pressed="false" data-t="opcion_color_fuente">Del vídeo o la carátula</button>
           </div>
+          <!--
+            «Automático» sigue el claro/oscuro del sistema y «Del vídeo o la
+            carátula» tiñe la ventana con el color de lo que suena (tanda Y).
+            El segundo reutiliza la clave del halo y del espectro a propósito:
+            es la misma idea con la misma palabra ("source") en storage.
+          -->
           <select id="theme" class="ytmpip-select-real">
             <option value="dark" data-t="opcion_oscuro">Oscuro</option>
             <option value="light" data-t="opcion_claro">Claro</option>
+            <option value="auto" data-t="opcion_automatico">Automático</option>
+            <option value="source" data-t="opcion_color_fuente">Del vídeo o la carátula</option>
+          </select>
+        </div>
+
+        <!--
+          La carátula en disco de vinilo (tanda AA): cuadrada, como siempre,
+          o un disco que gira mientras suena.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="coverStyle" data-t="fila_caratula">Carátula</label>
+            <span class="ytmpip-ayuda" data-t="fila_caratula_ayuda">
+              El disco gira mientras suena la música.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="coverStyle" aria-label="Carátula" data-t-aria="fila_caratula">
+            <button type="button" data-valor="square" aria-pressed="true" data-t="opcion_caratula_cuadrada">Cuadrada</button>
+            <button type="button" data-valor="vinyl" aria-pressed="false" data-t="opcion_caratula_vinilo">Disco de vinilo</button>
+          </div>
+          <select id="coverStyle" class="ytmpip-select-real">
+            <option value="square" data-t="opcion_caratula_cuadrada">Cuadrada</option>
+            <option value="vinyl" data-t="opcion_caratula_vinilo">Disco de vinilo</option>
+          </select>
+        </div>
+
+        <!--
+          El estado en el icono de la barra de Chrome (tanda AC): ▶, ❚❚ o los
+          minutos del temporizador sobre el icono. Encendido de serie; se
+          apaga aquí porque una etiqueta fija sobre un icono no le gusta a
+          todo el mundo.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="badgePreference" data-t="fila_estado_icono">Estado en el icono</label>
+            <span class="ytmpip-ayuda" data-t="fila_estado_icono_ayuda">
+              ▶ o ❚❚ sobre el icono de la barra, o los minutos que le quedan al
+              temporizador.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="badgePreference" aria-label="Estado en el icono" data-t-aria="fila_estado_icono">
+            <button type="button" data-valor="shown" aria-pressed="true" data-t="opcion_icono_ver">Enseñarlo</button>
+            <button type="button" data-valor="hidden" aria-pressed="false" data-t="opcion_icono_no">No enseñarlo</button>
+          </div>
+          <select id="badgePreference" class="ytmpip-select-real">
+            <option value="shown" data-t="opcion_icono_ver">Enseñarlo</option>
+            <option value="hidden" data-t="opcion_icono_no">No enseñarlo</option>
           </select>
         </div>
 
@@ -1494,6 +1549,32 @@
           En Spotify esto no funciona: su sonido no está al alcance de la
           página, así que no hay nada que tocar ni medir.
         </p>
+
+        <!--
+          La FORMA del espectro (tanda Z): las barras de siempre, una onda, o
+          rayos alrededor de la carátula. Va primero porque decide qué son las
+          filas de debajo: «cuántas barras» también es cuántos rayos o cuántos
+          puntos de la onda, y el color vale igual para las tres.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="spectrumStyle" data-t="fila_forma_espectro">Forma</label>
+            <span class="ytmpip-ayuda" data-t="fila_forma_espectro_ayuda">
+              El anillo rodea la carátula; con vídeo o con la letra en grande
+              vuelve a barras.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="spectrumStyle" aria-label="Forma" data-t-aria="fila_forma_espectro">
+            <button type="button" data-valor="bars" aria-pressed="true" data-t="opcion_forma_barras">Barras</button>
+            <button type="button" data-valor="wave" aria-pressed="false" data-t="opcion_forma_onda">Onda</button>
+            <button type="button" data-valor="ring" aria-pressed="false" data-t="opcion_forma_anillo">Anillo</button>
+          </div>
+          <select id="spectrumStyle" class="ytmpip-select-real">
+            <option value="bars" data-t="opcion_forma_barras">Barras</option>
+            <option value="wave" data-t="opcion_forma_onda">Onda</option>
+            <option value="ring" data-t="opcion_forma_anillo">Anillo</option>
+          </select>
+        </div>
 
         <!--
           Número de barras. Dos campos y no uno porque son dos decisiones
