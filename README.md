@@ -7169,6 +7169,45 @@ aviso a los usuarios por ese lado. NO MEDIDO: esta versión instalada en
 Chrome, y la actualización real desde la 1.0.1 (que es justo cuando se
 estrena la reinyección de la tanda T).
 
+## El rendimiento, medido en vivo (y la decisión de no tocarlo)
+
+La auditoría del 2026-09-28 dejó apuntado, sin medir, que en cada pestaña
+soportada el observador y `buildState` corren aunque la ventana esté
+cerrada, y que con Better Lyrics cada lectura clona la letra entera. Antes
+de tocar el bucle principal se midió: `tools/diagnostico-rendimiento.js`
+se pega en la consola de la pestaña, en el mundo «Music PiP», envuelve
+durante 30 s las funciones REALES del bucle y lo deja todo como estaba.
+Pasadas del autor, en su Chrome, con la 1.0.2:
+
+| | YouTube Music sonando, ventana cerrada | Ventana abierta | youtube.com en la portada, sin reproducir |
+|---|---|---|---|
+| `buildState` por segundo | 3,7 | 3,7 | 0,2 |
+| Tiempo de la extensión por segundo | ~26 ms | ~26 ms | 0,6 ms |
+| · leer título/artista/tiempo | 13,4 ms | 12,1 ms | 0,6 ms |
+| · leer la letra (Better Lyrics) | 12,5 ms | 8,2 ms | 0 |
+| · pintar la ventana | 0,02 ms | 5,6 ms | 0 |
+| Tareas largas (> 50 ms) | 0 | 0 | 0 |
+| Lecturas de storage por segundo | 0 | 0 | 0 |
+
+Lo que dicen:
+- **El ritmo lo marca el `<video>`, no la página**: los `timeupdate`
+  llegan ~4 veces por segundo y el observador solo ve 1–2 lotes. En una
+  pestaña que no reproduce (la portada de YouTube) la extensión casi no
+  hace nada: la preocupación principal de la auditoría NO se confirma.
+- **Con música, ~26 ms por segundo** (un 2,6 % de un núcleo), sin una sola
+  tarea larga y con la llamada más lenta en 7,8 ms, menos de medio
+  fotograma. La ventana cerrada cuesta lo mismo que abierta, y casi la
+  mitad es leer una letra que nadie mira.
+- **La tanda S, confirmada en producción**: cero lecturas de storage por
+  segundo con música sonando, y un solo mensaje por segundo al service
+  worker.
+
+**Decisión del autor: dejarlo así.** La mejora obvia —no leer la letra con
+la ventana cerrada— bajaría esos ~26 ms a ~13, pero no hay ningún síntoma
+que un usuario note, y el cambio tocaría el bucle y el estado guardado (y
+por tanto la política). Si algún día cambia el bucle, se repite la medición
+con el mismo guion antes y después.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
