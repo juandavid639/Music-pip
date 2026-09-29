@@ -339,6 +339,14 @@ test("ninguna regla del <style> apunta a una clase que no existe", () => {
    *    mentira que solo se ve mirando la pagina, no aqui—.
    */
   for (const det of doc.querySelectorAll("details")) det.open = true;
+  /*
+   * Y la vista previa en su tamaño GRANDE, por lo mismo que los <details>
+   * (tanda AD): el atributo data-tamano lo pone options.js al pulsar
+   * «Grande», y la regla que lo usa (no pegarla arriba en pantallas
+   * estrechas) es de ese estado. Se pone la pagina en el; no se perdona.
+   */
+  const lateral = doc.getElementById("lateralVistaPrevia");
+  if (lateral) lateral.dataset.tamano = "grande";
 
   /*
    * LAS LARGAS PRIMERO, que es lo unico delicado de esta linea y ya se ha

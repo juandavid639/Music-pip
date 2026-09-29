@@ -684,7 +684,10 @@
     "message": "Browser's floating video"
   },
   "vista_previa_ayuda": {
-    "message": "It is the real window —same HTML, same CSS— playing a fake song. The buttons show it at its two opening sizes; the settings on this page do not change this preview."
+    "message": "It is the real window —same HTML, same CSS— playing a fake song, with whatever you choose on this page. The buttons show it at its two opening sizes."
+  },
+  "vista_previa_lateral": {
+    "message": "Preview"
   },
   "vista_previa_titulo": {
     "message": "Preview of the floating window"

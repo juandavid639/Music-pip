@@ -7480,6 +7480,77 @@ en jsdom y, lo visual, a ojo en la vista previa o en páginas temporales
 con el `pip.js` real; nada de eso es la ventana flotante sobre YouTube
 Music.
 
+## La vista previa viva (la tanda AD: enseña lo que eliges y te acompaña al bajar)
+
+Pedido por el autor tras probar la 1.1.0, con sus palabras: que al tocar las
+opciones la previsualización «se desplace para ver los cambios, para no
+estar subiendo y bajando», y que «la previsualización no cambia, solo tiene
+el de la ventana». Las dos cosas eran ciertas, y la segunda era una
+decisión escrita: la ayuda del marco decía «los ajustes de esta página no
+cambian esta vista» desde la tanda P.
+
+**1. Acompaña al scroll.** La vista previa vivía dentro de la primera
+tarjeta, así que al bajar a tocar el espectro o el halo se quedaba arriba.
+Ahora es su propio bloque (`<aside id="lateralVistaPrevia">`) y va pegado
+(`sticky`) mientras se recorre la página: en pantallas anchas (desde 1180
+px) en una columna a la derecha, con la página a dos columnas; en las
+estrechas, arriba bajo la cabecera, pero **solo con la pequeña y si hay
+altura** (la grande, de 560 px, pegada arriba taparía media página). La
+cabecera cambia de alto con el idioma y el ancho, así que `options.js` la
+mide para pegar el bloque justo debajo. Comprobado en el navegador: con
+2627 px de scroll la vista previa sigue a 75 px del borde, entera a la
+vista; y en una ventana diminuta se queda en su sitio, como manda la regla.
+
+**2. Enseña lo que eliges.** El marco carga ahora las preferencias
+GUARDADAS (`Settings`, que dentro de Preferencias es una página de la
+extensión con su storage) y se repinta con cada cambio: el tema (los
+cuatro, «de la carátula» con el color de su portada de mentira), el halo
+(encendido, color y latido, con un bombo de mentira), el disco de vinilo y
+el espectro (forma, color, cuántas barras y altura). Las barras se mueven
+con un sonido inventado, salvo con «reducir movimiento». Lo que NO enseña,
+dicho en su comentario: el atenuado mientras suena, el latido de la
+carátula (es un botón de la ventana, no una preferencia) y el vídeo.
+
+**El espectro se dibuja con el MISMO código que la ventana.** El dibujo de
+las tres formas, la geometría, el arcoíris y la regla de «qué modos llevan
+un color por barra» se mudaron de `pip.js` a un módulo compartido nuevo,
+`src/shared/formas-espectro.js` (`YTMPip.FormasEspectro`). La ventana y
+la vista previa lo llaman igual; lo único que cada una pone de su parte es
+lo que solo ella sabe (dónde está la carátula, qué color fijo resuelve).
+Antes el marco pintaba unas barras de mentira propias, y cada forma nueva
+habría sido una copia que mantener de acuerdo con la buena. El módulo
+viaja en el paquete: **el zip pasa de 40 a 41 archivos**, y la lista del
+manifiesto lo lleva después de `color-fuente.js` (la reinyección de la
+tanda T lee esa lista, así que no hay nada más que tocar).
+
+**Lo que enseñó la mutación**, y está en la cabecera de su script:
+- Un segundo `Settings.load()` en el marco no hacía nada: `settings.js` ya
+  lo llama al cargarse. El mutante que lo quitaba sobrevivió, con razón; la
+  línea se quitó.
+- Predije que sin suscripción el marco pintaría los valores de serie
+  (6 caídas) y cayeron 4: cuando el marco pinta por primera vez, la carga
+  de arranque ya terminó y pinta lo guardado. Solo caen las pruebas que
+  cambian algo después de abrir, que es justo lo que ese mutante debe
+  vigilar.
+
+**Las pruebas**: 9 nuevas en `vista-previa.test.js` (el marco con
+preferencias sembradas y un storage que avisa; una prueba cuenta las curvas
+de la onda para demostrar que dibuja el código compartido; y la maquetación
+leída del HTML), 3 en `formas-espectro.test.js`, y las de la geometría
+movidas a leer del módulo. El banco del marco lee ahora sus scripts del
+propio `vista-previa.html` (la lista a mano se había quedado vieja), y la
+prueba de las reglas huérfanas de Preferencias pone la vista en «Grande»
+antes de mirar, como ya hacía abriendo los `<details>`.
+
+**La mutación** (`tools/mutar-tanda-ad.js`): 12 mutantes, todos muertos,
+**12 de 12 recuentos exactos** contra la predicción refijada. NO MEDIDO: la
+vista previa dentro de la extensión de verdad, cambiando opciones con el
+ratón (el navegador de pruebas no tiene el storage de la extensión; allí se
+le pasaron las preferencias a mano).
+
+**Suite entera**: 1033/1033. Por decisión del autor, sin subir la versión:
+primero la prueba él cargando la extensión desempaquetada.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

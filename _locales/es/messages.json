@@ -684,7 +684,10 @@
     "message": "Vídeo flotante del navegador"
   },
   "vista_previa_ayuda": {
-    "message": "Es la ventana de verdad —su mismo HTML y su mismo CSS— sonando una canción de mentira. Los botones la enseñan a sus dos tamaños de apertura; los ajustes de esta página no cambian esta vista."
+    "message": "Es la ventana de verdad —su mismo HTML y su mismo CSS— sonando una canción de mentira, con lo que elijas en esta página. Los botones la enseñan a sus dos tamaños de apertura."
+  },
+  "vista_previa_lateral": {
+    "message": "Vista previa"
   },
   "vista_previa_titulo": {
     "message": "Vista previa de la ventana flotante"

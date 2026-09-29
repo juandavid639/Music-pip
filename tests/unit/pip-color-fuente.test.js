@@ -326,6 +326,7 @@ function ventana(opciones) {
     "src/content/player-controller.js",
     "src/content/audio-spectrum.js",
     "src/shared/iconos.js",
+    "src/shared/formas-espectro.js",
     "src/pip/pip.js"
   );
 

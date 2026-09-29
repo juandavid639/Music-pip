@@ -950,132 +950,6 @@
    * y pintar no depende de nada mas.
    * ------------------------------------------------------------------ */
 
-  // Ancho de referencia por barra, en pixeles CSS. No es el ancho real:
-  // el real sale de repartir el canvas, esto solo decide CUANTAS caben.
-  const ANCHO_POR_BARRA = 7;
-  const BARRAS_MIN = 8;
-  const BARRAS_MAX = 40;
-
-  /**
-   * Cuantas barras caben en `ancho` pixeles, o las que pida `preferidas`.
-   *
-   * Con un numero fijo el espectro sale ridiculo en los dos extremos: en
-   * la ventana mini las barras se solapan hasta parecer un bloque, y en la
-   * ampliada quedan cuatro columnas gordas. Por eso el reparto por ancho
-   * sigue siendo lo que se hace si nadie dice nada. Los topes existen
-   * porque por debajo de ocho ya no es un espectro sino un vumetro, y por
-   * encima de cuarenta las barras bajan de un pixel y se pierden en el
-   * redondeo.
-   *
-   * Cuando `preferidas` es un numero MANDA, y no se vuelve a acotar: ya
-   * viene acotado de la normalizacion, y volver a hacerlo aqui seria tener
-   * el rango escrito en dos sitios. Tampoco se mira si "cabe": si alguien
-   * pide cuarenta barras en la ventana mini es que quiere cuarenta barras
-   * apretadas, y corregirselo en silencio seria ignorar la preferencia que
-   * acaba de guardar.
-   *
-   * Pura.
-   */
-  function barrasParaAncho(ancho, preferidas) {
-    if (Number.isFinite(preferidas)) return preferidas;
-    if (!(ancho > 0)) return BARRAS_MIN;
-    return Math.max(BARRAS_MIN, Math.min(BARRAS_MAX, Math.floor(ancho / ANCHO_POR_BARRA)));
-  }
-
-  /* ---------- Las otras dos formas del espectro (tanda Z) ----------
-   *
-   * Las barras de siempre se pintan en dibujarEspectro con un fillRect por
-   * barra. La onda y el anillo necesitan geometria, y la geometria vive
-   * aqui, pura, para poder probarla sin un canvas: jsdom no pinta, pero una
-   * lista de puntos se puede comprobar numero a numero.
-   */
-
-  /**
-   * Los puntos de la ONDA: uno por barra, centrado en su franja, a la altura
-   * que le toca. El dibujo los une con curvas y rellena por debajo.
-   *
-   * Una barra a cero sigue midiendo un pixel, como en las barras: una onda
-   * que se hunde hasta el borde desaparece, y un silencio tiene que verse
-   * como una linea plana abajo, no como nada. Pura.
-   */
-  function puntosDeOnda(barras, ancho, alto) {
-    const n = barras.length;
-    if (!n) return [];
-    const paso = ancho / n;
-    return barras.map((valor, i) => ({
-      x: (i + 0.5) * paso,
-      y: alto - Math.max(1, (valor / 255) * alto)
-    }));
-  }
-
-  /**
-   * Los rayos del ANILLO alrededor de la caratula: dos por barra, en espejo.
-   *
-   * Las barras van de graves a agudos, y un circulo no tiene «izquierda»:
-   * repartirlas en la vuelta entera dejaria los graves y los agudos
-   * pegados arriba. Asi que ocupan media vuelta —de arriba (-90°) a abajo
-   * por la derecha— y se repiten en espejo por la izquierda: los graves
-   * arriba, los agudos abajo, y el dibujo simetrico, que es como se lee
-   * un anillo. Cada rayo sale del borde (`radio`) hacia fuera, con largo
-   * proporcional a su barra y minimo de un pixel, como las barras.
-   *
-   * `i` es la barra de la que sale, para el color por barra. Pura.
-   */
-  function rayosDelAnillo(barras, cx, cy, radio, largoMax) {
-    const n = barras.length;
-    const rayos = [];
-    for (let i = 0; i < n; i++) {
-      const t = (i + 0.5) / n;
-      const largo = Math.max(1, (barras[i] / 255) * largoMax);
-      for (const angulo of [-Math.PI / 2 + t * Math.PI, -Math.PI / 2 - t * Math.PI]) {
-        const cos = Math.cos(angulo);
-        const sin = Math.sin(angulo);
-        rayos.push({
-          i,
-          x1: cx + radio * cos,
-          y1: cy + radio * sin,
-          x2: cx + (radio + largo) * cos,
-          y2: cy + (radio + largo) * sin
-        });
-      }
-    }
-    return rayos;
-  }
-
-  /* ---------- El arcoiris giratorio ("RGB", como los gamer) ----------
-   *
-   * Dos movimientos a la vez, y hacen falta los dos:
-   *
-   *   - el REPARTO: cada barra lleva un tono distinto, asi que en una sola
-   *     foto ya se ve un degradado y no un bloque de color;
-   *   - el GIRO: todo el degradado avanza con el reloj, que es lo que
-   *     convierte el degradado en el efecto que se pidio.
-   *
-   * Con solo el giro, el espectro entero seria un color liso cambiando
-   * despacio y a ratos se confundiria con el fondo. Con solo el reparto
-   * seria un arcoiris quieto.
-   *
-   * El arco es de 300 y no de 360 grados para que la ultima barra no acabe
-   * en el mismo tono con el que empieza la primera: cerrando la vuelta
-   * entera, los dos extremos del espectro salen del mismo color y el
-   * degradado parece cortado por la mitad.
-   */
-  const RGB_PERIODO_MS = 6000;
-  const RGB_ARCO = 300;
-
-  /**
-   * El tono (0-359) que le toca a la barra `indice` de `total` en el
-   * instante `ms`. Pura, y expuesta para poder probarla: es la unica parte
-   * del efecto que se puede comprobar sin mirar la pantalla.
-   */
-  function matizRgb(ms, indice, total) {
-    const giro = ((ms % RGB_PERIODO_MS) / RGB_PERIODO_MS) * 360;
-    // Con una sola barra no hay nada que repartir, y dividir por cero
-    // dejaria el tono en NaN y la barra sin pintar.
-    const reparto = total > 1 ? (indice / (total - 1)) * RGB_ARCO : 0;
-    return (giro + reparto) % 360;
-  }
-
   /*
    * ---------- La paleta propia ----------
    *
@@ -1560,37 +1434,30 @@
 
     const preferencias = YTMPip.Settings.get();
     const barras = YTMPip.Espectro.leerBarras(
-      barrasParaAncho(caja.width, preferencias.spectrumBars),
+      YTMPip.FormasEspectro.barrasParaAncho(caja.width, preferencias.spectrumBars),
       preferencias.spectrumFall
     );
     contexto.clearRect(0, 0, ancho, alto);
 
     if (barras && barras.length) {
-      const paso = ancho / barras.length;
-      // Un sexto de hueco entre barras: proporcional, para que el aire se
-      // vea igual con ocho barras que con cuarenta.
-      const grosor = Math.max(1, paso - Math.max(1, paso / 6));
       /*
-       * Un color fijo se pone UNA vez para las barras que haya; el arcoiris
-       * hay que ponerlo barra por barra, porque cada una lleva el suyo.
+       * Un color fijo se pone UNA vez para lo que se dibuje; el arcoiris y la
+       * paleta llevan uno por barra y los reparte el modulo compartido
+       * (colorDeBarraPara devuelve null con un color fijo: una sola
+       * pregunta, en un solo sitio).
        *
        * Cuando es fijo se lee `--ytmpip-spectrum-color`, no
        * `--ytmpip-accent`. Esa variable vale el acento del tema salvo que
        * las preferencias digan otra cosa, y quien decide eso es
        * applySettings. Preguntar aqui si el color es propio o del tema
        * seria hacer la misma pregunta en dos sitios.
-       *
-       * Los modos "rgb" y paleta SI se preguntan aqui, y no hay duplicado:
-       * ninguno de los dos tiene UN color que meter en la variable CSS
-       * —tienen uno por barra—, asi que applySettings no puede responderlos
-       * por adelantado.
        */
-      const ciclico = preferencias.spectrumColor === "rgb";
-      // La lista se parte una vez por fotograma, no una vez por barra:
-      // dentro del bucle serian cuarenta split() por cada 16 ms.
-      const paleta = ciclico ? null : YTMPip.Settings.normalizarPaleta(preferencias.spectrumColor);
-      const porBarra = ciclico || paleta;
-      if (!porBarra) {
+      const Formas = YTMPip.FormasEspectro;
+      // El reloj se lee UNA vez por fotograma: leerlo por barra repartiria
+      // los colores por lo que tarda en pintarse el fotograma.
+      const ahora = (pipWindow.performance || Date).now();
+      const colorDeBarra = Formas.colorDeBarraPara(preferencias.spectrumColor, ahora, barras.length);
+      if (!colorDeBarra) {
         /*
          * «Del video o la carátula» es el TERCER modo de color fijo, y el
          * unico que puede no tener respuesta: una portada en blanco y negro
@@ -1599,10 +1466,8 @@
          * mas: "no hay color de la fuente" y "no se ha pedido color de la
          * fuente" quieren pintar lo mismo, asi que no hacen falta dos ramas.
          *
-         * Se pregunta por el modo AQUI y no en applySettings, como el
-         * arcoiris y la paleta, porque el color cambia entre fotogramas sin
-         * que las preferencias se hayan tocado: applySettings no tiene
-         * ocasion de escribirlo.
+         * Se pregunta por el modo AQUI y no en applySettings porque el color
+         * cambia entre fotogramas sin que las preferencias se hayan tocado.
          */
         const deLaFuente =
           preferencias.spectrumColor === MODO_FUENTE ? colorDeLaFuente(ms) : null;
@@ -1611,44 +1476,25 @@
           pipWindow.getComputedStyle(els.root).getPropertyValue("--ytmpip-spectrum-color").trim() ||
           SPECTRUM_LIMITS.COLOR_SUGGESTED;
       }
-      // El reloj se lee UNA vez por fotograma: leerlo dentro del bucle
-      // repartiria las barras por el tiempo que tarda en pintarse el
-      // fotograma en vez de por su posicion.
-      const ahora = ciclico ? (pipWindow.performance || Date).now() : 0;
+
       /*
-       * El color de la barra `i`, para las tres formas. Con un color fijo
-       * devuelve null: ya esta puesto en fillStyle (arriba) y no hay nada
-       * que cambiar barra a barra.
+       * El dibujo de las tres formas vive en shared/formas-espectro.js (tanda
+       * AD): la vista previa de Preferencias dibuja con el MISMO codigo, y
+       * dos copias del dibujo serian dos espectros que acaban distintos. Lo
+       * que solo sabe la ventana se le pasa hecho: donde esta la caratula (el
+       * anillo) y la banda de abajo (su plan B cuando no se ve).
        */
-      const colorDeBarra = (i) =>
-        ciclico
-          ? "hsl(" + matizRgb(ahora, i, barras.length) + ", 100%, 60%)"
-          : paleta
-            ? YTMPip.Paleta.colorDePaleta(paleta, i, barras.length)
-            : null;
-
       const forma = preferencias.spectrumStyle;
-      const caratula = forma === "ring" ? cajaDeLaCaratula(caja, escala) : null;
-
-      if (forma === "wave") {
-        dibujarOnda(contexto, barras, ancho, alto, escala, colorDeBarra);
-      } else if (caratula) {
-        dibujarAnillo(contexto, barras, caratula, escala, colorDeBarra, ancho, alto);
-      } else {
-        /*
-         * Las barras de siempre. Tambien son el plan B del anillo cuando la
-         * caratula no esta a la vista (video, letra en grande): el lienzo
-         * del anillo ocupa la ventana entera, asi que las barras se quedan
-         * en la banda de abajo que diria la altura del espectro.
-         */
-        const banda = forma === "ring" ? Math.round((alto * preferencias.spectrumHeight) / 100) : alto;
-        for (let i = 0; i < barras.length; i++) {
-          const color = colorDeBarra(i);
-          if (color) contexto.fillStyle = color;
-          const altura = Math.max(1, (barras[i] / 255) * banda);
-          contexto.fillRect(i * paso, alto - altura, grosor, altura);
-        }
-      }
+      Formas.pintar(contexto, {
+        barras,
+        ancho,
+        alto,
+        escala,
+        forma,
+        caratula: forma === "ring" ? cajaDeLaCaratula(caja, escala) : null,
+        banda: forma === "ring" ? Math.round((alto * preferencias.spectrumHeight) / 100) : alto,
+        colorDeBarra
+      });
     }
 
     return true;
@@ -1675,88 +1521,6 @@
     };
   }
 
-  /*
-   * La onda: la linea une los puntos con curvas (cada punto es el control y
-   * el medio con el siguiente el destino, la receta clasica para una curva
-   * suave que pasa cerca de todos), y debajo se rellena con el mismo color
-   * mas tenue. Con color por barra el trazo es un degradado a lo ancho con
-   * una parada por barra: la onda es UNA linea y no puede cambiar de color
-   * a mitad.
-   */
-  function dibujarOnda(contexto, barras, ancho, alto, escala, colorDeBarra) {
-    const puntos = puntosDeOnda(barras, ancho, alto);
-    if (colorDeBarra(0)) {
-      const degradado = contexto.createLinearGradient(0, 0, ancho, 0);
-      puntos.forEach((p, i) => degradado.addColorStop(p.x / ancho, colorDeBarra(i)));
-      contexto.fillStyle = degradado;
-    }
-    contexto.strokeStyle = contexto.fillStyle;
-    contexto.lineWidth = 2 * escala;
-    contexto.lineJoin = "round";
-
-    contexto.beginPath();
-    contexto.moveTo(0, puntos[0].y);
-    for (let i = 0; i < puntos.length - 1; i++) {
-      const mx = (puntos[i].x + puntos[i + 1].x) / 2;
-      const my = (puntos[i].y + puntos[i + 1].y) / 2;
-      contexto.quadraticCurveTo(puntos[i].x, puntos[i].y, mx, my);
-    }
-    contexto.lineTo(ancho, puntos[puntos.length - 1].y);
-    contexto.stroke();
-
-    contexto.lineTo(ancho, alto);
-    contexto.lineTo(0, alto);
-    contexto.closePath();
-    contexto.globalAlpha = 0.35;
-    contexto.fill();
-    contexto.globalAlpha = 1;
-  }
-
-  /*
-   * El anillo: rayos redondeados desde un circulo un poco mayor que la
-   * caratula. El radio es la mitad del lado mas un margen, y no la media
-   * diagonal: con la diagonal los rayos empezarian lejos del centro de cada
-   * lado y la caratula quedaria flotando en un hueco. Las esquinas
-   * redondeadas de la portada tapan la diferencia; con el disco de vinilo
-   * (tanda AA) el circulo encaja justo.
-   *
-   * EL CUADRADO DE LA CARATULA SE RECORTA del dibujo. El lienzo esta por
-   * encima de la portada, y en las esquinas el circulo queda DENTRO del
-   * cuadrado: sin el recorte, los rayos pintaban sobre las esquinas de la
-   * imagen (se vio en la primera prueba a ojo). Con el recorte parecen
-   * salir de detras de la portada.
-   */
-  function dibujarAnillo(contexto, barras, caratula, escala, colorDeBarra, ancho, alto) {
-    const radio = caratula.lado / 2 + 4 * escala;
-    const rayos = rayosDelAnillo(barras, caratula.cx, caratula.cy, radio, caratula.lado * 0.3);
-    contexto.save();
-    contexto.beginPath();
-    contexto.rect(0, 0, ancho, alto);
-    if (caratula.redonda) {
-      /*
-       * Con el disco de vinilo el agujero es el CIRCULO: recortar el
-       * cuadrado dejaria un hueco en las diagonales entre el disco y el
-       * arranque de los rayos, que salen justo del borde del disco.
-       */
-      contexto.moveTo(caratula.cx + caratula.lado / 2, caratula.cy);
-      contexto.arc(caratula.cx, caratula.cy, caratula.lado / 2, 0, 2 * Math.PI);
-    } else {
-      contexto.rect(caratula.cx - caratula.lado / 2, caratula.cy - caratula.lado / 2, caratula.lado, caratula.lado);
-    }
-    contexto.clip("evenodd");
-    contexto.lineWidth = Math.max(1, Math.min(4 * escala, (Math.PI * radio) / barras.length - escala));
-    contexto.lineCap = "round";
-    contexto.strokeStyle = contexto.fillStyle;
-    for (const rayo of rayos) {
-      const color = colorDeBarra(rayo.i);
-      if (color) contexto.strokeStyle = color;
-      contexto.beginPath();
-      contexto.moveTo(rayo.x1, rayo.y1);
-      contexto.lineTo(rayo.x2, rayo.y2);
-      contexto.stroke();
-    }
-    contexto.restore();
-  }
 
   /**
    * Enciende o apaga los DOS efectos que viven del analizador —las barras y
@@ -4666,10 +4430,6 @@
     layoutFor: layoutFor,
     timelineFor: timelineFor,
     activeLyricAt: activeLyricAt,
-    barrasParaAncho: barrasParaAncho,
-    puntosDeOnda: puntosDeOnda,
-    rayosDelAnillo: rayosDelAnillo,
-    matizRgb: matizRgb,
     opacidadDelPip: opacidadDelPip,
 
     /*

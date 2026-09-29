@@ -706,6 +706,10 @@
     if (!vistaPrevia) return;
     vistaPrevia.style.width = elegido.tamano.width + "px";
     vistaPrevia.style.height = elegido.tamano.height + "px";
+    // La hoja decide con esto si el bloque puede ir pegado arriba en una
+    // pantalla estrecha (con la grande no: taparia media pagina).
+    const lateral = document.getElementById("lateralVistaPrevia");
+    if (lateral) lateral.dataset.tamano = elegido.tamano === PIP_DIMENSIONS.EXPANDED ? "grande" : "pequena";
     for (const { boton } of botonesDeVista) {
       if (boton) boton.setAttribute("aria-pressed", String(boton === elegido.boton));
     }
@@ -717,6 +721,20 @@
   // Nace pequeña, que es tambien el tamaño de fabrica de la ventana; los
   // width/height del HTML son solo para el instante antes de esta linea.
   ponerVistaPrevia(botonesDeVista[0]);
+
+  /*
+   * Lo alto que es la cabecera pegada, para que la vista previa se pegue
+   * JUSTO debajo (tanda AD). Cambia con el idioma y con el ancho (la
+   * navegacion salta de linea), asi que se mide y se vuelve a medir.
+   */
+  function medirCabecera() {
+    const cabecera = document.querySelector(".ytmpip-cabecera");
+    if (cabecera) {
+      document.documentElement.style.setProperty("--alto-cabecera", cabecera.offsetHeight + "px");
+    }
+  }
+  medirCabecera();
+  window.addEventListener("resize", medirCabecera);
 
   function load() {
     chrome.storage.local.get(Object.values(STORAGE_KEYS), (stored) => {

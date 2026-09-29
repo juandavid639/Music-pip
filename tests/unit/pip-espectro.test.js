@@ -175,6 +175,7 @@ function ventana(opciones) {
     "src/content/player-controller.js",
     "src/content/audio-spectrum.js",
     "src/shared/iconos.js",
+    "src/shared/formas-espectro.js",
     "src/pip/pip.js"
   );
 
@@ -278,7 +279,7 @@ test("el suavizado sube de golpe y baja con freno", () => {
 });
 
 test("el numero de barras se ajusta al ancho, con topes en los dos extremos", () => {
-  const b = ventana().PipView.barrasParaAncho;
+  const b = ventana().win.YTMPip.FormasEspectro.barrasParaAncho;
 
   assert.ok(b(400) > b(160), "el mismo espectro para una ventana mini que para una ampliada");
   assert.strictEqual(b(40), 8, "por debajo de ocho barras ya no es un espectro, es un vumetro");
@@ -295,7 +296,7 @@ test("el numero de barras se ajusta al ancho, con topes en los dos extremos", ()
  * ------------------------------------------------------------------ */
 
 test("un numero de barras preferido manda sobre el ancho de la ventana", () => {
-  const b = ventana().PipView.barrasParaAncho;
+  const b = ventana().win.YTMPip.FormasEspectro.barrasParaAncho;
 
   assert.strictEqual(b(400, 12), 12, "se ignoro el numero elegido en preferencias");
   assert.strictEqual(b(40, 40), 40, "pedir cuarenta barras en la ventana mini es una eleccion legitima");
@@ -445,7 +446,7 @@ test("el tono siempre cae dentro de la rueda de color", () => {
    * Un tono fuera de [0, 360) no es un error a medias: hsl() con un valor
    * invalido no pinta nada, asi que las barras desaparecerian.
    */
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
 
   for (let ms = 0; ms < 20000; ms += 137) {
     for (const total of [1, 2, 8, 40]) {
@@ -461,7 +462,7 @@ test("el tono siempre cae dentro de la rueda de color", () => {
 test("EL REPARTO: en un mismo instante cada barra lleva su tono", () => {
   // Sin esto el espectro entero seria un color liso: se veria cambiar, pero
   // no seria un arcoiris.
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
   const tonos = new Set();
   for (let i = 0; i < 12; i++) tonos.add(m(0, i, 12));
 
@@ -469,7 +470,7 @@ test("EL REPARTO: en un mismo instante cada barra lleva su tono", () => {
 });
 
 test("EL GIRO: el mismo sitio cambia de color con el tiempo", () => {
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
 
   assert.notStrictEqual(m(1500, 0, 12), m(0, 0, 12), "el degradado esta quieto");
   assert.notStrictEqual(m(3000, 0, 12), m(0, 0, 12));
@@ -481,7 +482,7 @@ test("la vuelta se cierra sola: el efecto no se para nunca", () => {
    * a los pocos minutos el tono se saldria de la rueda y el espectro se
    * apagaria justo en las canciones largas.
    */
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
 
   assert.strictEqual(m(0, 3, 12), m(6000, 3, 12), "una vuelta entera tenia que volver al mismo tono");
   assert.strictEqual(m(0, 3, 12), m(600000, 3, 12), "diez minutos despues el ciclo se habia perdido");
@@ -493,7 +494,7 @@ test("los dos extremos del espectro no acaban del mismo color", () => {
    * entera, la ultima barra vuelve al tono de la primera y el degradado
    * parece cortado por la mitad.
    */
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
   const primera = m(0, 0, 24);
   const ultima = m(0, 23, 24);
 
@@ -505,7 +506,7 @@ test("con una sola barra no hay nada que repartir, pero sigue habiendo color", (
   // Repartir entre una barra divide por cero: el tono saldria NaN y esa
   // barra no se pintaria. barrasParaAncho no baja de ocho, pero la funcion
   // no puede depender de eso para no romperse.
-  const m = ventana().PipView.matizRgb;
+  const m = ventana().win.YTMPip.FormasEspectro.matizRgb;
 
   assert.strictEqual(m(0, 0, 1), 0);
   assert.ok(Number.isFinite(m(1234, 0, 1)));
@@ -953,18 +954,18 @@ async function conForma(forma, extra = {}) {
 
 test("puntosDeOnda: uno por barra, centrado en su franja, a su altura, y el silencio a un pixel", () => {
   const v = ventana();
-  const p = v.PipView.puntosDeOnda([255, 0, 51], 300, 100);
+  const p = v.win.YTMPip.FormasEspectro.puntosDeOnda([255, 0, 51], 300, 100);
   assert.strictEqual(p.length, 3);
   assert.deepStrictEqual(p.map((q) => q.x), [50, 150, 250]);
   assert.strictEqual(p[0].y, 0, "la barra llena llega arriba del todo");
   assert.strictEqual(p[1].y, 99, "el silencio se ve como una linea abajo, no como nada");
   assert.strictEqual(p[2].y, 80);
-  assert.strictEqual(v.PipView.puntosDeOnda([], 300, 100).length, 0);
+  assert.strictEqual(v.win.YTMPip.FormasEspectro.puntosDeOnda([], 300, 100).length, 0);
 });
 
 test("rayosDelAnillo: dos por barra en espejo, desde el borde, graves arriba y agudos abajo", () => {
   const v = ventana();
-  const rayos = v.PipView.rayosDelAnillo([255, 0], 100, 100, 50, 40);
+  const rayos = v.win.YTMPip.FormasEspectro.rayosDelAnillo([255, 0], 100, 100, 50, 40);
   assert.strictEqual(rayos.length, 4);
   for (const r of rayos) {
     const d = Math.hypot(r.x1 - 100, r.y1 - 100);

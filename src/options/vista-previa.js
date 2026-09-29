@@ -85,36 +85,181 @@ function aplicarDensidad(root) {
 }
 
 /*
- * Barras inventadas, y a proposito no se copia aqui barrasParaAncho:
- * la pregunta que responde esta vista es donde cae el canvas y
- * cuanto tapa, y para eso el numero exacto de barras da igual.
- * Copiar la regla seria tener dos, y esta vista previa ya carga con
- * una copia (la de densidad, arriba) que al menos lee los mismos
- * umbrales.
+ * ---------- LA VISTA PREVIA VIVA (tanda AD) ----------
+ *
+ * Hasta la tanda AD esta vista enseñaba la ventana a sus dos tamaños y nada
+ * mas: «los ajustes de esta pagina no cambian esta vista», decia su propia
+ * ayuda. Ahora lee las preferencias GUARDADAS y se repinta cuando cambian,
+ * con las mismas piezas que la ventana: el tema, el halo, el disco de
+ * vinilo y el espectro (forma, color, cuantas barras y altura).
+ *
+ * El espectro se dibuja con shared/formas-espectro.js, el MISMO codigo que
+ * la ventana; lo unico inventado es el sonido. Antes aqui habia unas
+ * barras de mentira propias, y cada forma nueva habria sido una copia.
+ *
+ * Lo que NO enseña, dicho claro: el atenuado mientras suena, el latido de
+ * la caratula (es un boton de la ventana, no una preferencia) y el video.
  */
-function pintarBarrasDeMentira(lienzo) {
+
+// El color «de la fuente» de esta cancion de mentira: el de su portada,
+// pasado por la misma normalizacion que un color muestreado de verdad.
+function colorDeLaPortada() {
+  const Y = self.YTMPip;
+  if (!Y.ColorFuente || !Y.Paleta) return null;
+  return Y.ColorFuente.normalizarLuz(Y.Paleta.rgbAHsl({ r: 0x7b, g: 0x3f, b: 0xe4 }));
+}
+
+function sistemaEnClaro() {
+  try {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+  } catch (err) {
+    return false;
+  }
+}
+
+function menosMovimiento() {
+  try {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  } catch (err) {
+    return false;
+  }
+}
+
+// Lo que ahora mismo dicen las preferencias; lo lee el dibujo en cada fotograma.
+let preferencias = null;
+
+/**
+ * Pinta en la vista las preferencias `p`. Las mismas decisiones que la
+ * ventana (applySettings), con la cancion de mentira como fuente de color.
+ */
+function aplicarPreferencias(p) {
+  preferencias = p;
+  const Y = self.YTMPip;
+  const html = document.documentElement;
+  const root = document.getElementById("ytmpip-root");
+  if (!root) return;
+  const fuente = colorDeLaPortada();
+
+  // El tema.
+  html.classList.toggle("ytmpip-theme-light", p.theme === "light" || (p.theme === "auto" && sistemaEnClaro()));
+  const tinte = p.theme === "source" && Y.ColorFuente ? Y.ColorFuente.temaDeLaFuente(fuente) : null;
+  if (tinte) {
+    html.style.setProperty("--ytmpip-bg-rgb", tinte.fondo.join(", "));
+    html.style.setProperty("--ytmpip-accent", "rgb(" + tinte.acento.join(", ") + ")");
+  } else {
+    html.style.removeProperty("--ytmpip-bg-rgb");
+    html.style.removeProperty("--ytmpip-accent");
+  }
+
+  // El halo: se ve o no, y su color (el tema, uno propio o el de la portada).
+  const halo = document.getElementById("ytmpip-halo");
+  if (halo) {
+    halo.hidden = p.haloPreference === "hidden";
+    if (String(p.haloColor).charAt(0) === "#") halo.style.setProperty("--ytmpip-halo-color", p.haloColor);
+    else if (p.haloColor === "source" && fuente) halo.style.setProperty("--ytmpip-halo-color", Y.Paleta.hslACss(fuente));
+    else halo.style.removeProperty("--ytmpip-halo-color");
+  }
+
+  // El disco de vinilo, y «sonando»: la cancion de mentira siempre suena.
+  root.classList.toggle("ytmpip-vinilo", p.coverStyle === "vinyl");
+  root.classList.toggle("ytmpip-sonando", true);
+
+  // El espectro: altura, color fijo y el lienzo a pantalla completa del anillo.
+  // Los parametros de la URL mandan: son para mirar extremos en la rejilla.
+  root.style.setProperty("--ytmpip-spectrum-height", (parametros.get("altoEspectro") || p.spectrumHeight) + "%");
+  const propio = Y.Settings && Y.Settings.partirColor(p.spectrumColor).modo === "custom";
+  root.style.setProperty(
+    "--ytmpip-spectrum-color",
+    parametros.get("colorEspectro") || (propio ? p.spectrumColor : "var(--ytmpip-accent)")
+  );
+  const lienzo = document.getElementById("ytmpip-spectrum");
+  if (lienzo) lienzo.classList.toggle("ytmpip-espectro-anillo", p.spectrumStyle === "ring");
+  if (conEspectro) pintarEspectroDeMentira(performance.now());
+}
+
+/*
+ * Un sonido inventado: mucho grave, poco agudo, y que se mueve. Pura en el
+ * tiempo: el mismo `ms` da siempre las mismas barras.
+ */
+function barrasDeMentira(n, ms) {
+  return Array.from({ length: n }, (_, i) => {
+    const forma = Math.pow(1 - i / n, 1.4) * (i % 5 === 2 ? 1.2 : 0.85);
+    const vida = 0.55 + 0.45 * Math.abs(Math.sin(ms / 420 + i * 0.7));
+    return Math.max(12, Math.min(255, Math.round(255 * forma * vida)));
+  });
+}
+
+// El golpe del halo «latiendo»: un bombo de mentira, dos por segundo.
+function golpeDeMentira(ms) {
+  return Math.pow(Math.max(0, Math.sin((ms / 500) * Math.PI)), 8);
+}
+
+function pintarEspectroDeMentira(ms) {
+  const Y = self.YTMPip;
+  const lienzo = document.getElementById("ytmpip-spectrum");
+  const p = preferencias;
+  if (!lienzo || !p || !Y.FormasEspectro) return;
   const caja = lienzo.getBoundingClientRect();
   if (!caja.width || !caja.height) return;
   const escala = window.devicePixelRatio || 1;
   const ancho = Math.round(caja.width * escala);
   const alto = Math.round(caja.height * escala);
-  lienzo.width = ancho;
-  lienzo.height = alto;
+  if (lienzo.width !== ancho) lienzo.width = ancho;
+  if (lienzo.height !== alto) lienzo.height = alto;
+  const contexto = lienzo.getContext && lienzo.getContext("2d");
+  if (!contexto) return;
 
-  const contexto = lienzo.getContext("2d");
-  const barras = 24;
-  const paso = ancho / barras;
-  const grosor = Math.max(1, paso - Math.max(1, paso / 6));
-  // La misma variable que lee pip.js, no --ytmpip-accent: si aqui se
-  // leyera otra, esta vista dejaria de enseñar lo que se va a ver.
-  contexto.fillStyle = getComputedStyle(document.getElementById("ytmpip-root"))
-    .getPropertyValue("--ytmpip-spectrum-color")
-    .trim();
-  for (let i = 0; i < barras; i++) {
-    // Curva con forma de musica: mucho grave, poco agudo y un pico.
-    const fraccion = Math.max(0.06, Math.pow(1 - i / barras, 1.6) * (i % 5 === 2 ? 1.3 : 0.8));
-    contexto.fillRect(i * paso, alto - fraccion * alto, grosor, fraccion * alto);
+  const Formas = Y.FormasEspectro;
+  const barras = barrasDeMentira(Formas.barrasParaAncho(caja.width, p.spectrumBars), ms);
+  contexto.clearRect(0, 0, ancho, alto);
+  const colorDeBarra = Formas.colorDeBarraPara(p.spectrumColor, ms, barras.length);
+  if (!colorDeBarra) {
+    const fuente = p.spectrumColor === "source" ? colorDeLaPortada() : null;
+    contexto.fillStyle =
+      (fuente && Y.Paleta.hslACss(fuente)) ||
+      getComputedStyle(document.getElementById("ytmpip-root")).getPropertyValue("--ytmpip-spectrum-color").trim() ||
+      Y.CONSTANTS.SPECTRUM_LIMITS.COLOR_SUGGESTED;
   }
+
+  // Donde esta la caratula, como lo mide la ventana (cajaDeLaCaratula).
+  let caratula = null;
+  const img = document.getElementById("ytmpip-artwork");
+  if (p.spectrumStyle === "ring" && img) {
+    const a = img.getBoundingClientRect();
+    if (a.width > 0 && a.height > 0) {
+      caratula = {
+        cx: (a.left + a.width / 2 - caja.left) * escala,
+        cy: (a.top + a.height / 2 - caja.top) * escala,
+        lado: Math.max(a.width, a.height) * escala,
+        redonda: document.getElementById("ytmpip-root").classList.contains("ytmpip-vinilo")
+      };
+    }
+  }
+  Formas.pintar(contexto, {
+    barras,
+    ancho,
+    alto,
+    escala,
+    forma: p.spectrumStyle,
+    caratula,
+    banda: p.spectrumStyle === "ring" ? Math.round((alto * p.spectrumHeight) / 100) : alto,
+    colorDeBarra
+  });
+}
+
+/*
+ * El bucle: espectro y halo latiendo, con un sonido de mentira. Con «menos
+ * movimiento» se pinta un fotograma y ya.
+ */
+function animar(ms) {
+  const p = preferencias;
+  if (p) {
+    if (conEspectro) pintarEspectroDeMentira(ms);
+    const root = document.getElementById("ytmpip-root");
+    const late = p.haloPreference !== "hidden" && p.haloMode === "pulse";
+    root.style.setProperty("--ytmpip-halo-golpe", late ? golpeDeMentira(ms).toFixed(3) : "0");
+  }
+  if (!menosMovimiento()) requestAnimationFrame(animar);
 }
 
 fetch("../pip/pip.html")
@@ -236,34 +381,27 @@ fetch("../pip/pip.html")
     botonEspectro.hidden = false;
     botonEspectro.setAttribute("aria-pressed", String(conEspectro));
 
-    /*
-     * El alto y el color del espectro los escribe applySettings, que
-     * aqui no corre: pip.css ya no les pone valor de reserva a
-     * proposito (el valor por defecto vive en DEFAULT_SETTINGS y
-     * repetirlo en el CSS seria tenerlo en dos sitios). Asi que esta
-     * vista los escribe igual que lo haria la ventana, leyendo las
-     * mismas constantes, y admite un valor por la URL para poder
-     * mirar los extremos: ?altoEspectro=100&colorEspectro=%2300ff88
-     */
-    const preferido = self.YTMPip.CONSTANTS.DEFAULT_SETTINGS;
-    root.style.setProperty(
-      "--ytmpip-spectrum-height",
-      (parametros.get("altoEspectro") || preferido.spectrumHeight) + "%"
-    );
-    root.style.setProperty(
-      "--ytmpip-spectrum-color",
-      parametros.get("colorEspectro") || "var(--ytmpip-accent)"
-    );
-
-    if (conEspectro) {
-      const lienzo = document.getElementById("ytmpip-spectrum");
-      lienzo.hidden = false;
-      pintarBarrasDeMentira(lienzo);
-      // El canvas se estira con el escenario, asi que hay que
-      // repintarlo al cambiar de tamaño o sale borroso.
-      window.addEventListener("resize", () => pintarBarrasDeMentira(lienzo));
-    }
+    if (conEspectro) document.getElementById("ytmpip-spectrum").hidden = false;
 
     aplicarDensidad(root);
     window.addEventListener("resize", () => aplicarDensidad(root));
+
+    /*
+     * Las preferencias GUARDADAS (tanda AD). Dentro de Preferencias el marco
+     * es una pagina de la extension: Settings carga de storage y avisa de
+     * cada cambio, asi que tocar una opcion la repinta aqui al momento.
+     * Fuera de la extension (la rejilla de tools/) no hay storage y se
+     * pintan los valores de serie.
+     */
+    const Settings = self.YTMPip.Settings;
+    /*
+     * Sin Settings.load() aqui, y a proposito: settings.js ya lo llama el
+     * solo al cargarse. Aqui habia uno, y la mutacion lo delato como codigo
+     * que no hace nada (quitarlo no tumbaba ninguna prueba): cuando se pinta
+     * por primera vez, la carga de arranque ya termino y get() da lo
+     * guardado; lo que llegue despues lo trae subscribe.
+     */
+    aplicarPreferencias(Settings.get());
+    Settings.subscribe(aplicarPreferencias);
+    requestAnimationFrame(animar);
   });

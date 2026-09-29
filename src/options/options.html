@@ -449,6 +449,68 @@
         font-variant-numeric: tabular-nums;
       }
 
+      /* ---------- La vista previa que acompaña (tanda AD) ----------
+       *
+       * Las tarjetas van en su columna y la vista previa en su bloque
+       * pegado. --alto-cabecera lo mide options.js (la cabecera cambia de
+       * alto con el idioma y el ancho); el 64px es sólo el instante de
+       * antes de medirla.
+       */
+      .ytmpip-tarjetas {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .ytmpip-lateral {
+        position: sticky;
+        top: calc(var(--alto-cabecera, 64px) + 8px);
+        z-index: 4;
+      }
+
+      .ytmpip-lateral .ytmpip-vista-previa {
+        margin: 0;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+
+      /* Ancha: dos columnas, las tarjetas a la izquierda y la vista previa
+         a la derecha, pegada mientras se baja. */
+      @media (min-width: 1180px) {
+        .ytmpip-pagina {
+          max-width: 1220px;
+          display: grid;
+          grid-template-columns: minmax(0, 760px) minmax(0, 420px);
+          column-gap: 24px;
+          align-items: start;
+        }
+        .ytmpip-lateral {
+          grid-column: 2;
+          grid-row: 1;
+        }
+        .ytmpip-tarjetas {
+          grid-column: 1;
+          grid-row: 1;
+        }
+        .ytmpip-cabecera-contenido {
+          max-width: 1220px;
+        }
+      }
+
+      /* Estrecha: arriba, bajo la cabecera, SÓLO con la pequeña y si la
+         pantalla tiene altura para ella y para algo de página debajo. La
+         grande (560 px) pegada arriba dejaría media página tapada. */
+      @media (max-width: 1179px) {
+        .ytmpip-lateral[data-tamano="grande"] {
+          position: static;
+        }
+      }
+      @media (max-width: 1179px) and (max-height: 699px) {
+        .ytmpip-lateral {
+          position: static;
+        }
+      }
+
       /* ---------- La vista previa incrustada ----------
        *
        * Un iframe de src/options/vista-previa.html, que carga el pip.css y
@@ -478,12 +540,6 @@
       .ytmpip-vista-previa .pista {
         margin: 0;
         text-align: center;
-      }
-
-      /* La fila que viene justo despues de la vista previa tampoco lleva
-         raya, por lo mismo que la de detras de la explicacion. */
-      .ytmpip-vista-previa + .ytmpip-fila {
-        border-top: 0;
       }
 
       /* ---------- La matriz de sitios ----------
@@ -928,13 +984,16 @@
     </header>
 
     <main class="ytmpip-pagina">
-      <!-- ================= LA VENTANA ================= -->
-      <section id="seccion-ventana" class="ytmpip-tarjeta">
-        <h2 data-t="tarjeta_ventana">La ventana flotante</h2>
-        <p class="ytmpip-intro" data-t="tarjeta_ventana_intro">
-          La ventanita que se queda encima de todo lo demás mientras escuchas.
-        </p>
-
+      <!--
+        LA VISTA PREVIA ACOMPAÑA AL SCROLL (tanda AD). Antes vivía dentro de
+        la primera tarjeta y, al bajar a tocar el espectro o el halo, se
+        quedaba arriba: había que subir a mirar el cambio y volver a bajar.
+        Ahora es su propio bloque, pegado (sticky) mientras se recorre la
+        página: en pantallas anchas en una columna a la derecha, y en las
+        estrechas arriba, bajo la cabecera, sólo si es la pequeña y cabe (la
+        grande taparía media página; ver la hoja).
+      -->
+      <aside id="lateralVistaPrevia" class="ytmpip-lateral" aria-label="Vista previa" data-t-aria="vista_previa_lateral">
         <!--
           La vista previa honesta: un iframe de vista-previa.html, que carga
           el pip.css y el pip.html DE VERDAD con una canción de mentira. Los
@@ -963,10 +1022,20 @@
           </div>
           <p class="pista" data-t="vista_previa_ayuda">
             Es la ventana de verdad —su mismo HTML y su mismo CSS— sonando una
-            canción de mentira. Los botones la enseñan a sus dos tamaños de
-            apertura; los ajustes de esta página no cambian esta vista.
+            canción de mentira, con lo que elijas en esta página. Los botones
+            la enseñan a sus dos tamaños de apertura.
           </p>
         </div>
+      </aside>
+
+      <div class="ytmpip-tarjetas">
+      <!-- ================= LA VENTANA ================= -->
+      <section id="seccion-ventana" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_ventana">La ventana flotante</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_ventana_intro">
+          La ventanita que se queda encima de todo lo demás mientras escuchas.
+        </p>
+
 
         <!--
           "El último" es una tercera opción de la misma pregunta y no una
@@ -1941,6 +2010,7 @@
           no pasa por la página y YouTube no tiene panel de letra.
         </p>
       </section>
+      </div>
     </main>
 
     <!--

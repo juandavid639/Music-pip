@@ -4,6 +4,16 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Cambiado
+
+- La vista previa de Preferencias enseña lo que eliges: el tema, el
+  halo, el disco de vinilo y la forma, el color y la altura de las
+  barras, y se actualiza al momento al cambiar una opción.
+- La vista previa acompaña al bajar por la página: en pantallas anchas
+  va en una columna a la derecha, siempre a la vista.
+
 ## [1.1.0] — 2026-09-28
 
 ### Añadido

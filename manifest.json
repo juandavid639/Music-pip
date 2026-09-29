@@ -27,6 +27,7 @@
         "src/shared/settings.js",
         "src/shared/paleta.js",
         "src/shared/color-fuente.js",
+        "src/shared/formas-espectro.js",
         "src/shared/iconos.js",
         "src/shared/state.js",
         "src/content/adapter-registry.js",
