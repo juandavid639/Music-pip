@@ -7772,6 +7772,24 @@ contexto) y se queda como seguro para los futuros.
 una actualización de verdad, y el cortafuegos y la salud con un cambio real
 del sitio.
 
+## La 1.2.0 (las tandas AF a AL)
+
+Segundo número y no tercero, como dice la receta de la ficha (sección 10):
+hay funciones nuevas (exportar, importar y restaurar las preferencias; el
+aviso de «el sitio cambió»). `manifest.json`, `package.json` y
+`package-lock.json` suben juntos, y el `CHANGELOG.md` pasa su «Sin
+publicar» a «[1.2.0]». Suite entera: **1138/1138**.
+
+**Permisos: ninguno nuevo.** `chrome.runtime.getContexts` no pide permiso,
+y la descarga del archivo de preferencias es un `<a download>`. **La
+política de privacidad sí cambió** (el párrafo del archivo exportado, en
+los dos idiomas): se publica sola en Pages al hacer push. El zip no gana
+archivos, porque ESLint, los guiones y las pruebas quedan fuera de la lista
+blanca.
+
+Si la 1.1.1 no llegó a subirse a la tienda, se puede saltar: la 1.2.0 la
+lleva dentro.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
