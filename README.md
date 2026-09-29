@@ -7601,6 +7601,26 @@ redundante (ese tema no tiene fondo en la hoja y ya no avisaba), y se quitó.
 ventana que murió sin despedirse; en ese caso el muestreo de la anterior
 también se queda colgado, un problema previo que no es de esta tanda.
 
+## La 1.1.1 (la vista previa viva y el color de acento)
+
+Lleva las tandas AD y AE, las dos pedidas por el autor tras probar la
+1.1.0. `manifest.json`, `package.json` y `package-lock.json` suben juntos y
+el `CHANGELOG.md` pasa su sección «Sin publicar» a «[1.1.1]». Suite
+entera: 1047/1047.
+
+El zip pasa a **41 archivos**: el módulo compartido del espectro
+(`src/shared/formas-espectro.js`, tanda AD) es nuevo y viaja. **Permisos:
+ninguno nuevo**, ni justificaciones que volver a pegar.
+
+Sobre el número: la receta de la ficha (sección 10) sube el SEGUNDO número
+cuando hay funciones nuevas, y el color de acento lo es. Se eligió 1.1.1
+por decisión del autor; si se prefiere seguir la receta al pie de la
+letra, el siguiente número sería 1.2.0 (aún no publicada, cambiarlo es
+subir los tres archivos y reempaquetar).
+
+NO MEDIDO en vivo: la vista previa y el acento dentro de la extensión de
+verdad, cambiando opciones con el ratón.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
