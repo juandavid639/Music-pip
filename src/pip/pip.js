@@ -230,6 +230,26 @@
   let temaPintado = null;
 
   /*
+   * EL ACENTO TIENE DOS DUEÑOS POSIBLES (tanda AE), y por eso un solo
+   * pintor: el tema «de la caratula» (el acento de la cancion) y el color
+   * de acento que elige el usuario. Los dos escribirian la misma variable
+   * en linea sobre <html>; si cada uno la pusiera y quitara por su cuenta,
+   * quitar el tinte al cambiar de tema se llevaria por delante el color
+   * propio. pintarAcento decide: la cancion si el tema la sigue, si no el
+   * propio, y si no ninguno (manda la hoja: rojo, o rojo oscuro en claro).
+   */
+  let acentoDeLaFuente = null;
+  let acentoPropio = null;
+
+  function pintarAcento() {
+    if (!pipWindow || pipWindow.closed) return;
+    const raiz = pipWindow.document.documentElement;
+    const acento = acentoDeLaFuente || acentoPropio;
+    if (acento) raiz.style.setProperty("--ytmpip-accent", acento);
+    else raiz.style.removeProperty("--ytmpip-accent");
+  }
+
+  /*
    * UN SOLO rAF PARA LOS DOS. Antes esta variable se llamaba
    * `espectroFrame` y la cadena la mantenia viva el propio dibujado. Con dos
    * efectos serian dos cadenas compitiendo, cada una llamando a
@@ -1234,13 +1254,10 @@
     temaPintado = objetivo;
     const raiz = pipWindow.document.documentElement;
     const tema = YTMPip.ColorFuente.temaDeLaFuente(objetivo);
-    if (tema) {
-      raiz.style.setProperty("--ytmpip-bg-rgb", tema.fondo.join(", "));
-      raiz.style.setProperty("--ytmpip-accent", "rgb(" + tema.acento.join(", ") + ")");
-    } else {
-      raiz.style.removeProperty("--ytmpip-bg-rgb");
-      raiz.style.removeProperty("--ytmpip-accent");
-    }
+    if (tema) raiz.style.setProperty("--ytmpip-bg-rgb", tema.fondo.join(", "));
+    else raiz.style.removeProperty("--ytmpip-bg-rgb");
+    acentoDeLaFuente = tema ? "rgb(" + tema.acento.join(", ") + ")" : null;
+    pintarAcento();
   }
 
   function pintarColorFuenteEnHalo() {
@@ -2355,6 +2372,10 @@
     // Despues de la puerta del muestreo, que ya tiene color si lo habia:
     // tiñe con el, o destiñe si el tema dejo de ser «De la caratula».
     pintarColorFuenteEnTema();
+    // Y el acento propio (tanda AE), despues del tinte: si el tinte se fue,
+    // es el que queda.
+    acentoPropio = settings.accentColor && settings.accentColor !== "default" ? settings.accentColor : null;
+    pintarAcento();
 
     // El atenuado depende ADEMAS de si la musica esta sonando, asi que el
     // valor lo pone render(); aqui solo se le pide que lo repase, porque
@@ -3551,6 +3572,7 @@
     // «con que color la teñi» no, y sin olvidarla la ventana nueva se
     // quedaria sin teñir hasta que el color cambiara doce grados.
     temaPintado = null;
+    acentoDeLaFuente = null;
 
     // Ventana nueva, letra desde cero: los elementos de la anterior
     // murieron con su documento.

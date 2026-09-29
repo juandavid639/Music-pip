@@ -32,6 +32,9 @@
   "aleatorio": {
     "message": "Aleatorio"
   },
+  "aviso_acento": {
+    "message": "Ojo: este color se lee mal sobre el fondo del tema. «Sin conexión» y el botón grande pueden costar de ver."
+  },
   "banda_aire": {
     "message": "Aire"
   },
@@ -163,6 +166,15 @@
   },
   "fijar_ecualizador": {
     "message": "Fijar el ecualizador a esta canción"
+  },
+  "fila_acento": {
+    "message": "Color de acento"
+  },
+  "fila_acento_ayuda": {
+    "message": "El de los botones encendidos, la barra de progreso y el botón grande."
+  },
+  "fila_acento_tu_color_ayuda": {
+    "message": "Se usa tal cual, con cualquier tema salvo el de la carátula."
   },
   "fila_ajuste": {
     "message": "Ajuste"
@@ -389,6 +401,9 @@
   "opcion_a_mi_gusto": {
     "message": "A mi gusto"
   },
+  "opcion_acento_siempre": {
+    "message": "El de siempre"
+  },
   "opcion_automatico": {
     "message": "Automático"
   },
@@ -493,6 +508,9 @@
   },
   "pausar": {
     "message": "Pausar"
+  },
+  "pista_acento_fuente": {
+    "message": "Con el tema «Del vídeo o la carátula» manda el color de la canción; tu color vuelve con los demás temas."
   },
   "pista_color_fuente": {
     "message": "Las barras toman el color que más manda en lo que estés viendo, y cambian con el vídeo. Si la imagen no tiene un color claro —blanco y negro, o casi todo oscuro— vuelven al color del tema."

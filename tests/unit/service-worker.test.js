@@ -461,3 +461,19 @@ test("cerrar la pestaña recordada limpia el icono", async () => {
   await new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(ultima(w.registro.insignias), "");
 });
+
+test("REGRESION TANDA AE: con un acento propio, la etiqueta del icono lo sigue", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 }, local: { accentColor: "#12ab34" } });
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(ultima(w.registro.colores), "#12ab34");
+});
+
+test("...y cambiarlo en Preferencias repinta la etiqueta al momento", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], sesion: { pestanaMusical: 7 } });
+  w.local.lastKnownState = { connected: true, playing: true };
+  await w.mensaje("STATE_UPDATE", { state: { connected: true, playing: true } }, 7);
+  await w.disparar("almacen", { accentColor: { newValue: "#12ab34" } }, "local");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.strictEqual(ultima(w.registro.colores), "#12ab34");
+});

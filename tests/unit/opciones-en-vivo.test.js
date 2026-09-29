@@ -22,12 +22,37 @@ const { cargar, i18nFalso, RAIZ } = require("../helpers/entorno.js");
 
 const OPCIONES_HTML = path.join(RAIZ, "src/options/options.html");
 
-function abrir(guardado = {}) {
+/*
+ * `conHoja`: servir pip.css de verdad, para que la pagina lea de el el
+ * acento y el fondo de cada tema (el aviso del acento, tanda AE). jsdom no
+ * trae hojas construibles (CSSStyleSheet.replaceSync), asi que se pone un
+ * doble minimo: parte la hoja en bloques «selector { declaraciones }» y
+ * contesta getPropertyValue. Solo sirve para reglas planas como las de los
+ * temas, que son las que la pagina lee.
+ */
+class HojaDeMentira {
+  replaceSync(texto) {
+    const sinComentarios = texto.replace(/\/\*[\s\S]*?\*\//g, "");
+    this.cssRules = [...sinComentarios.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => {
+      const declaraciones = {};
+      for (const d of m[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) declaraciones[d[1]] = d[2].trim();
+      return { selectorText: m[1].trim(), style: { getPropertyValue: (n) => declaraciones[n] || "" } };
+    });
+  }
+}
+
+function abrir(guardado = {}, { conHoja = false } = {}) {
   const dom = new JSDOM(fs.readFileSync(OPCIONES_HTML, "utf8"), { runScripts: "outside-only" });
   const win = dom.window;
   win.self = win;
   win.console.warn = () => {};
-  win.fetch = () => Promise.reject(new Error("sin red en las pruebas"));
+  if (conHoja) {
+    const hoja = fs.readFileSync(path.join(RAIZ, "src/pip/pip.css"), "utf8");
+    win.fetch = () => Promise.resolve({ text: () => Promise.resolve(hoja) });
+    win.CSSStyleSheet = HojaDeMentira;
+  } else {
+    win.fetch = () => Promise.reject(new Error("sin red en las pruebas"));
+  }
 
   const almacen = Object.assign({}, guardado);
   const oyentes = [];
@@ -68,6 +93,7 @@ function abrir(guardado = {}) {
     "src/shared/ecualizador.js",
     "src/shared/settings.js",
     "src/shared/paleta.js",
+    "src/shared/color-fuente.js",
     "src/options/options.js"
   );
 
@@ -174,4 +200,41 @@ test("el estado en el icono (tanda AC) se carga de lo guardado y se guarda al el
   assert.strictEqual(p.$("badgePreference").value, "hidden");
   p.elegir("badgePreference", "shown");
   assert.strictEqual(p.almacen.badgePreference, "shown");
+});
+
+/* ---------- El color de acento (tanda AE) ---------- */
+
+const esperarHoja = () => new Promise((r) => setTimeout(r, 20));
+
+test("el acento se carga de lo guardado y se guarda al elegirlo", () => {
+  const p = abrir({ accentColor: "#12ab34" });
+  assert.strictEqual(p.$("accentColorMode").value, "custom");
+  assert.strictEqual(p.$("accentColor").value, "#12ab34");
+  p.elegir("accentColorMode", "default");
+  assert.strictEqual(p.almacen.accentColor, "default", "«el de siempre» guarda la palabra, no un color");
+  p.elegir("accentColorMode", "custom");
+  assert.strictEqual(p.almacen.accentColor, "#12ab34", "«un color mio» guarda el del cuentagotas");
+});
+
+test("el cuentagotas del acento solo se ve con «un color mio»", () => {
+  const p = abrir({});
+  assert.strictEqual(p.$("accentColorLabel").hidden, true);
+  p.elegir("accentColorMode", "custom");
+  assert.strictEqual(p.$("accentColorLabel").hidden, false);
+});
+
+test("REGRESION TANDA AE: un acento que se lee mal sobre el tema lo avisa; el de siempre no", async () => {
+  const p = abrir({ theme: "dark", accentColor: "#101010" }, { conHoja: true });
+  await esperarHoja();
+  assert.strictEqual(p.$("accentContrastWarning").hidden, false, "casi negro sobre el oscuro sin aviso");
+  p.$("accentColor").value = "#ff0000";
+  p.elegir("accentColorMode", "custom");
+  assert.strictEqual(p.$("accentContrastWarning").hidden, true, "el rojo de siempre no merece aviso");
+});
+
+test("con el tema de la caratula no se avisa del contraste: se dice que manda la cancion", async () => {
+  const p = abrir({ theme: "source", accentColor: "#101010" }, { conHoja: true });
+  await esperarHoja();
+  assert.strictEqual(p.$("accentContrastWarning").hidden, true);
+  assert.strictEqual(p.$("accentSourceHint").hidden, false);
 });

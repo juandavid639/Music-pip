@@ -410,6 +410,7 @@
       spectrumStyle: pick(stored[STORAGE_KEYS.SPECTRUM_STYLE], ["bars", "wave", "ring"], DEFAULT_SETTINGS.spectrumStyle),
       coverStyle: pick(stored[STORAGE_KEYS.COVER_STYLE], ["square", "vinyl"], DEFAULT_SETTINGS.coverStyle),
       badgePreference: pick(stored[STORAGE_KEYS.BADGE_PREFERENCE], ["shown", "hidden"], DEFAULT_SETTINGS.badgePreference),
+      accentColor: normalizarAcento(stored[STORAGE_KEYS.ACCENT_COLOR]),
       pipTransparency: entero(
         stored[STORAGE_KEYS.PIP_TRANSPARENCY],
         PIP_LIMITS.TRANSPARENCY_MIN,
@@ -694,6 +695,15 @@
     }
   }
 
+  /**
+   * El color de acento guardado: un "#rrggbb" (en minusculas) o "default".
+   * Cualquier otra cosa es "default": un acento a medio escribir no puede
+   * acabar en una variable CSS que el navegador tiraria entera. Pura.
+   */
+  function normalizarAcento(valor) {
+    return typeof valor === "string" && /^#[0-9a-f]{6}$/i.test(valor) ? valor.toLowerCase() : "default";
+  }
+
   YTMPip.Settings = {
     get: function get() {
       return cache;
@@ -730,6 +740,9 @@
     // del halo de lo guardado: la MISMA regla que aplica la ventana, no
     // una copia con charAt escrita alli.
     normalizarColorDeHalo,
+    // El color de acento (tanda AE), con la misma regla en la ventana, la
+    // vista previa y la pagina de opciones.
+    normalizarAcento,
     // Si cambiar esta clave cambia algo que se ve (la lista de arriba, la
     // que clasifica el censo de settings-recargas.test.js). La usa la
     // pagina de opciones para repintarse cuando otro contexto escribe, sin

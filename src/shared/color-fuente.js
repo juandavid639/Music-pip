@@ -284,6 +284,22 @@
     );
   }
 
+  /**
+   * Si el acento `acento` ([r,g,b]) se lee mal sobre el fondo `fondo`
+   * (tanda AE). Las dos reglas que la prueba de accesibilidad hace con los
+   * temas fijos: «Sin conexion» es TEXTO en el color del acento (AA pide
+   * 4,5 contra el fondo) y el boton grande lleva tinta BLANCA sobre el
+   * acento (3 como tinta de componente). Pura.
+   */
+  function acentoSeLeeMal(acento, fondo) {
+    const contraste = (a, b) => {
+      const la = luminancia(a);
+      const lb = luminancia(b);
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+    return contraste(acento, fondo) < 4.5 || contraste([255, 255, 255], acento) < 3;
+  }
+
   YTMPip.ColorFuente = {
     deImagen,
     acercar,
@@ -291,6 +307,7 @@
     temaDeLaFuente,
     cambiaElTema,
     luminancia,
+    acentoSeLeeMal,
     // Los tres pasos por separado, para que cuando el color salga raro se
     // pueda saber si el fallo esta en el recuento, en el umbral o en la
     // normalizacion, sin tener que deducirlo del resultado final.

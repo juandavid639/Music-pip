@@ -80,6 +80,9 @@
     // A diferencia del desplegable de arriba, SIEMPRE se guarda: el color
     // es "a que volver al encender", como el modo.
     haloColorMode: document.getElementById("haloColorMode"),
+    // El color de acento (tanda AE): modo y cuentagotas, como el del halo.
+    accentColorMode: document.getElementById("accentColorMode"),
+    accentColor: document.getElementById("accentColor"),
     haloColor: document.getElementById("haloColor"),
     spectrumBarsMode: document.getElementById("spectrumBarsMode"),
     spectrumBarsCount: document.getElementById("spectrumBarsCount"),
@@ -104,6 +107,9 @@
   const colorLabel = document.getElementById("spectrumColorLabel");
   const haloColorLabel = document.getElementById("haloColorLabel");
   const haloSourceHint = document.getElementById("haloSourceHint");
+  const accentColorLabel = document.getElementById("accentColorLabel");
+  const accentContrastWarning = document.getElementById("accentContrastWarning");
+  const accentSourceHint = document.getElementById("accentSourceHint");
   const accentHint = document.getElementById("spectrumAccentHint");
   const sourceHint = document.getElementById("spectrumSourceHint");
   const accentSwatch = document.getElementById("spectrumAccentSwatch");
@@ -383,6 +389,8 @@
     light: "html.ytmpip-theme-light"
   };
   let acentos = null;
+  // Los canales del fondo de cada tema, leidos de pip.css (tanda AE).
+  let fondos = null;
 
   function leerAcentosDelCss() {
     return fetch(chrome.runtime.getURL("src/pip/pip.css"))
@@ -391,8 +399,18 @@
         const hoja = new CSSStyleSheet();
         hoja.replaceSync(texto);
         const encontrados = {};
+        const fondosLeidos = {};
         for (const regla of hoja.cssRules) {
           if (!regla.style || !regla.selectorText) continue;
+          // Y el fondo de cada tema, para el aviso del acento (tanda AE).
+          const canales = regla.style.getPropertyValue("--ytmpip-bg-rgb").trim();
+          if (canales) {
+            for (const tema of Object.keys(SELECTOR_POR_TEMA)) {
+              if (regla.selectorText === SELECTOR_POR_TEMA[tema]) {
+                fondosLeidos[tema] = canales.split(",").map((n) => Number(n.trim()));
+              }
+            }
+          }
           const valor = regla.style.getPropertyValue(ACENTO_VAR).trim();
           if (!valor) continue;
           for (const tema of Object.keys(SELECTOR_POR_TEMA)) {
@@ -416,12 +434,37 @@
           }
         }
         acentos = encontrados;
+        fondos = fondosLeidos;
+        mostrarCamposDependientes();
       })
       .catch((error) => {
         console.warn("[YTMPip] no se pudo leer src/pip/pip.css para la muestra del acento:", error);
         acentos = {};
       })
       .then(pintarMuestraAcento);
+  }
+
+  /*
+   * Si el acento `hex` se lee mal con el tema elegido (la regla vive en
+   * ColorFuente.acentoSeLeeMal). El fondo de cada tema se lee
+   * de pip.css (--ytmpip-bg-rgb, junto con el acento de la muestra), no se
+   * copia aqui; sin haberlo leido no se avisa de nada.
+   */
+  function acentoIlegible(hex) {
+    const CF = self.YTMPip.ColorFuente;
+    if (!CF || !fondos) return false;
+    const rgb = self.YTMPip.Paleta.hexARgb(hex);
+    if (!rgb) return false;
+    const acento = [rgb.r, rgb.g, rgb.b];
+    /*
+     * Con el tema de la caratula ("source") no se avisa nunca, y no hace
+     * falta decirlo con un if: la hoja no tiene fondo para ese tema (lo pone
+     * la cancion), asi que fondos.source no existe y no hay contra que
+     * medir. Hubo una guarda explicita y la mutacion la delato como codigo
+     * que no hacia nada.
+     */
+    const temas = fields.theme.value === "auto" ? ["dark", "light"] : [fields.theme.value];
+    return temas.some((tema) => Boolean(fondos[tema]) && CF.acentoSeLeeMal(acento, fondos[tema]));
   }
 
   function pintarMuestraAcento() {
@@ -512,6 +555,19 @@
 
     // El cuentagotas del halo, con la misma regla que el del espectro:
     // solo cuando el desplegable de al lado dice "un color mio".
+    /*
+     * El color de acento (tanda AE): el cuentagotas solo con «Un color
+     * mio»; la pista, si el tema es el de la caratula (ahi manda la
+     * cancion); y el aviso, si el color elegido se lee mal sobre el fondo
+     * de algun tema de los que se pueden ver con la eleccion actual.
+     */
+    const acentoPropio = fields.accentColorMode.value === "custom";
+    fields.accentColor.hidden = !acentoPropio;
+    accentColorLabel.hidden = !acentoPropio;
+    const conCaratula = fields.theme.value === "source";
+    accentSourceHint.hidden = !(acentoPropio && conCaratula);
+    accentContrastWarning.hidden = !(acentoPropio && acentoIlegible(fields.accentColor.value));
+
     const haloPropio = fields.haloColorMode.value === "custom";
     fields.haloColor.hidden = !haloPropio;
     haloColorLabel.hidden = !haloPropio;
@@ -827,6 +883,10 @@
       fields.spectrumStyle.value = stored[STORAGE_KEYS.SPECTRUM_STYLE] ?? DEFAULT_SETTINGS.spectrumStyle;
       fields.coverStyle.value = stored[STORAGE_KEYS.COVER_STYLE] ?? DEFAULT_SETTINGS.coverStyle;
       fields.badgePreference.value = stored[STORAGE_KEYS.BADGE_PREFERENCE] ?? DEFAULT_SETTINGS.badgePreference;
+      // El acento: la regla de settings.js decide si lo guardado es un color.
+      const acento = self.YTMPip.Settings.normalizarAcento(stored[STORAGE_KEYS.ACCENT_COLOR]);
+      fields.accentColorMode.value = acento === "default" ? "default" : "custom";
+      fields.accentColor.value = acento === "default" ? SPECTRUM_LIMITS.COLOR_SUGGESTED : acento;
       fields.pipTransparency.value =
         stored[STORAGE_KEYS.PIP_TRANSPARENCY] ?? DEFAULT_SETTINGS.pipTransparency;
 
@@ -896,6 +956,7 @@
       [STORAGE_KEYS.SPECTRUM_STYLE]: fields.spectrumStyle.value,
       [STORAGE_KEYS.COVER_STYLE]: fields.coverStyle.value,
       [STORAGE_KEYS.BADGE_PREFERENCE]: fields.badgePreference.value,
+      [STORAGE_KEYS.ACCENT_COLOR]: fields.accentColorMode.value === "custom" ? fields.accentColor.value : "default",
       [STORAGE_KEYS.SPECTRUM_COLOR]: unirColor(fields.spectrumColorMode.value, fields.spectrumColor.value, coloresElegidos()),
       [STORAGE_KEYS.PIP_TRANSPARENCY]: Number(fields.pipTransparency.value)
     });

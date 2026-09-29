@@ -14,6 +14,12 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
 - La vista previa acompaña al bajar por la página: en pantallas anchas
   va en una columna a la derecha, siempre a la vista.
 
+### Añadido
+
+- Se puede elegir el **color de acento** (el de los botones encendidos,
+  la barra de progreso y el botón grande) en vez del rojo de siempre.
+  Preferencias avisa si el color elegido se lee mal sobre el tema.
+
 ## [1.1.0] — 2026-09-28
 
 ### Añadido

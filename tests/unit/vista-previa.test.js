@@ -216,6 +216,16 @@ test("REGRESION TANDA AD: la vista previa vive FUERA de la primera tarjeta, en s
   assert.match(css, /\.ytmpip-lateral\[data-tamano="grande"\]\s*\{\s*position:\s*static/, "la grande pegada arriba taparia media pagina");
 });
 
+test("la vista previa enseña el acento propio (tanda AE), y el de la cancion manda con su tema", async () => {
+  const m = await marcoCon({ theme: "dark", accentColor: "#12ab34" });
+  const html = m.doc.documentElement;
+  assert.strictEqual(html.style.getPropertyValue("--ytmpip-accent"), "#12ab34");
+  await m.cambiar({ theme: "source" });
+  assert.notStrictEqual(html.style.getPropertyValue("--ytmpip-accent"), "#12ab34", "con el tema de la caratula manda la cancion");
+  await m.cambiar({ theme: "dark", accentColor: "default" });
+  assert.strictEqual(html.style.getPropertyValue("--ytmpip-accent"), "", "«el de siempre» deja mandar a la hoja");
+});
+
 test("la ayuda de la vista previa ya no dice que los ajustes no la cambian", () => {
   assert.doesNotMatch(OPCIONES, /no cambian esta vista/);
 });

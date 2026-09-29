@@ -143,13 +143,14 @@ function aplicarPreferencias(p) {
   // El tema.
   html.classList.toggle("ytmpip-theme-light", p.theme === "light" || (p.theme === "auto" && sistemaEnClaro()));
   const tinte = p.theme === "source" && Y.ColorFuente ? Y.ColorFuente.temaDeLaFuente(fuente) : null;
-  if (tinte) {
-    html.style.setProperty("--ytmpip-bg-rgb", tinte.fondo.join(", "));
-    html.style.setProperty("--ytmpip-accent", "rgb(" + tinte.acento.join(", ") + ")");
-  } else {
-    html.style.removeProperty("--ytmpip-bg-rgb");
-    html.style.removeProperty("--ytmpip-accent");
-  }
+  if (tinte) html.style.setProperty("--ytmpip-bg-rgb", tinte.fondo.join(", "));
+  else html.style.removeProperty("--ytmpip-bg-rgb");
+  // El acento, con la regla de pintarAcento en pip.js: la cancion si el tema
+  // la sigue, si no el color propio (tanda AE), y si no el de la hoja.
+  const acentoPropio = p.accentColor && p.accentColor !== "default" ? p.accentColor : null;
+  const acento = tinte ? "rgb(" + tinte.acento.join(", ") + ")" : acentoPropio;
+  if (acento) html.style.setProperty("--ytmpip-accent", acento);
+  else html.style.removeProperty("--ytmpip-accent");
 
   // El halo: se ve o no, y su color (el tema, uno propio o el de la portada).
   const halo = document.getElementById("ytmpip-halo");

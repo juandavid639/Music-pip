@@ -55,6 +55,7 @@ test("valores validos: se respetan tal cual", async () => {
     spectrumStyle: "ring",
     coverStyle: "vinyl",
     badgePreference: "hidden",
+    accentColor: "#12ab34",
     pipTransparency: 55,
     /*
      * Se guarda una lista de ganancias A MANO y no el nombre de un preset,

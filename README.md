@@ -7551,6 +7551,56 @@ le pasaron las preferencias a mano).
 **Suite entera**: 1033/1033. Por decisión del autor, sin subir la versión:
 primero la prueba él cargando la extensión desempaquetada.
 
+## El color de acento, a elegir (la tanda AE)
+
+Pedido por el autor: «elegir el color del tema por defecto, sé que tenemos
+por defecto el rojo pero tengamos también la posibilidad de que el usuario
+seleccione». Preferencia nueva `accentColor`: `default` (el de la hoja:
+rojo en oscuro, rojo oscuro en claro) o un `#rrggbb`. En Preferencias va
+junto al tema: «El de siempre» / «Un color mío» y un cuentagotas, el mismo
+patrón que el color del halo.
+
+**Se usa TAL CUAL, y se avisa en vez de retocarlo.** El acento no es
+decoración: es texto («Sin conexión» en la cabecera) y es el fondo de la
+tinta blanca del botón grande, y la tanda N dejó escrito que el rojo pasa
+AA sin margen. Retocar el color elegido para que se lea sería desobedecer
+la elección. En su lugar, Preferencias **avisa** (sin bloquear) si el color
+se lee mal sobre el fondo del tema elegido (los dos, con «Automático»), con
+las mismas dos reglas que la prueba de accesibilidad: 4,5 como texto sobre
+el fondo y 3 para la tinta blanca encima. La regla vive en
+`ColorFuente.acentoSeLeeMal` (pura) y los fondos de cada tema se leen de
+`pip.css` junto con el acento de la muestra, sin copiarlos. Con el tema
+«Del vídeo o la carátula» manda la canción, y una pista lo dice.
+
+**El acento tiene dos dueños y un solo pintor.** El tema de la carátula
+(tanda Y) ya escribía `--ytmpip-accent` en línea sobre `<html>`, y el color
+propio tendría que escribir la misma variable. Si cada uno la pusiera y
+quitara por su cuenta, quitar el tinte al dejar el tema de la carátula se
+llevaría por delante el color elegido. `pintarAcento` decide: la canción si
+el tema la sigue, si no el propio, y si no ninguno (manda la hoja). La hoja
+no se toca: siete pruebas y la muestra de Preferencias leen su acento como
+texto literal. La vista previa aplica la misma regla, y **la etiqueta del
+icono de la barra** (tanda AC) sigue también al color propio.
+
+**Comprobado en el navegador** con la vista previa de Preferencias: con
+`#1e90ff` el botón grande y el halo salen azules. La primera lectura dio
+rojo: el panel del navegador estaba oculto y Chrome congela las
+transiciones de un panel oculto; desactivándolas, el color era el bueno.
+
+**Las pruebas**: 7 en `pip-tema.test.js` (entre ellas la del reparto: al
+dejar el tema de la carátula vuelve el color PROPIO, no el de la hoja), 4 en
+`opciones-en-vivo.test.js` (el aviso se prueba con un doble mínimo de hoja
+construible: jsdom no trae `CSSStyleSheet.replaceSync`), 1 en
+`vista-previa.test.js`, 2 en `service-worker.test.js` y el round-trip.
+
+**La mutación** (`tools/mutar-tanda-ae.js`): 13 mutantes, todos muertos,
+**13 de 13 recuentos exactos** contra una predicción refijada: la guarda
+«no avisar con el tema de la carátula» sobrevivió con razón porque era
+redundante (ese tema no tiene fondo en la hoja y ya no avisaba), y se quitó.
+**Sin prueba, dicho claro**: el olvido de `acentoDeLaFuente` al reabrir una
+ventana que murió sin despedirse; en ese caso el muestreo de la anterior
+también se queda colgado, un problema previo que no es de esta tanda.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

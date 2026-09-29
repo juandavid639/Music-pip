@@ -32,6 +32,9 @@
   "aleatorio": {
     "message": "Shuffle"
   },
+  "aviso_acento": {
+    "message": "Careful: this color is hard to read on the theme background. «Disconnected» and the big button may be hard to see."
+  },
   "banda_aire": {
     "message": "Air"
   },
@@ -163,6 +166,15 @@
   },
   "fijar_ecualizador": {
     "message": "Pin the equalizer to this song"
+  },
+  "fila_acento": {
+    "message": "Accent color"
+  },
+  "fila_acento_ayuda": {
+    "message": "The one for active buttons, the progress bar and the big button."
+  },
+  "fila_acento_tu_color_ayuda": {
+    "message": "Used as is, with any theme except the artwork one."
   },
   "fila_ajuste": {
     "message": "Setting"
@@ -389,6 +401,9 @@
   "opcion_a_mi_gusto": {
     "message": "My own"
   },
+  "opcion_acento_siempre": {
+    "message": "The usual one"
+  },
   "opcion_automatico": {
     "message": "Automatic"
   },
@@ -493,6 +508,9 @@
   },
   "pausar": {
     "message": "Pause"
+  },
+  "pista_acento_fuente": {
+    "message": "With the «From the video or artwork» theme the song's color wins; your color comes back with the other themes."
   },
   "pista_color_fuente": {
     "message": "The bars take the most dominant color of what you're watching, and change with the video. If the image has no clear color —black and white, or mostly dark— they fall back to the theme's color."

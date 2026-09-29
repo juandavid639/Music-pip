@@ -1105,6 +1105,52 @@
         </div>
 
         <!--
+          EL COLOR DE ACENTO (tanda AE): el de los botones encendidos, la
+          barra de progreso y el botón grande. «El de siempre» es el de la
+          hoja (rojo, o rojo oscuro con el tema claro). «Un color mío» se usa
+          TAL CUAL: no se retoca para que se lea mejor, porque elegir un
+          color es elegir ese color; en su lugar, la página avisa si se lee
+          mal sobre el fondo del tema (options.js, con la misma cuenta de
+          contraste que las pruebas). Con el tema de la carátula manda la
+          canción, y lo dice una pista.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="accentColorMode" data-t="fila_acento">Color de acento</label>
+            <span class="ytmpip-ayuda" data-t="fila_acento_ayuda">
+              El de los botones encendidos, la barra de progreso y el botón
+              grande.
+            </span>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="accentColorMode" aria-label="Color de acento" data-t-aria="fila_acento">
+            <button type="button" data-valor="default" aria-pressed="true" data-t="opcion_acento_siempre">El de siempre</button>
+            <button type="button" data-valor="custom" aria-pressed="false" data-t="opcion_color_mio">Un color mío</button>
+          </div>
+          <select id="accentColorMode" class="ytmpip-select-real">
+            <option value="default" data-t="opcion_acento_siempre">El de siempre</option>
+            <option value="custom" data-t="opcion_color_mio">Un color mío</option>
+          </select>
+        </div>
+
+        <label id="accentColorLabel" class="ytmpip-fila" for="accentColor" hidden>
+          <span class="ytmpip-fila-texto">
+            <span class="ytmpip-fila-titulo" data-t="fila_tu_color">Tu color</span>
+            <span class="ytmpip-ayuda" data-t="fila_acento_tu_color_ayuda">Se usa tal cual, con cualquier tema salvo el de la carátula.</span>
+          </span>
+          <input id="accentColor" type="color" hidden />
+        </label>
+
+        <p id="accentContrastWarning" class="ytmpip-pista" hidden data-t="aviso_acento">
+          Ojo: este color se lee mal sobre el fondo del tema. «Sin conexión» y
+          el botón grande pueden costar de ver.
+        </p>
+
+        <p id="accentSourceHint" class="ytmpip-pista" hidden data-t="pista_acento_fuente">
+          Con el tema «Del vídeo o la carátula» manda el color de la canción; tu
+          color vuelve con los demás temas.
+        </p>
+
+        <!--
           La carátula en disco de vinilo (tanda AA): cuadrada, como siempre,
           o un disco que gira mientras suena.
         -->
@@ -2031,6 +2077,8 @@
     <script src="../shared/ecualizador.js"></script>
     <script src="../shared/settings.js"></script>
     <script src="../shared/paleta.js"></script>
+    <!-- Por su cuenta de contraste (luminancia), para el aviso del acento. -->
+    <script src="../shared/color-fuente.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

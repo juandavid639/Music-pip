@@ -224,7 +224,16 @@ function textoDelIcono(estado) {
 }
 
 function colorDelIcono(estado) {
-  return estado && estado.playing ? SPECTRUM_LIMITS.COLOR_SUGGESTED : "#5f6368";
+  // Con un color de acento propio (tanda AE), la etiqueta lo sigue.
+  return estado && estado.playing ? acentoDelIcono || SPECTRUM_LIMITS.COLOR_SUGGESTED : "#5f6368";
+}
+
+// El acento propio, o null (el de serie). Lo lee iconoEncendido con la
+// preferencia de la etiqueta, y lo pone al dia el mismo oyente de storage.
+let acentoDelIcono = null;
+
+function acentoDe(valor) {
+  return typeof valor === "string" && /^#[0-9a-f]{6}$/i.test(valor) ? valor : null;
 }
 
 // null = aun sin leer en este despertar; se lee una vez y lo mantiene al
@@ -234,8 +243,9 @@ let iconoPermitido = null;
 async function iconoEncendido() {
   if (iconoPermitido === null) {
     try {
-      const guardado = await chrome.storage.local.get(STORAGE_KEYS.BADGE_PREFERENCE);
+      const guardado = await chrome.storage.local.get([STORAGE_KEYS.BADGE_PREFERENCE, STORAGE_KEYS.ACCENT_COLOR]);
       iconoPermitido = guardado[STORAGE_KEYS.BADGE_PREFERENCE] !== "hidden";
+      acentoDelIcono = acentoDe(guardado[STORAGE_KEYS.ACCENT_COLOR]);
     } catch (err) {
       iconoPermitido = true;
     }
@@ -259,8 +269,12 @@ async function pintarIcono(estado) {
  */
 try {
   chrome.storage.onChanged.addListener((cambios, zona) => {
-    if (zona !== "local" || !cambios[STORAGE_KEYS.BADGE_PREFERENCE]) return;
-    iconoPermitido = cambios[STORAGE_KEYS.BADGE_PREFERENCE].newValue !== "hidden";
+    if (zona !== "local") return;
+    const etiqueta = cambios[STORAGE_KEYS.BADGE_PREFERENCE];
+    const acento = cambios[STORAGE_KEYS.ACCENT_COLOR];
+    if (!etiqueta && !acento) return;
+    if (etiqueta) iconoPermitido = etiqueta.newValue !== "hidden";
+    if (acento) acentoDelIcono = acentoDe(acento.newValue);
     chrome.storage.local
       .get(STORAGE_KEYS.LAST_KNOWN_STATE)
       .then((guardado) => pintarIcono(guardado[STORAGE_KEYS.LAST_KNOWN_STATE]))

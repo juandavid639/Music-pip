@@ -48,6 +48,7 @@ const SE_APLICA = {
   spectrumStyle: true,
   coverStyle: true,
   badgePreference: true,
+  accentColor: true,
   pipTransparency: true,
   equalizer: true,
   lastKnownState: false, // la de esta tanda: la escribe el SW cada segundo

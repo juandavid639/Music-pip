@@ -83,6 +83,12 @@
        * los minutos del temporizador sobre el icono; "hidden" lo deja limpio.
        */
       BADGE_PREFERENCE: "badgePreference",
+      /*
+       * EL COLOR DE ACENTO (tanda AE): "default" (el de la hoja: rojo en
+       * oscuro, rojo oscuro en claro) o un "#rrggbb" elegido por el usuario,
+       * que se usa TAL CUAL con cualquier tema salvo «de la caratula».
+       */
+      ACCENT_COLOR: "accentColor",
       PIP_TRANSPARENCY: "pipTransparency",
       /*
        * UNA sola clave para el ecualizador, y lleva dentro tres respuestas
@@ -202,6 +208,7 @@
       spectrumStyle: "bars",
       coverStyle: "square",
       badgePreference: "shown",
+      accentColor: "default",
 
       /*
        * Cuanto se atenua la ventana MIENTRAS SUENA la musica, en porcentaje.

@@ -216,3 +216,58 @@ test("REGRESION TANDA Y: el tema de la caratula pide el color por si solo, sin h
   await new Promise((r) => setTimeout(r, 450)); // un tic del muestreo (400 ms)
   assert.deepStrictEqual(pedidas, ["https://ejemplo/portada.jpg"], "nadie pidio el color de la portada");
 });
+
+/* ---------- El color de acento propio (tanda AE) ---------- */
+
+test("REGRESION TANDA AE: un color de acento propio se usa tal cual en la ventana", async () => {
+  const v = await ventana({ theme: "dark", extra: { accentColor: "#12ab34" } });
+  assert.strictEqual(v.variable("--ytmpip-accent"), "#12ab34");
+});
+
+test("con «el de siempre» no se escribe nada: manda la hoja", async () => {
+  const v = await ventana({ theme: "dark" });
+  assert.strictEqual(v.variable("--ytmpip-accent"), "");
+});
+
+test("con el tema de la caratula manda el color de la cancion, no el propio", async () => {
+  const v = await ventana({ theme: "source", extra: { accentColor: "#12ab34" } });
+  v.color(ROJO);
+  const t = v.esperado(ROJO);
+  assert.strictEqual(v.variable("--ytmpip-accent"), "rgb(" + t.acento.join(", ") + ")");
+});
+
+test("REGRESION TANDA AE: al dejar el tema de la caratula vuelve el acento PROPIO, no el de la hoja", async () => {
+  // El acento tiene dos dueños posibles; si el tinte lo quitara por su
+  // cuenta al irse, se llevaria por delante el color que eligio el usuario.
+  const v = await ventana({ theme: "source", extra: { accentColor: "#12ab34" } });
+  v.color(ROJO);
+  v.tema("dark");
+  assert.strictEqual(v.variable("--ytmpip-accent"), "#12ab34");
+});
+
+test("...y sin color de la cancion (portada gris), tambien el propio", async () => {
+  const v = await ventana({ theme: "source", extra: { accentColor: "#12ab34" } });
+  v.color(ROJO);
+  v.color(null);
+  assert.strictEqual(v.variable("--ytmpip-accent"), "#12ab34");
+});
+
+test("las preferencias solo aceptan un #rrggbb como acento (y lo pasan a minusculas)", async () => {
+  const { win } = crearEntorno(undefined);
+  cargar(win, "src/shared/constants.js", "src/shared/messages.js", "src/shared/ecualizador.js", "src/shared/settings.js");
+  const n = win.YTMPip.Settings.normalizarAcento;
+  assert.strictEqual(n("#12AB34"), "#12ab34");
+  for (const basura of ["rgb", "#fff", "12ab34", "", null, "default", 16711680]) {
+    assert.strictEqual(n(basura), "default", String(basura));
+  }
+});
+
+test("acentoSeLeeMal: el rojo de siempre se lee sobre el oscuro; un casi negro o un amarillo sobre blanco no", async () => {
+  const { win } = crearEntorno(undefined);
+  cargar(win, "src/shared/constants.js", "src/shared/paleta.js", "src/shared/color-fuente.js");
+  const mal = win.YTMPip.ColorFuente.acentoSeLeeMal;
+  assert.strictEqual(mal([255, 0, 0], [15, 15, 15]), false, "el rojo 255 sobre el oscuro");
+  assert.strictEqual(mal([16, 16, 16], [15, 15, 15]), true, "casi negro sobre negro");
+  assert.strictEqual(mal([255, 255, 0], [255, 255, 255]), true, "amarillo sobre blanco");
+  assert.strictEqual(mal([255, 238, 238], [15, 15, 15]), true, "tan claro que la tinta blanca del boton no se ve");
+});
