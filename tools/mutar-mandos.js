@@ -28,8 +28,6 @@
  * Mismo arnes que los otros: de usar y tirar, fuera de `npm test`, y
  * restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -220,7 +218,7 @@ const MUTACIONES = [
   {
     etiqueta: "MANDOS: la etiqueta enseña el id interno en vez del nombre",
     archivo: MANDOS,
-    de: "    const texto = definicion.etiqueta + \" · \" + hz;",
+    de: "    const texto = (nombreBanda === claveBanda ? definicion.etiqueta : nombreBanda) + \" · \" + hz;",
     a: "    const texto = definicion.id + \" · \" + hz;"
   },
   {
@@ -268,8 +266,8 @@ const MUTACIONES = [
   {
     etiqueta: "MANDOS: el aviso enseña el numero con signo («baja -11 dB»)",
     archivo: MANDOS,
-    de: "        Math.abs(preamp) +",
-    a: "        preamp +"
+    de: "t(\"preamp_baja\", [Math.abs(preamp)])",
+    a: "t(\"preamp_baja\", [preamp])"
   },
 
   /* ---------- LA PAGINA: lo escrito a mano que se queda atras ---------- */
@@ -313,14 +311,14 @@ const MUTACIONES = [
   {
     etiqueta: "MANDOS: los presets se quedan sin nombre y el desplegable sale en blanco",
     archivo: MANDOS,
-    de: "      opcion.textContent = etiqueta || opcion.value;",
+    de: "      opcion.textContent = traducido !== clavePreset ? traducido : etiqueta || opcion.value;",
     a: "      ;"
   },
   {
     etiqueta: "MANDOS: un preset sin etiqueta deja su opcion muda en vez de enseñar la clave",
     archivo: MANDOS,
-    de: "      opcion.textContent = etiqueta || opcion.value;",
-    a: "      opcion.textContent = etiqueta || \"\";"
+    de: "      opcion.textContent = traducido !== clavePreset ? traducido : etiqueta || opcion.value;",
+    a: "      opcion.textContent = traducido !== clavePreset ? traducido : etiqueta || \"\";"
   },
   /* ----------------------------------------------------------------
    * LA OTRA PUNTA DEL MISMO CABLE: el boton del PiP.
@@ -338,14 +336,14 @@ const MUTACIONES = [
   {
     etiqueta: "PIP: el boton vuelve a decir solo «encendido» y no cual esta puesto",
     archivo: "src/pip/pip.js",
-    de: '        : "ajuste propio";',
-    a: '        : "ajuste propio";\n      que = "encendido";'
+    de: "    return preset ? etiquetaPreset(preset) : t(\"eq_ajuste_propio\");",
+    a: "    return \"encendido\";"
   },
   {
     etiqueta: "PIP: unos numeros a mano se anuncian como si fueran un preset",
     archivo: "src/pip/pip.js",
-    de: "      const preset = Eq.presetDe(valor);",
-    a: '      const preset = Eq.presetDe(valor) || "plano";'
+    de: "    const preset = Eq.presetDe(valor);",
+    a: "    const preset = Eq.presetDe(valor) || \"plano\";"
   },
   /* ---------- LAS BARRITAS: el dibujo miente sobre lo que suena ----------
    *
@@ -444,90 +442,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-/*
- * Las marcadas `equivalente` se cuentan aparte y NO tumban el proceso.
- *
- * Una mutacion equivalente es la que produce un programa que se comporta
- * igual en todo estado alcanzable: no hay prueba que pueda distinguirla,
- * asi que contarla como "prueba que falta" es mentir sobre la cobertura, y
- * borrar el codigo para que muera es dejar el programa peor por complacer a
- * una herramienta. Lo unico honesto es senalarla y escribir POR QUE lo es,
- * que es lo que hace el comentario de cada una.
- *
- * Se sigue ejecutando, y si alguna vez MUERE hay que venir aqui: significa
- * que el codigo cambio y el razonamiento de su comentario ya no vale.
- */
-let equivalentes = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (m.equivalente) {
-    equivalentes++;
-    if (caidas.length) {
-      sobreviven++;
-      console.error(
-        `  OJO   ${m.etiqueta}\n` +
-          "        estaba marcada como EQUIVALENTE y ahora muere: el codigo " +
-          "cambio y el motivo escrito en tools/mutar-mandos.js ya no vale. " +
-          "Quitale la marca."
-      );
-    } else {
-      console.log(`  (equivalente, a proposito) ${m.etiqueta}`);
-    }
-    continue;
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.slice(0, 3).join(" | ")}`);
-  }
-}
-
-console.log(
-  `\n${muertas} de ${MUTACIONES.length - equivalentes} mutaciones detectadas; ` +
-    `${sobreviven} sobreviven` +
-    (equivalentes ? `; ${equivalentes} equivalente(s) aparte.` : ".")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

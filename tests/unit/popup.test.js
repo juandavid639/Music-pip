@@ -528,3 +528,11 @@ test("si la ventana se abrio, el estado no se toca", async () => {
   await m.asentar();
   assert.equal(m.estado.textContent, antes);
 });
+
+test("sin Document PiP (tanda AF), el menu dice que el mismo es la ventana de respaldo", async () => {
+  const m = menu(SONANDO, { respuestaAbrir: { ok: false, result: "respaldo" } });
+  await m.asentar();
+  m.abrir.click();
+  await m.asentar();
+  assert.match(m.estado.textContent, /respaldo/);
+});

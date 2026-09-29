@@ -318,7 +318,6 @@
   let lyricLineEls = []; // [{ el, time }]
   let lyricsSignature = "";
   let activeLyricIndex = -1;
-  let lyricsTimer = null;
   /*
    * La SEGUNDA fuente de sincronia: el indice que la propia pagina dice
    * que se canta (state.lyrics.activeLine, hoy solo Spotify). Viaja con
@@ -1058,7 +1057,10 @@
      * para siempre en el segundo.
      */
     if (els.spectrum && !els.spectrum.hidden) {
-      if (dibujarEspectro(ms)) quedaTrabajo = true;
+      // Si el lienzo revienta, `false`: no se reintenta en cada fotograma
+      // (el fallo no se va a arreglar solo), pero el pulso y el halo de
+      // abajo siguen.
+      if (aislado("lienzo del espectro", () => dibujarEspectro(ms), false)) quedaTrabajo = true;
     }
     if (pulsoActivo || haloLate) {
       /*
@@ -1071,7 +1073,7 @@
        * Cada uno escribe SU variable CSS; encender el halo jamas mueve la
        * caratula ni al reves.
        */
-      const golpe = YTMPip.Espectro.leerPulso(ms);
+      const golpe = aislado("lectura del golpe", () => YTMPip.Espectro.leerPulso(ms), null);
       if (golpe !== null) {
         if (pulsoActivo) ponerPulso(golpe);
         if (haloLate) ponerHaloGolpe(golpe);
@@ -3488,17 +3490,24 @@
   async function abrirVentana() {
     // Abrir una ventana nueva si necesita la extension viva: pip.html y
     // pip.css se cargan como web_accessible_resources.
+    /*
+     * Cada salida DICE que paso (tanda AF), y el service worker lo lee:
+     * antes todas devolvian nada y openPipOnTab lo tomaba por «abierta». En
+     * un navegador sin Document PiP eso hacia que el menu de la ventana de
+     * respaldo creyera haber abierto la flotante, cuando lo que habia hecho
+     * era pedir OTRA ventana de respaldo.
+     */
     if (!YTMPip.isContextValid()) {
       console.info("[YTMPip] La extension se recargo; recarga la pestaña (F5) antes de abrir el PiP.");
-      return;
+      return "sin-extension";
     }
     if (!supported()) {
       requestFallbackWindow();
-      return;
+      return "respaldo";
     }
     if (pipWindow && !pipWindow.closed) {
       pipWindow.focus();
-      return;
+      return "opened";
     }
 
     // Lectura SINCRONA de la cache de preferencias: un await aqui, antes
@@ -3573,6 +3582,21 @@
     // quedaria sin teñir hasta que el color cambiara doce grados.
     temaPintado = null;
     acentoDeLaFuente = null;
+    /*
+     * Y el muestreo del color (tanda AF). Su temporizador murio con la
+     * ventana anterior, pero si aquella murio SIN pagehide (se colgo, la
+     * cerro el sistema) nadie paso por pararMuestreoFuente: la variable
+     * seguia valiendo un numero, sincronizarColorFuente la tomaba por «ya
+     * en marcha» y NINGUNA ventana posterior volvia a leer el color. El
+     * tema de la caratula, el halo y el espectro «de la fuente» se
+     * quedaban en el acento hasta recargar la pestaña. Se olvida todo, como
+     * al pararlo: la ventana nueva lee el color de nuevo en el acto.
+     */
+    muestreoFuenteTimer = null;
+    colorFuenteObjetivo = null;
+    colorFuenteActual = null;
+    colorFuenteMs = 0;
+    portadaSondeada = "";
 
     // Ventana nueva, letra desde cero: los elementos de la anterior
     // murieron con su documento.
@@ -3588,9 +3612,17 @@
      * Un solo latido para la barra y la letra: las dos leen el mismo
      * <video> y no tiene sentido consultarlo dos veces por tick.
      */
-    lyricsTimer = pipWindow.setInterval(() => {
-      tickTimeline();
-      tickLyrics();
+    /*
+     * Sin guardar el id: nadie lo cancela nunca, porque el intervalo muere
+     * con la ventana (ver arriba). Habia un `lyricsTimer` que se asignaba
+     * y no se leia en ningun sitio; lo encontro ESLint en la tanda AG.
+     *
+     * Cada latido va aislado (tanda AH): si la barra revienta, la letra
+     * sigue, y al reves.
+     */
+    pipWindow.setInterval(() => {
+      aislado("latido de la barra", tickTimeline);
+      aislado("latido de la letra", tickLyrics);
     }, 300);
 
     watchWindowSize();
@@ -3661,7 +3693,6 @@
       YTMPip.Espectro.desconectar();
       // Los timers de la ventana mueren con ella; aqui solo se sueltan
       // las referencias a elementos que ya no existen.
-      lyricsTimer = null;
       lyricLineEls = [];
       lyricsSignature = "";
       activeLyricIndex = -1;
@@ -3674,6 +3705,7 @@
     unsubscribeSettings = YTMPip.Settings.subscribe(applySettings);
 
     if (lastState) render(lastState);
+    return "opened";
   }
 
   /* ------------------------------------------------------------------
@@ -4307,6 +4339,40 @@
     }
   }
 
+  /*
+   * EL CORTAFUEGOS (tanda AH).
+   *
+   * render pinta una docena de cosas seguidas y el bucle de fotogramas otras
+   * tres. Antes, una excepcion en cualquiera se llevaba por delante todo lo
+   * que venia detras: un cambio del HTML del sitio que rompiera, por
+   * ejemplo, la lectura del fondo Canvas dejaba el titulo de la cancion
+   * anterior para siempre; un lienzo que fallara cortaba la cadena de
+   * fotogramas y con ella el pulso y el halo.
+   *
+   * Ahora cada seccion va aislada: si falla, devuelve `respaldo` y las
+   * demas siguen. Se apunta en la consola UNA vez por seccion, con la
+   * traza —render corre varias veces por segundo, y el mismo error cuatro
+   * veces por segundo tapa cualquier otro mensaje—. No oculta nada: la
+   * seccion rota sigue rota hasta que alguien lea la consola, pero la
+   * ventana entera deja de caer con ella.
+   *
+   * La memoria de lo ya apuntado dura lo que la pagina, no lo que la
+   * ventana: reabrir no vuelve a llenar la consola con lo mismo.
+   */
+  const seccionesQueFallaron = new Set();
+
+  function aislado(seccion, fn, respaldo) {
+    try {
+      return fn();
+    } catch (err) {
+      if (!seccionesQueFallaron.has(seccion)) {
+        seccionesQueFallaron.add(seccion);
+        console.error("[YTMPip] Fallo en «" + seccion + "» (el resto de la ventana sigue):", err);
+      }
+      return respaldo;
+    }
+  }
+
   function render(state) {
     lastState = state;
     if (!pipWindow || pipWindow.closed || !els.root) return;
@@ -4317,13 +4383,24 @@
       // boton "volver a la pestaña").
       els.status.textContent = t("extension_recargada");
       els.status.classList.add("disconnected");
+    } else if (state.connected && state.piezasQueFaltan && state.piezasQueFaltan.length) {
+      /*
+       * La salud del adaptador (tanda AK): suena algo y el sitio no tiene
+       * alguna pieza vital (el boton de reproducir, el titulo...). Es casi
+       * seguro que el sitio cambio su HTML. Decirlo aqui es lo que separa
+       * «la extension esta rota» de «el sitio cambio y hay que esperar a
+       * una actualizacion». Los nombres de lo que falta van a la consola
+       * (content-script.js), que es donde los busca quien lo arregla.
+       */
+      els.status.textContent = t("sitio_cambio");
+      els.status.classList.add("disconnected");
     } else {
       els.status.textContent = state.connected ? t("conectado") : t("desconectado");
       els.status.classList.toggle("disconnected", !state.connected);
     }
 
-    alCambiarDeCancion(state);
-    const hayVideoQueAlternar = syncVideoMode(state);
+    aislado("cambio de cancion", () => alCambiarDeCancion(state));
+    const hayVideoQueAlternar = aislado("modo video", () => syncVideoMode(state), false);
 
     /*
      * Modo karaoke: sin video y con letra, la letra pasa a ser la
@@ -4350,13 +4427,13 @@
     // Con la letra en grande los mandos pasan a flotar encima, y quien
     // decide eso es layoutFor. Va DESPUES de la clase a proposito: es de
     // ahi de donde applyDensity lee la respuesta.
-    applyDensity();
+    aislado("densidad", applyDensity);
 
     // El boton se pinta con las dos respuestas ya calculadas, nunca
     // recalculandolas.
-    pintarBotonDeEscenario(hayVideoQueAlternar, karaoke);
-    pintarBotonPipNativo(state);
-    sincronizarFondoCanvas(state);
+    aislado("boton de escenario", () => pintarBotonDeEscenario(hayVideoQueAlternar, karaoke));
+    aislado("boton del PiP nativo", () => pintarBotonPipNativo(state));
+    aislado("fondo Canvas", () => sincronizarFondoCanvas(state));
 
     /*
      * "Solo la imagen" no depende de la cancion: si el usuario lo pidio, se
@@ -4365,11 +4442,11 @@
      * combinaciones que nadie ha pedido.
      */
     els.root.classList.toggle("ytmpip-sin-texto", soloCaratula);
-    pintarBotonLimpio();
+    aislado("boton de solo caratula", pintarBotonLimpio);
 
     // Despues de syncVideoMode: si la ventana acaba de tomar prestado el
     // <video>, el espectro tiene que engancharse a ESE elemento.
-    sincronizarEspectro(letraEnGrande);
+    aislado("espectro", () => sincronizarEspectro(letraEnGrande));
 
     /*
      * El panel se abre solo en dos casos, y solo se decide aqui. Que la
@@ -4386,36 +4463,42 @@
      * con el. Cubre tambien `letraEnGrande`, que solo puede estar activo
      * por un estado anterior: el clic que abrio la cola ya cerro el panel.
      */
-    const colaAbierta = els.queuePanel && !els.queuePanel.hidden;
-    if (
-      els.lyricsPanel &&
-      els.lyricsPanel.hidden &&
-      !colaAbierta &&
-      (letraEnGrande || (karaoke && !lyricsClosedByUser))
-    ) {
-      setLyricsVisible(true, { auto: true });
-    }
-    if (!karaoke) ocultarLineaEnVivo();
+    aislado("panel de letra", () => {
+      const colaAbierta = els.queuePanel && !els.queuePanel.hidden;
+      if (
+        els.lyricsPanel &&
+        els.lyricsPanel.hidden &&
+        !colaAbierta &&
+        (letraEnGrande || (karaoke && !lyricsClosedByUser))
+      ) {
+        setLyricsVisible(true, { auto: true });
+      }
+      if (!karaoke) ocultarLineaEnVivo();
+    });
 
     els.title.textContent = state.title || t("sin_reproduccion");
     els.title.title = state.title || "";
     els.artist.textContent = state.artist || "";
     els.album.textContent = state.album || "";
 
-    const art = state.artworkUrl || getURLSafe("assets/placeholders/artwork.svg");
-    cambiarCaratula(art);
-    els.artwork.alt = state.title ? t("portada_de", [state.title]) : t("sin_portada");
-    if (els.backdrop) {
-      // Se reutiliza la portada ya descargada: sin peticion extra.
-      els.backdrop.style.backgroundImage = state.artworkUrl ? `url("${state.artworkUrl}")` : "";
-      els.backdrop.classList.toggle("ytmpip-has-art", Boolean(state.artworkUrl));
-    }
+    aislado("caratula", () => {
+      const art = state.artworkUrl || getURLSafe("assets/placeholders/artwork.svg");
+      cambiarCaratula(art);
+      els.artwork.alt = state.title ? t("portada_de", [state.title]) : t("sin_portada");
+      if (els.backdrop) {
+        // Se reutiliza la portada ya descargada: sin peticion extra.
+        els.backdrop.style.backgroundImage = state.artworkUrl ? `url("${state.artworkUrl}")` : "";
+        els.backdrop.classList.toggle("ytmpip-has-art", Boolean(state.artworkUrl));
+      }
+    });
 
-    paintTimeline(timelineFor(state.currentTime, state.duration));
+    aislado("barra de tiempo", () => paintTimeline(timelineFor(state.currentTime, state.duration)));
 
-    els.playPause.setAttribute("aria-label", state.playing ? t("pausar") : t("reproducir"));
-    Iconos.poner(els.playPause, state.playing ? "pausar" : "reproducir");
-    aplicarAtenuado(state.playing, YTMPip.Settings.get().pipTransparency);
+    aislado("boton de reproducir", () => {
+      els.playPause.setAttribute("aria-label", state.playing ? t("pausar") : t("reproducir"));
+      Iconos.poner(els.playPause, state.playing ? "pausar" : "reproducir");
+      aplicarAtenuado(state.playing, YTMPip.Settings.get().pipTransparency);
+    });
     /*
      * «Esta sonando», como clase de la raiz (tanda AA): el disco de vinilo
      * solo gira mientras suena, y quien lo para es la hoja de estilos
@@ -4424,9 +4507,9 @@
      */
     els.root.classList.toggle("ytmpip-sonando", Boolean(state.playing));
 
-    renderExtras(state);
-    renderLyrics(state.lyrics || {});
-    renderQueue(state);
+    aislado("extras", () => renderExtras(state));
+    aislado("letra", () => renderLyrics(state.lyrics || {}));
+    aislado("cola", () => renderQueue(state));
   }
 
   function setDegraded(value) {
@@ -4441,6 +4524,9 @@
     ensureLauncher: ensureLauncherButton,
     destacarLanzador: destacarLanzador,
     setDegraded: setDegraded,
+    // Para el relevo del content script huerfano (tanda AI): con su ventana
+    // abierta no se retira, porque nadie mas puede servirla.
+    estaAbierta: () => Boolean(pipWindow && !pipWindow.closed),
     // Se exponen solo para poder probarlas: son las unicas decisiones de
     // maquetacion que no necesitan una ventana flotante real.
     atajoPara: atajoPara,
@@ -4689,12 +4775,15 @@
     return true;
   }
 
-  // Disparador secundario: el service worker (clic en el icono de la
-  // extension). Puede fallar por falta de activacion de usuario; se
-  // mantiene por conveniencia cuando el navegador si la propaga.
-  window.addEventListener("ytmpip:open-pip", () => {
-    openPip().catch((err) => console.error("[YTMPip] No se pudo abrir el PiP", err));
-  });
+  /*
+   * Aqui habia un oyente de un evento "ytmpip:open-pip" en window, el
+   * «disparador secundario» del service worker. Se quito en la tanda AI:
+   * el service worker solo lo disparaba cuando PipView no existia, que es
+   * justo cuando este oyente tampoco (los dos los pone este archivo), y los
+   * eventos de window cruzan los mundos aislados, asi que cualquier script
+   * de la PAGINA podia pedir abrir la ventana. El service worker llama a
+   * PipView.open() directamente, y sin script contesta "sin-script".
+   */
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", ensureLauncherButton);

@@ -260,3 +260,23 @@ test("REGRESION TANDA U: la linea en vivo es un boton para el teclado tambien", 
   tecla(v, linea, "keydown", "Enter");
   assert.strictEqual(panel.hidden, false, "Enter sobre la linea en vivo no abrio la letra");
 });
+
+test("con Document PiP, open() dice «opened», tambien si la ventana ya estaba abierta", async () => {
+  const p = pagina();
+  assert.strictEqual(await p.PipView.open(), "opened");
+  assert.strictEqual(await p.PipView.open(), "opened", "la segunda llamada enfoca la que hay");
+});
+
+test("TANDA AI: estaAbierta dice la verdad antes, durante y despues de la ventana", async () => {
+  /*
+   * El relevo del content script huerfano pregunta esto para decidir si se
+   * retira ya o sigue sirviendo su ventana. Su banco (content-relevo.test.js)
+   * finge la respuesta; aqui se comprueba la de verdad.
+   */
+  const p = pagina();
+  assert.strictEqual(p.PipView.estaAbierta(), false);
+  const v = await p.abrir();
+  assert.strictEqual(p.PipView.estaAbierta(), true);
+  v.ventana.close();
+  assert.strictEqual(p.PipView.estaAbierta(), false);
+});

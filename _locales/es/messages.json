@@ -617,6 +617,9 @@
   "sin_reproduccion": {
     "message": "Sin reproducción"
   },
+  "sin_ventana_flotante": {
+    "message": "Este navegador no tiene ventana flotante: esta es la de respaldo."
+  },
   "solo_caratula": {
     "message": "Sólo carátula"
   },
@@ -715,5 +718,38 @@
   },
   "volver_al_sitio": {
     "message": "Volver a $1"
+  },
+  "sitio_cambio": {
+    "message": "El sitio cambió: algunos mandos pueden no responder"
+  },
+  "tarjeta_copia": {
+    "message": "Tus preferencias"
+  },
+  "tarjeta_copia_intro": {
+    "message": "Llévatelas a otro equipo en un archivo, o vuelve a como venía la extensión. El archivo solo lleva las preferencias de esta página y se queda donde tú lo guardes."
+  },
+  "boton_exportar": {
+    "message": "Exportar a un archivo"
+  },
+  "boton_importar": {
+    "message": "Importar de un archivo"
+  },
+  "boton_restaurar": {
+    "message": "Volver a los valores de fábrica"
+  },
+  "confirmar_restaurar": {
+    "message": "¿Volver a los valores de fábrica? Se pierden tus preferencias (las canciones con ecualizador fijado se conservan)."
+  },
+  "preferencias_exportadas": {
+    "message": "Preferencias exportadas."
+  },
+  "preferencias_importadas": {
+    "message": "Preferencias importadas."
+  },
+  "preferencias_no_validas": {
+    "message": "Ese archivo no son preferencias de Music PiP: no se ha cambiado nada."
+  },
+  "preferencias_restauradas": {
+    "message": "Valores de fábrica restaurados."
   }
 }

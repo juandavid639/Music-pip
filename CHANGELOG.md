@@ -4,6 +4,37 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Añadido
+
+- Preferencias tiene una tarjeta nueva, **Tus preferencias**: exportarlas a
+  un archivo, importarlas de uno (por ejemplo, en otro equipo) y volver a
+  los valores de fábrica. El archivo solo lleva las preferencias; las
+  canciones con ecualizador fijado se conservan al restaurar.
+- Si el sitio de música cambia y la extensión deja de encontrar el botón
+  de reproducir, el de siguiente o el título mientras suena algo, la
+  ventana lo dice («El sitio cambió: algunos mandos pueden no responder»)
+  en vez de quedarse muda.
+
+### Cambiado
+
+- Un fallo en una parte de la ventana (la letra, la cola, las barras…) ya
+  no se lleva por delante el resto: el título, la carátula y los botones
+  siguen al día.
+- Tras actualizar la extensión, la copia anterior que quedaba en las
+  pestañas de música abiertas deja de trabajar en cuanto llega la nueva
+  (a partir de la próxima actualización: la copia que se retira tiene que
+  saber hacerlo).
+- En un navegador sin ventana flotante nativa, abrir desde la ventana de
+  respaldo enfoca la que ya hay en vez de abrir otra cada vez, y el menú
+  dice por qué.
+
+### Seguridad
+
+- Las páginas de música ya no pueden pedir que se abra la ventana
+  flotante con un evento propio (esa vía no la usaba la extensión).
+
 ## [1.1.1] — 2026-09-29
 
 ### Cambiado

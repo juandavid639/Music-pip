@@ -42,6 +42,75 @@
     if (YTMPip.PipView && YTMPip.PipView.setDegraded) YTMPip.PipView.setDegraded(true);
   };
 
+  /*
+   * EL RELEVO (tanda AI).
+   *
+   * Desde la tanda T, instalar o actualizar reinyecta estos scripts en las
+   * pestañas de musica abiertas. La copia de antes no desaparece: queda
+   * huerfana (sin chrome.runtime) pero con su observador y sus escuchas del
+   * <video> vivas, y la pagina paga DOS lecturas del estado por latido
+   * hasta que se recarga.
+   *
+   * Al arrancar, cada copia anuncia el relevo con un evento del DOM (el DOM
+   * es compartido entre mundos aislados; chrome.runtime no). Quien lo oye
+   * y ya es huerfano se retira: suelta el observador, las escuchas y el
+   * temporizador. Con UNA excepcion: si su ventana flotante esta abierta
+   * la sigue sirviendo —es suya, la copia nueva no puede pintarla, y
+   * congelarla seria peor que pagar el doble un rato— y se retira en el
+   * primer latido despues de que se cierre.
+   *
+   * Una copia VIVA que oye el anuncio no hace nada: solo le importa a quien
+   * ya no sirve. Y una cosa honesta: la copia que se retira tiene que
+   * saber oir, asi que esto solo funciona a partir de la version que lo
+   * trae; la actualizacion que lo estrena todavia deja huerfanas sordas.
+   */
+  const EVENTO_RELEVO = "ytmpip:relevo";
+  let relevado = false;
+  let retirado = false;
+
+  function ventanaAbierta() {
+    return Boolean(YTMPip.PipView && YTMPip.PipView.estaAbierta && YTMPip.PipView.estaAbierta());
+  }
+
+  function retirarse() {
+    if (retirado) return;
+    retirado = true;
+    if (observer) observer.disconnect();
+    observer = null;
+    if (mediaElement) MEDIA_EVENTS.forEach((evt) => mediaElement.removeEventListener(evt, onMediaEvent));
+    mediaElement = null;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = null;
+    console.info("[YTMPip] Una copia nueva de la extension ha tomado el relevo en esta pestaña; la anterior se retira.");
+  }
+
+  function alOirElRelevo() {
+    if (YTMPip.isContextValid()) return;
+    relevado = true;
+    if (!ventanaAbierta()) retirarse();
+  }
+
+  /*
+   * LA SALUD DEL SITIO (tanda AK), en la consola. El estado ya lleva la
+   * lista (MetadataReader) y la ventana lo dice con palabras; aqui van los
+   * NOMBRES, una vez por cada lista distinta, para quien vaya a arreglar el
+   * adaptador. Una vez y no por latido: timeupdate llega cuatro veces por
+   * segundo.
+   */
+  let faltasAvisadas = "";
+
+  function avisarDeLaSalud(state) {
+    const faltan = (state.piezasQueFaltan || []).join(", ");
+    if (faltan === faltasAvisadas) return;
+    faltasAvisadas = faltan;
+    if (!faltan) return;
+    console.warn(
+      "[YTMPip] El sitio parece haber cambiado: suena algo y no encuentro " +
+        faltan +
+        ". Algunos mandos pueden no responder hasta que se actualice el adaptador."
+    );
+  }
+
   function songKeyOf(metadata) {
     return metadata.title + "||" + metadata.artist;
   }
@@ -121,7 +190,13 @@
     debounceTimer = setTimeout(
       () => {
         debounceTimer = null;
+        // El huerfano relevado que servia su ventana: cerrada, se retira.
+        if (relevado && !ventanaAbierta()) {
+          retirarse();
+          return;
+        }
         const state = buildState();
+        avisarDeLaSalud(state);
         /*
          * La memoria por cancion escucha el MISMO latido que todo lo
          * demas, y ANTES de pintar: si la cancion que empieza trae un
@@ -331,6 +406,11 @@
       return true;
     }
   });
+
+  // Primero el anuncio y DESPUES la escucha: si no, esta copia se oiria a
+  // si misma (dispatchEvent es sincrono).
+  document.dispatchEvent(new Event(EVENTO_RELEVO));
+  document.addEventListener(EVENTO_RELEVO, alOirElRelevo);
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
     init();

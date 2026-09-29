@@ -356,12 +356,22 @@ async function openPipOnTab(tab) {
     target: { tabId: tab.id },
     world: "ISOLATED",
     func: () => {
-      if (!self.YTMPip || !self.YTMPip.PipView) {
-        window.dispatchEvent(new Event("ytmpip:open-pip"));
-        return "event-fallback";
-      }
+      /*
+       * Sin PipView en este mundo aislado no hay script vivo, y ya esta: se
+       * contesta y el service worker le da script (intentarAbrir).
+       *
+       * Aqui se disparaba un evento "ytmpip:open-pip" por si alguien lo
+       * oia. Nadie podia: quien lo escuchaba era pip.js, el mismo que
+       * publica PipView, asi que si faltaba uno faltaba el otro. Y el
+       * oyente, en cambio, si estaba siempre puesto en la pagina, y los
+       * eventos de window cruzan los mundos: cualquier script de la PAGINA
+       * podia pedir abrir la ventana. Se quitaron los dos (tanda AI).
+       */
+      if (!self.YTMPip || !self.YTMPip.PipView) return "sin-script";
+      // open() dice que paso (tanda AF): "opened", "respaldo" (sin
+      // Document PiP, se abrio la ventana de respaldo) o "sin-extension".
       return self.YTMPip.PipView.open().then(
-        () => "opened",
+        (que) => que || "opened",
         (err) => (err && err.name) || "error"
       );
     }
@@ -413,7 +423,32 @@ async function focusSourceTab(senderTabId) {
   return { ok: true, tabId: found.id };
 }
 
+/*
+ * UNA ventana de respaldo como mucho (tanda AF). En un navegador sin
+ * Document PiP, el boton «Abrir ventana flotante» de la propia ventana de
+ * respaldo pedia la flotante, la pestaña no podia, y pedia... otra ventana
+ * de respaldo: una cada clic. Si ya hay una, se enfoca.
+ *
+ * getContexts (Chrome 116+) ve las paginas de la propia extension sin
+ * permiso "tabs". Sin la API, se abre como siempre.
+ */
+async function ventanaDeRespaldoAbierta() {
+  if (!chrome.runtime.getContexts) return null;
+  try {
+    const url = chrome.runtime.getURL("src/popup/popup.html");
+    const contextos = await chrome.runtime.getContexts({ contextTypes: ["TAB"], documentUrls: [url] });
+    return contextos.length && typeof contextos[0].windowId === "number" ? contextos[0].windowId : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 async function openFallbackWindow() {
+  const abierta = await ventanaDeRespaldoAbierta();
+  if (abierta !== null) {
+    await chrome.windows.update(abierta, { focused: true });
+    return;
+  }
   const { pipSize } = await chrome.storage.local.get(STORAGE_KEYS.PIP_SIZE);
   const dims = pipSize === "expanded" ? PIP_DIMENSIONS.EXPANDED : PIP_DIMENSIONS.COMPACT;
   await chrome.windows.create({
@@ -473,16 +508,19 @@ async function abrirPipDesdeElNavegador(clickedTab, origen) {
  * extension tampoco le da activacion a la pestaña, asi que lo normal era
  * un NotAllowedError que el menu recibia como exito, sin plan B.
  *
- * "event-fallback" es la pestaña sin script vivo en este mundo aislado
+ * "sin-script" es la pestaña sin script vivo en este mundo aislado
  * (abierta antes de instalar, o huerfana de una version anterior que la
  * reinyeccion no alcanzo): se le da script y se reintenta una vez.
  */
 async function intentarAbrir(target, origen) {
   let result = await openPipOnTab(target);
-  if (result === "event-fallback" && (await inyectarSiFalta(target)) === "inyectada") {
+  if (result === "sin-script" && (await inyectarSiFalta(target)) === "inyectada") {
     result = await openPipOnTab(target);
   }
   if (result === "opened") return "opened";
+  // Sin Document PiP no hay nada que destacar: la pestaña ya pidio la
+  // ventana de respaldo (openFallbackWindow no abre una segunda).
+  if (result === "respaldo") return "respaldo";
 
   if (result === "NotAllowedError") {
     // No es un fallo que se pueda reintentar: la API exige un gesto en la

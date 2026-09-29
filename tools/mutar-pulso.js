@@ -14,8 +14,6 @@
  * Mismo arnes que tools/mutar-velocidad.js: de usar y tirar, fuera de
  * `npm test`, y restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -172,8 +170,8 @@ const MUTACIONES = [
   {
     etiqueta: "el fotograma trata el 'no se sabe' como un cero",
     archivo: "src/pip/pip.js",
-    de: "      if (golpe !== null) ponerPulso(golpe);",
-    a: "      ponerPulso(golpe);"
+    de: "      if (golpe !== null) {",
+    a: "      {"
   },
   {
     etiqueta: "el pulso deja de publicarse (la medicion no llega al CSS)",
@@ -184,8 +182,8 @@ const MUTACIONES = [
   {
     etiqueta: "el valor publicado se sale de 0..1",
     archivo: "src/pip/pip.js",
-    de: "    const valor = Number.isFinite(golpe) ? Math.min(1, Math.max(0, golpe)) : 0;",
-    a: "    const valor = Number.isFinite(golpe) ? golpe : 0;"
+    de: "  function ponerPulso(golpe) {\n    if (!els.root) return;\n    const valor = Number.isFinite(golpe) ? Math.min(1, Math.max(0, golpe)) : 0;",
+    a: "  function ponerPulso(golpe) {\n    if (!els.root) return;\n    const valor = Number.isFinite(golpe) ? golpe : 0;"
   },
   {
     etiqueta: "la caratula se queda crecida al apagar el pulso con el espectro puesto",
@@ -222,8 +220,8 @@ const MUTACIONES = [
      */
     etiqueta: "la letra en grande deja de parar el pulso (se mide para nadie)",
     archivo: "src/pip/pip.js",
-    de: "    const alguienQuiere = (espectroPedido || pulsoPedido) && !letraEnGrande;",
-    a: "    const alguienQuiere = espectroPedido || pulsoPedido;"
+    de: "    const alguienQuiere = (espectroPedido || pulsoPedido || haloQuiereLatir) && !letraEnGrande;",
+    a: "    const alguienQuiere = espectroPedido || pulsoPedido || haloQuiereLatir;"
   },
   {
     /*
@@ -257,27 +255,27 @@ const MUTACIONES = [
      * o sea que contaba lo contrario de lo que hacia.
      */
     etiqueta: "el boton vuelve a prometer una caratula mientras hace latir un video",
-    archivo: "src/pip/pip.js",
-    de: '        : "Hacer que la imagen lata con los graves";',
-    a: '        : "Hacer que la carátula lata con los graves";'
+    archivo: "_locales/es/messages.json",
+    de: "\"Hacer que la imagen lata con los graves\"",
+    a: "\"Hacer que la carátula lata con los graves\""
   },
   {
     etiqueta: "el analizador no se monta si el espectro no lo pide tambien",
     archivo: "src/pip/pip.js",
-    de: "    const alguienQuiere = (espectroPedido || pulsoPedido) && !letraEnGrande;",
-    a: "    const alguienQuiere = espectroPedido && !letraEnGrande;"
+    de: "    const alguienQuiere = (espectroPedido || pulsoPedido || haloQuiereLatir) && !letraEnGrande;",
+    a: "    const alguienQuiere = (espectroPedido || haloQuiereLatir) && !letraEnGrande;"
   },
   {
     etiqueta: "apagar el espectro suelta el analizador con el pulso todavia pedido",
     archivo: "src/pip/pip.js",
-    de: "    if (!espectroPedido && !pulsoPedido) YTMPip.Espectro.desconectar();",
+    de: "    if (!espectroPedido && !pulsoPedido && !haloQuiereLatir) YTMPip.Espectro.desconectar();",
     a: "    YTMPip.Espectro.desconectar();"
   },
   {
     etiqueta: "la animacion se corta con el pulso encendido (late un solo fotograma)",
     archivo: "src/pip/pip.js",
-    de: "    if (!els.spectrum.hidden || pulsoActivo) {",
-    a: "    if (!els.spectrum.hidden) {"
+    de: "    if (!els.spectrum.hidden || pulsoActivo || haloLate) {",
+    a: "    if (!els.spectrum.hidden || haloLate) {"
   },
   {
     etiqueta: "el boton del pulso se ofrece aunque el audio no se pueda medir",
@@ -305,70 +303,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-let deliberadas = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (!caidas.length) {
-    if (m.deliberada) {
-      deliberadas++;
-      console.log(`  (vive) ${m.etiqueta}\n         superviviente documentada: no puede cambiar el comportamiento`);
-    } else {
-      sobreviven++;
-      console.error(`  VIVE  ${m.etiqueta}`);
-    }
-  } else {
-    muertas++;
-    if (m.deliberada) {
-      console.error(`  ??  ${m.etiqueta}\n      (se declaro inmatable y una prueba la mato: revisa el comentario)`);
-    }
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-const enJuego = MUTACIONES.length - deliberadas;
-console.log(
-  `\n${muertas} de ${enJuego} mutaciones detectadas; ${sobreviven} sobreviven.` +
-    (deliberadas ? ` (${deliberadas} mas viven a proposito y estan documentadas.)` : "")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

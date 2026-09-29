@@ -241,6 +241,10 @@ abre antes de pegarla en la consola.
    «Sin publicar» a una sección con el número y la fecha.
 4. Reempaquetar: `tools/empaquetar.ps1` + `tools/revisar-zip.js` — el zip
    sale con el número nuevo en el nombre.
+   Antes de subirlo, con la extensión desempaquetada de esa versión y una
+   canción sonando, pegar `tools/diagnostico-publicacion.js` en la consola
+   de cada sitio (contexto «Music PiP» en el desplegable de DevTools): si
+   dice FALLO, no se publica sin mirarlo (tanda AL).
 5. Consola → el elemento → **Package** → **Upload new package** → subir el
    zip → **Submit for review**.
 6. Los usuarios se actualizan solos (Chrome busca cada pocas horas); no hay

@@ -26,7 +26,8 @@ const URL_DE_SPOTIFY = "https://open.spotify.com/album/1uD1kdwTWH1DZQZqGKz6rY";
 
 // Prefijos MEDIDOS de los dibujos del boton de play/pausa (el aria-label
 // viene traducido; el path no). Pausa a la vista = suena; play = pausado.
-const DIBUJO_DE_PAUSA = "M2.7 1a.7.7 0 0 0-.7.7v12.6";
+// El de pausa ("M2.7 1a.7.7 0 0 0-.7.7v12.6") ya lo traen las fixtures
+// que suenan; aqui solo hace falta escribir el de play.
 const DIBUJO_DE_PLAY = "M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288";
 
 /** El entorno estandar, pero viviendo en open.spotify.com. */

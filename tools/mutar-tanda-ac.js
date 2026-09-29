@@ -9,8 +9,6 @@
  * de OneDrive): de usar y tirar, fuera de `npm test`, y restaura los
  * archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -49,8 +47,8 @@ const MUTACIONES = [
   {
     "etiqueta": "el color no distingue la pausa",
     "archivo": "src/background/service-worker.js",
-    "de": "estado && estado.playing ? SPECTRUM_LIMITS.COLOR_SUGGESTED : \"#5f6368\"",
-    "a": "SPECTRUM_LIMITS.COLOR_SUGGESTED"
+    "de": "estado && estado.playing ? acentoDelIcono || SPECTRUM_LIMITS.COLOR_SUGGESTED : \"#5f6368\"",
+    "a": "acentoDelIcono || SPECTRUM_LIMITS.COLOR_SUGGESTED"
   },
   {
     "etiqueta": "la preferencia guardada no se lee",
@@ -67,7 +65,7 @@ const MUTACIONES = [
   {
     "etiqueta": "cambiar la preferencia no la apunta",
     "archivo": "src/background/service-worker.js",
-    "de": "    iconoPermitido = cambios[STORAGE_KEYS.BADGE_PREFERENCE].newValue !== \"hidden\";",
+    "de": "    if (etiqueta) iconoPermitido = etiqueta.newValue !== \"hidden\";",
     "a": "    ;"
   },
   {
@@ -96,76 +94,6 @@ const MUTACIONES = [
   }
 ];
 
-/*
- * Escribir con reintentos. OneDrive bloquea un archivo unos instantes
- * mientras lo sincroniza, y en la primera pasada de esta tanda un bloqueo
- * cayo JUSTO en la restauracion: constants.js se quedo mutado y hubo que
- * devolverlo a mano. Un error de escritura aqui no es «la mutacion fallo»,
- * es «vuelve a intentarlo en un momento».
- */
-function escribir(ruta, texto) {
-  for (let intento = 1; ; intento++) {
-    try {
-      fs.writeFileSync(ruta, texto);
-      return;
-    } catch (err) {
-      if (intento >= 40) throw err;
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
-    }
-  }
-}
-
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  escribir(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    escribir(ruta, original);
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-console.log(`\n${muertas} de ${MUTACIONES.length} mutaciones detectadas; ${sobreviven} sobreviven.`);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

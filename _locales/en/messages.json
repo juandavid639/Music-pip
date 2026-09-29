@@ -126,7 +126,7 @@
     "message": "off"
   },
   "eq_aviso_1": {
-    "message": "With \u201cOff\u201d the sound is untouched. As soon as you pick any other option, the tab's audio starts going through the equalizer, and"
+    "message": "With “Off” the sound is untouched. As soon as you pick any other option, the tab's audio starts going through the equalizer, and"
   },
   "eq_aviso_2": {
     "message": "keeps going through it even if you turn it off again"
@@ -147,7 +147,7 @@
     "message": "Tip: lowering is free. If you want to hear more bass, lower the other bands instead of raising the bass one — you only pay for raising."
   },
   "eq_pista_3": {
-    "message": "And about \u201cOff\u201d: it leaves the sound as is, but if you ever turned the equalizer on, the detour stays in place inside until you reload the tab."
+    "message": "And about “Off”: it leaves the sound as is, but if you ever turned the equalizer on, the detour stays in place inside until you reload the tab."
   },
   "eq_pregunta": {
     "message": "Why does raising a band make it sound quieter?"
@@ -180,7 +180,7 @@
     "message": "Setting"
   },
   "fila_ajuste_ayuda": {
-    "message": "Pick a ready-made one or move the bands yourself, which is what \u201cMy own\u201d means."
+    "message": "Pick a ready-made one or move the bands yourself, which is what “My own” means."
   },
   "fila_al_abrir": {
     "message": "When it opens, show"
@@ -219,13 +219,13 @@
     "message": "Colors"
   },
   "fila_colores_ayuda": {
-    "message": "The look of the window. It also decides what color the sound bars get if you leave them on \u201cThe theme's\u201d."
+    "message": "The look of the window. It also decides what color the sound bars get if you leave them on “The theme's”."
   },
   "fila_cuantas_barras": {
     "message": "How many bars"
   },
   "fila_cuantas_barras_ayuda": {
-    "message": "\u201cAs many as fit\u201d shows more or fewer depending on how wide the window is."
+    "message": "“As many as fit” shows more or fewer depending on how wide the window is."
   },
   "fila_cuantos_colores": {
     "message": "How many colors"
@@ -285,7 +285,7 @@
     "message": "Size when it opens"
   },
   "fila_tamano_ayuda": {
-    "message": "If you resize it by dragging an edge, it gets noted down; with \u201cAs I left it\u201d it will open like that next time."
+    "message": "If you resize it by dragging an edge, it gets noted down; with “As I left it” it will open like that next time."
   },
   "fila_tu_color": {
     "message": "Your color"
@@ -617,6 +617,9 @@
   "sin_reproduccion": {
     "message": "Nothing playing"
   },
+  "sin_ventana_flotante": {
+    "message": "This browser has no floating window: this is the fallback one."
+  },
   "solo_caratula": {
     "message": "Artwork only"
   },
@@ -715,5 +718,38 @@
   },
   "volver_al_sitio": {
     "message": "Back to $1"
+  },
+  "sitio_cambio": {
+    "message": "The site changed: some controls may not respond"
+  },
+  "tarjeta_copia": {
+    "message": "Your preferences"
+  },
+  "tarjeta_copia_intro": {
+    "message": "Take them to another computer in a file, or go back to how the extension came. The file only holds the preferences on this page and stays wherever you save it."
+  },
+  "boton_exportar": {
+    "message": "Export to a file"
+  },
+  "boton_importar": {
+    "message": "Import from a file"
+  },
+  "boton_restaurar": {
+    "message": "Restore factory settings"
+  },
+  "confirmar_restaurar": {
+    "message": "Restore factory settings? Your preferences will be lost (songs with a pinned equalizer are kept)."
+  },
+  "preferencias_exportadas": {
+    "message": "Preferences exported."
+  },
+  "preferencias_importadas": {
+    "message": "Preferences imported."
+  },
+  "preferencias_no_validas": {
+    "message": "That file is not Music PiP preferences: nothing was changed."
+  },
+  "preferencias_restauradas": {
+    "message": "Factory settings restored."
   }
 }

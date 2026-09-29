@@ -192,6 +192,8 @@
         const que = respuesta && respuesta.ok === false ? respuesta.result : null;
         if (que === "destacado") els.status.textContent = t("abrir_desde_la_pagina");
         else if (que === "sin-lanzador") els.status.textContent = t("recargar_pestana_musical");
+        // Sin Document PiP (tanda AF): esta ventana ES la de respaldo.
+        else if (que === "respaldo") els.status.textContent = t("sin_ventana_flotante");
       })
       .catch((err) => {
         console.warn("[YTMPip] La peticion de abrir la ventana no llego", err);

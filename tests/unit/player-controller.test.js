@@ -174,7 +174,7 @@ test("TOGGLE_MUTE alterna en ambos sentidos", () => {
 });
 
 test("TOGGLE_LIKE pulsa el boton de me gusta, no el de no me gusta", () => {
-  const { win, YTMPip, TIPOS } = entornoControlador();
+  const { YTMPip, TIPOS } = entornoControlador();
   const like = espiarClic(YTMPip.Adapter.getLikeButton());
   const dislike = espiarClic(YTMPip.Adapter.getDislikeButton());
 
@@ -305,7 +305,6 @@ test("TOGGLE_PLAY en una pagina vacia no lanza", () => {
  * ------------------------------------------------------------------ */
 
 const URL_DE_SPOTIFY = "https://open.spotify.com/album/1uD1kdwTWH1DZQZqGKz6rY";
-const DIBUJO_DE_PAUSA = "M2.7 1a.7.7 0 0 0-.7.7v12.6";
 const DIBUJO_DE_PLAY = "M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288";
 
 /*

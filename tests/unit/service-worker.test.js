@@ -46,10 +46,10 @@ function pestana(id, url, extra = {}) {
  * Monta un service worker. `pestanas` se comparte entre despertares (son
  * las del navegador), igual que `sesion` y `local`.
  */
-function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", fallaVentana = false } = {}) {
+function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", fallaVentana = false, contextos = [] } = {}) {
   const oyentes = {};
   const ev = (nombre) => ({ addListener: (fn) => (oyentes[nombre] = oyentes[nombre] || []).push(fn) });
-  const registro = { enviados: [], inyecciones: [], destacados: [], ventanas: [], creadas: [], avisos: [], insignias: [], colores: [] };
+  const registro = { enviados: [], inyecciones: [], destacados: [], ventanas: [], creadas: [], avisos: [], insignias: [], colores: [], enfocadas: [] };
 
   const pick = (almacen, claves) => {
     if (claves == null) return Object.assign({}, almacen);
@@ -68,7 +68,9 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
     if (tab.vivo) {
       g.YTMPip = {
         PipView: {
-          open: () => (abrir === "opened" ? Promise.resolve() : Promise.reject({ name: abrir })),
+          // "respaldo" (tanda AF): la pestaña no tiene Document PiP y lo dice.
+          open: () =>
+            abrir === "opened" ? Promise.resolve() : abrir === "respaldo" ? Promise.resolve("respaldo") : Promise.reject({ name: abrir }),
           destacarLanzador: () => {
             registro.destacados.push(tab.id);
             return tab.lanzador !== false;
@@ -84,6 +86,8 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
       id: "id-de-prueba",
       getURL: (p) => `chrome-extension://id-de-prueba/${p}`,
       getManifest: () => MANIFIESTO,
+      // Las paginas de la extension abiertas (tanda AF: la ventana de respaldo).
+      getContexts: async () => contextos,
       onInstalled: ev("instalar"),
       onStartup: ev("arrancar"),
       onMessage: ev("mensaje")
@@ -138,7 +142,7 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
         if (fallaVentana) throw new Error("no se pudo crear la ventana");
         registro.ventanas.push(o);
       },
-      update: async () => ({})
+      update: async (id, cambios) => void registro.enfocadas.push([id, cambios])
     },
     action: {
       onClicked: ev("icono"),
@@ -393,6 +397,19 @@ test("el icono sobre una pestaña sin script vivo le da script y reintenta", asy
   assert.deepStrictEqual(w.registro.destacados, [], "se abrio al segundo intento: no habia nada que destacar");
 });
 
+test("TANDA AI: sin script vivo no se dispara ningun evento en la pagina (la puerta ytmpip:open-pip se cerro)", async () => {
+  /*
+   * El evento no lo podia oir nadie (su oyente vivia en el mismo pip.js
+   * que publica PipView) y el oyente dejaba abrir la ventana a cualquier
+   * script de la pagina. Se contesta «sin-script» y el service worker da
+   * script y reintenta, que es lo que ya hacia.
+   */
+  const w = trabajador({ pestanas: [pestana(7, YTM, { vivo: false })] });
+  await w.disparar("icono", pestana(7, YTM));
+  assert.deepStrictEqual(w.registro.avisos.filter((a) => a[0] === "evento"), []);
+  assert.deepStrictEqual(w.registro.inyecciones.map((i) => i.id), [7], "sin script, se le da script");
+});
+
 test("REGRESION TANDA T: si la ventana de respaldo no se puede crear, el que la pidio recibe respuesta", async () => {
   const w = trabajador({ fallaVentana: true });
   const r = await w.mensaje("OPEN_FALLBACK_WINDOW");
@@ -476,4 +493,29 @@ test("...y cambiarlo en Preferencias repinta la etiqueta al momento", async () =
   await w.disparar("almacen", { accentColor: { newValue: "#12ab34" } }, "local");
   await new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(ultima(w.registro.colores), "#12ab34");
+});
+
+/* ==================================================================
+ * 6. La ventana de respaldo (tanda AF)
+ * ================================================================== */
+
+test("REGRESION TANDA AF: sin Document PiP, el menu recibe «respaldo» y no «abierta»", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM)], abrir: "respaldo" });
+  const r = await w.mensaje("OPEN_PIP_REQUEST");
+  assert.deepStrictEqual([r.ok, r.result], [false, "respaldo"]);
+  assert.deepStrictEqual(w.registro.destacados, [], "no hay boton que destacar: la ventana de respaldo ya esta pedida");
+});
+
+test("REGRESION TANDA AF: si ya hay una ventana de respaldo, se enfoca en vez de abrir otra", async () => {
+  const w = trabajador({ contextos: [{ windowId: 42 }] });
+  const r = await w.mensaje("OPEN_FALLBACK_WINDOW");
+  assert.strictEqual(r.ok, true);
+  assert.deepStrictEqual(w.registro.ventanas, [], "se abrio una segunda ventana de respaldo");
+  assert.strictEqual(w.registro.enfocadas[0][0], 42);
+});
+
+test("...y si no hay ninguna, se abre", async () => {
+  const w = trabajador();
+  await w.mensaje("OPEN_FALLBACK_WINDOW");
+  assert.strictEqual(w.registro.ventanas.length, 1);
 });

@@ -7621,6 +7621,157 @@ subir los tres archivos y reempaquetar).
 NO MEDIDO en vivo: la vista previa y el acento dentro de la extensión de
 verdad, cambiando opciones con el ratón.
 
+## Más robusta (las tandas AF a AL, pedidas tras la 1.1.1)
+
+El autor preguntó «qué otros cambios podemos implementar para que quede más
+robusta» y eligió todas las propuestas menos una (R12, `use_dynamic_url`).
+Siete tandas, sin versión todavía.
+
+### La ventana dice qué pasó al abrirse (tanda AF)
+
+`open()` devuelve lo que ocurrió: `"opened"`, `"respaldo"` (el navegador no
+tiene Document PiP y se pidió la ventana de respaldo) o `"sin-extension"`
+(la pestaña quedó huérfana). Antes el service worker oía siempre «abierta».
+Tres arreglos cuelgan de ahí:
+
+- **Una ventana de respaldo como mucho.** Sin Document PiP, el botón «Abrir
+  ventana flotante» de la propia ventana de respaldo pedía otra ventana de
+  respaldo a cada clic. Ahora `chrome.runtime.getContexts` (sin permiso
+  nuevo) la encuentra y se enfoca.
+- El menú lo dice con una frase propia en vez de parpadear el botón PiP.
+- **El muestreo del color no se queda colgado.** Si una ventana moría sin
+  `pagehide`, su temporizador de muestreo seguía apuntado y ninguna ventana
+  posterior volvía a leer el color. `abrirVentana` lo olvida todo.
+
+Mutación (`tools/mutar-tanda-af.js`): 9 de 9, **9 de 9 exactos** en la
+segunda pasada. En la primera, el olvido del muestreo sobrevivió por culpa
+del banco: en jsdom los temporizadores de la ventana «muerta» seguían vivos
+y hacían la lectura por la nueva; la prueba ahora los mata, como Chrome.
+Deliberada: el `return "respaldo"` temprano, que solo evita un aviso de
+consola falso.
+
+### El arnés de mutación, uno solo, y ESLint (tanda AG)
+
+Los 24 `tools/mutar-*.js` llevaban cada uno su bucle (cinco variantes; solo
+las nuevas reintentaban al escribir, y eso ya costó un `constants.js`
+mutado en la tanda Y). Ahora todos llaman a **`tools/mutar-comun.js`**:
+escribe con reintentos, restaura pase lo que pase (también con Ctrl+C) y
+**comprueba leyendo** que el archivo quedó byte a byte, compara cada
+mutante con su predicción (`esperadas`), y entiende `equivalente` y
+`deliberada`. Dos modos nuevos:
+
+- `MUTAR_SOLO_COMPROBAR=1`: no muta; mira que cada texto a mutar siga en
+  el código, una vez. **La primera pasada destapó 64 mutaciones de 485 que
+  buscaban un texto que ya no existía**: no probaban nada y el arnés viejo
+  las contaba entre muchas líneas que nadie leía. Se reapuntaron todas (una
+  se retiró, con comentario: la vigila mejor la tanda T) y se volvieron a
+  correr: todas mueren. Una reapuntada sobrevivió al principio porque la
+  traduje mal, y se corrigió. `tests/unit/mutar-comun.test.js` corre este
+  modo sobre los 24 scripts en cada `npm test`: tocar una línea vigilada
+  obliga a reapuntar en el mismo cambio. En esta misma tanda lo pilló una
+  vez (el filtro de la tanda V, al que la tarjeta nueva le copió el texto).
+- `MUTAR_SOLO_ETIQUETAS=<expresión>`: solo las elegidas, para verificar lo
+  reapuntado sin pagar la media hora del espectro entero.
+
+**ESLint** (`eslint.config.js`, `npm run lint`, en CI antes de las pruebas)
+con dos reglas y ninguna de estilo: `no-undef` y `no-unused-vars`. Encontró
+un fallo real: el guion de consola del limitador acababa **cada medición en
+un ReferenceError** (una variable de una fase que ya no existía). También
+encontró una variable `lyricsTimer` que nadie leía y tres restos en las
+pruebas.
+
+Mutación del arnés: 6 de 6, exactos en la segunda pasada (en la primera
+caían en 2 y no en 1: cada mutante quita el texto que ancla su propio
+script, y también cae esa fila).
+
+### El cortafuegos de la ventana (tanda AH)
+
+`render()` pinta una docena de cosas seguidas, y una excepción en
+cualquiera se llevaba por delante todo lo de detrás: un cambio del HTML del
+sitio podía dejar el título de la canción anterior para siempre. Ahora cada
+sección va en `aislado(sección, fn, respaldo)`. Si falla, las demás siguen
+y se apunta en la consola **una vez** por sección, con la traza. El bucle
+de fotogramas igual: un lienzo que revienta ya no corta el pulso ni el
+halo. Mutación 5 de 5, exactos. Sin prueba propia: cada una de las once
+llamadas por separado (se prueba el mecanismo) y los dos latidos de 300 ms.
+
+### El relevo y la puerta cerrada (tanda AI)
+
+- **El relevo.** Tras una actualización, la copia vieja del content script
+  seguía trabajando en cada pestaña (dos lecturas por latido hasta recargar
+  la pestaña). Ahora cada copia anuncia al arrancar un evento
+  `ytmpip:relevo` en el DOM. La huérfana que lo oye se retira: suelta el
+  observador, las escuchas del `<video>` y el temporizador. Si tiene su
+  ventana abierta, la sigue sirviendo y se retira al cerrarse. Soltar las
+  escuchas no es solo ahorro: cada `timeupdate` comprueba el temporizador de
+  apagado, y una huérfana podría pausar la música con un plazo viejo.
+  **Honesto**: la copia que se retira tiene que saber oír, así que esto
+  funciona a partir de la versión que lo trae.
+- **La puerta `ytmpip:open-pip`.** `pip.js` escuchaba ese evento en
+  `window` y abría la ventana. Los eventos de `window` cruzan los mundos
+  aislados, así que cualquier script de la página podía pedirlo. Y no lo
+  usaba nadie: el service worker solo lo disparaba cuando `PipView` no
+  existía, que es cuando el oyente tampoco. Se quitaron los dos; sin script
+  el service worker oye `"sin-script"` y da script, como ya hacía.
+
+Mutación 8 de 8, exactos en la segunda pasada. En la primera, «el
+observador sigue puesto» sobrevivió: la prueba no cambiaba el DOM antes del
+latido que miraba.
+
+### Tus preferencias: exportar, importar y volver a las de fábrica (tanda AJ)
+
+Tarjeta nueva al pie de Preferencias:
+
+- **Qué viaja.** Solo las claves que `settings.js` clasifica como «se
+  aplican», rellenadas con los valores de serie. Ni el último estado, ni el
+  tamaño anotado, ni las canciones fijadas.
+- **Qué entra.** El archivo es entrada no confiable: tiene que ser nuestro
+  (`app: "music-pip"`). Las claves que no son preferencias se tiran, y cada
+  valor pasa por `Settings.normalize`, las mismas reglas con las que lee la
+  ventana. Lo que el archivo no trae no se toca.
+- **Restaurar.** Pide confirmación y borra las preferencias y nada más.
+
+La descarga es un `<a download>` con un Blob: **sin permiso nuevo**. La
+política de privacidad lo cuenta (en los dos idiomas). Mutación 6 de 6,
+exactos. Sin prueba: vaciar el selector de archivo para poder importar dos
+veces el mismo (en jsdom no se distingue).
+
+### La salud del adaptador (tanda AK)
+
+Si mientras suena algo faltan el botón de reproducir, el de siguiente o el
+título, casi seguro que el sitio cambió su HTML. La ventana lo dice en su
+línea de estado («El sitio cambió: algunos mandos pueden no responder»), y
+la consola nombra lo que falta, una vez por cada lista distinta. Solo
+mientras suena: sin música, que falten es lo normal. La lista de piezas
+vitales es corta a propósito y vive en el registro de adaptadores
+(`Adaptadores.salud()`). Mutación 6 de 6, exactos.
+
+### Dos guiones de consola para antes de publicar (tanda AL)
+
+Se pegan en la consola de la pestaña **con el contexto «Music PiP»
+elegido** en el desplegable de DevTools. Así leen el adaptador vivo, sin
+copiar selectores.
+
+- `tools/diagnostico-publicacion.js`: la comprobación de veinte segundos
+  por sitio. Dice qué selector casa (el principal o un respaldo, que es el
+  aviso temprano), la salud, el estado leído, la letra, y si la ventana
+  tiene botón y API. Deja el veredicto en el portapapeles.
+- `tools/diagnostico-fixture.js`: recorta del DOM vivo lo que leen los
+  getters del adaptador, con sus antepasados vacíos, sin scripts, estilos
+  ni manejadores. Deja una fixture lista en el portapapeles. **Léela antes
+  de guardarla**: el texto (títulos, letra, cola) se queda.
+
+`tests/unit/guiones-consola.test.js` los ejecuta de verdad. La prueba
+fuerte es la ida y vuelta: capturar y releer da lo mismo, en YouTube Music
+(controles, letra, sin letra, Better Lyrics, cola) y en Spotify. Mutación 4
+de 4, exactos en la segunda pasada. Deliberada: el esqueleto de
+antepasados, que ningún selector de hoy necesita (todos tienen respaldo sin
+contexto) y se queda como seguro para los futuros.
+
+**Sin probar en vivo**: los dos guiones en los sitios reales, el relevo tras
+una actualización de verdad, y el cortafuegos y la salud con un cambio real
+del sitio.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

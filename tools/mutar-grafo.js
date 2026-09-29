@@ -22,8 +22,6 @@
  * Mismo arnes que tools/mutar-ecualizador.js: de usar y tirar, fuera de
  * `npm test`, y restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -82,8 +80,8 @@ const MUTACIONES = [
   {
     etiqueta: "PUERTA: una pista cifrada tambien cruza (y el navegador da silencio)",
     archivo: GRAFO,
-    de: "    return Boolean(video) && !video.mediaKeys && hayWebAudio();",
-    a: "    return Boolean(video) && hayWebAudio();"
+    de: "    return Boolean(video) && !video.mediaKeys && hayWebAudio() && sitioLoAdmite();",
+    a: "    return Boolean(video) && hayWebAudio() && sitioLoAdmite();"
   },
 
   /* ---------- las que dejan el contexto dormido ---------- */
@@ -298,88 +296,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-/*
- * Las marcadas `equivalente` se cuentan aparte y NO tumban el proceso.
- *
- * Una mutacion equivalente es la que produce un programa que se comporta
- * igual en todo estado alcanzable: no hay prueba que pueda distinguirla, asi
- * que contarla como "prueba que falta" es mentir sobre la cobertura, y
- * borrar el codigo para que muera es dejar el programa peor por complacer a
- * una herramienta. El motivo de cada una esta en su comentario.
- *
- * Se sigue ejecutando, y si alguna vez MUERE hay que venir aqui: significa
- * que el codigo cambio y el razonamiento de su comentario ya no vale.
- */
-let equivalentes = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (m.equivalente) {
-    equivalentes++;
-    if (caidas.length) {
-      sobreviven++;
-      console.error(
-        `  OJO  ${m.etiqueta}\n` +
-          "      Estaba marcada como equivalente y ahora MUERE: el codigo ha cambiado\n" +
-          "      y el razonamiento de su comentario ya no vale. Quitale la marca."
-      );
-    } else {
-      console.log(`  (equivalente, a proposito) ${m.etiqueta}`);
-    }
-    continue;
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.slice(0, 3).join(" | ")}`);
-  }
-}
-
-console.log(
-  `\n${muertas} de ${MUTACIONES.length - equivalentes} mutaciones detectadas; ` +
-    `${sobreviven} sobreviven` +
-    (equivalentes ? `; ${equivalentes} equivalente(s) aparte.` : ".")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

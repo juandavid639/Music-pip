@@ -32,16 +32,24 @@
  * Mismo arnes que los demas: de usar y tirar, fuera de `npm test`, y
  * restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
 const PRUEBAS = ["tests/unit/manifiesto-tienda.test.js"];
 
-/* La descripcion tal cual esta, para no repetirla en cada mutacion. */
-const DESCRIPCION =
-  '  "description": "Ventana flotante para controlar YouTube Music: portada, letra, ecualizador y atajos. No oficial, no afiliado a Google.",';
+/*
+ * LO QUE CAMBIA CON CADA VERSION SE LEE, NO SE COPIA (tanda AG). Aqui
+ * estaban escritos a mano la descripcion, la version y los sitios, y con
+ * las versiones se quedaron viejos: cinco de las diez mutaciones buscaban
+ * un texto que ya no existia y no probaban nada (el arnes lo decia con
+ * «??» y nadie lo miraba). Ahora se leen de los archivos al arrancar.
+ */
+const CATALOGO = "_locales/es/messages.json";
+const TEXTO_DESCRIPCION = JSON.parse(fs.readFileSync(path.join(RAIZ, CATALOGO), "utf8")).extension_descripcion.message;
+const DESCRIPCION = '    "message": ' + JSON.stringify(TEXTO_DESCRIPCION);
+const VERSION = JSON.parse(fs.readFileSync(path.join(RAIZ, "manifest.json"), "utf8")).version;
+const SITIOS = '      "matches": ["https://music.youtube.com/*", "https://www.youtube.com/*", "https://open.spotify.com/*"],';
 
 /* Los dos permisos, juntos, tal cual estan en el manifiesto. */
 const PERMISOS = '    "storage",\n    "scripting"';
@@ -56,11 +64,11 @@ const MUTACIONES = [
      * es el estado del que se venia.
      */
     etiqueta: "vuelve la descripcion de 137 caracteres (la ficha admite 132)",
-    archivo: "manifest.json",
+    archivo: CATALOGO,
     de: DESCRIPCION,
     a:
-      '  "description": "Ventana flotante (Picture-in-Picture) independiente para controlar ' +
-      'YouTube Music. Producto no oficial, no afiliado a Google ni a YouTube.",'
+      '    "message": "Ventana flotante (Picture-in-Picture) independiente para YouTube Music, ' +
+      'YouTube y Spotify. No oficial, no afiliada a Google ni a Spotify."'
   },
   {
     /*
@@ -69,9 +77,9 @@ const MUTACIONES = [
      * que vienen muy bien. Es exactamente por eso que hay que sujetarlo.
      */
     etiqueta: "el recorte se lleva por delante el «no oficial»",
-    archivo: "manifest.json",
+    archivo: CATALOGO,
     de: DESCRIPCION,
-    a: '  "description": "Ventana flotante para controlar YouTube Music: portada, letra, ecualizador y atajos.",'
+    a: '    "message": "Ventana flotante para YouTube Music, YouTube y Spotify: portada, letra, ecualizador y atajos."'
   },
 
   /* ---- Permisos ---- */
@@ -94,10 +102,10 @@ const MUTACIONES = [
     a: '    "scripting"'
   },
   {
-    etiqueta: "el content script entra en todo YouTube, no solo en Music",
+    etiqueta: "el content script entra en todo YouTube, no solo en los sitios declarados",
     archivo: "manifest.json",
-    de: '      "matches": ["https://music.youtube.com/*"],',
-    a: '      "matches": ["https://*.youtube.com/*"],'
+    de: SITIOS,
+    a: '      "matches": ["https://*.youtube.com/*", "https://open.spotify.com/*"],'
   },
 
   /* ---- El nombre, repartido en seis sitios ---- */
@@ -133,81 +141,17 @@ const MUTACIONES = [
   {
     etiqueta: "package.json y el manifiesto se van a versiones distintas",
     archivo: "package.json",
-    de: '  "version": "1.0.0",',
-    a: '  "version": "1.0.1",'
+    de: '  "version": "' + VERSION + '",',
+    a: '  "version": "' + VERSION + '9",'
   },
   {
     etiqueta: "la version deja de ser la que Chrome sabe leer",
     archivo: "manifest.json",
-    de: '  "version": "1.0.0",',
-    a: '  "version": "1.0.0-beta",'
+    de: '  "version": "' + VERSION + '",',
+    a: '  "version": "' + VERSION + '-beta",'
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-let deliberadas = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (!caidas.length) {
-    if (m.deliberada) {
-      deliberadas++;
-      console.log(`  (vive) ${m.etiqueta}\n         superviviente documentada: no puede cambiar el comportamiento`);
-    } else {
-      sobreviven++;
-      console.error(`  VIVE  ${m.etiqueta}`);
-    }
-  } else {
-    muertas++;
-    if (m.deliberada) {
-      console.error(`  ??  ${m.etiqueta}\n      (se declaro inmatable y una prueba la mato: revisa el comentario)`);
-    }
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-const enJuego = MUTACIONES.length - deliberadas;
-console.log(
-  `\n${muertas} de ${enJuego} mutaciones detectadas; ${sobreviven} sobreviven.` +
-    (deliberadas ? ` (${deliberadas} mas viven a proposito y estan documentadas.)` : "")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

@@ -271,3 +271,29 @@ test("acentoSeLeeMal: el rojo de siempre se lee sobre el oscuro; un casi negro o
   assert.strictEqual(mal([255, 255, 0], [255, 255, 255]), true, "amarillo sobre blanco");
   assert.strictEqual(mal([255, 238, 238], [15, 15, 15]), true, "tan claro que la tinta blanca del boton no se ve");
 });
+
+/* ---------- El muestreo tras una ventana que murio sin despedirse (tanda AF) ---------- */
+
+test("REGRESION TANDA AF: una ventana que murio sin pagehide no deja el color de la caratula bloqueado", async () => {
+  // Sin halo ni espectro que pidan color: el unico que lo pide es el tema.
+  const v = await ventana({ extra: { haloPreference: "hidden", spectrumColor: "accent" } });
+  const vieja = v.actual();
+  // Muere de golpe: ni pagehide ni pararMuestreoFuente. Y con ella sus
+  // temporizadores, como en Chrome: en jsdom seguirian vivos, y el muestreo
+  // de la ventana muerta —que lee el estado ACTUAL— haria la lectura por la
+  // nueva y taparia el fallo (asi sobrevivio la primera mutacion de la AF).
+  for (let id = 1; id < 2000; id++) vieja.clearInterval(id);
+  Object.defineProperty(vieja, "closed", { value: true, configurable: true });
+  await v.win.YTMPip.PipView.open();
+  assert.notStrictEqual(v.actual(), vieja, "premisa: se abrio otra ventana");
+
+  const pedidas = [];
+  v.win.Image = class {
+    set src(url) {
+      pedidas.push(url);
+    }
+  };
+  v.win.YTMPip.PipView.onStateUpdate({ connected: true, title: "x", artist: "y", artworkUrl: "https://ejemplo/otra.jpg" });
+  await new Promise((r) => setTimeout(r, 450));
+  assert.deepStrictEqual(pedidas, ["https://ejemplo/otra.jpg"], "la ventana nueva no volvio a leer el color");
+});

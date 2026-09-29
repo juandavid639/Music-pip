@@ -743,6 +743,10 @@
     // El color de acento (tanda AE), con la misma regla en la ventana, la
     // vista previa y la pagina de opciones.
     normalizarAcento,
+    // Lo guardado, saneado: la usa la pagina de opciones al IMPORTAR un
+    // archivo (tanda AJ), para que lo que entra de fuera pase por las
+    // mismas reglas que lo que lee la ventana. Pura.
+    normalize,
     // Si cambiar esta clave cambia algo que se ve (la lista de arriba, la
     // que clasifica el censo de settings-recargas.test.js). La usa la
     // pagina de opciones para repintarse cuando otro contexto escribe, sin

@@ -13,8 +13,6 @@
  * Mismo arnes que tools/mutar-lanzador.js: de usar y tirar, fuera de
  * `npm test`, y restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -70,8 +68,8 @@ const MUTACIONES = [
   {
     etiqueta: "las tres posiciones comparten el mismo texto",
     archivo: "src/pip/pip.js",
-    de: '    NONE: "Repetir: desactivado",\n    ALL: "Repetir: toda la lista",\n    ONE: "Repetir: esta canción"',
-    a: '    NONE: "Repetir",\n    ALL: "Repetir",\n    ONE: "Repetir"'
+    de: '    NONE: "repetir_desactivado",\n    ALL: "repetir_lista",\n    ONE: "repetir_cancion"',
+    a: '    NONE: "repetir_desactivado",\n    ALL: "repetir_desactivado",\n    ONE: "repetir_desactivado"'
   },
   {
     etiqueta: "el boton se enciende tambien con NONE",
@@ -88,8 +86,8 @@ const MUTACIONES = [
   {
     etiqueta: "el estado se ve pero no se anuncia a quien no ve el dibujo",
     archivo: "src/pip/pip.js",
-    de: "    els.repeat.setAttribute(\"aria-label\", ETIQUETA_REPETIR[modo]);",
-    a: '    els.repeat.setAttribute("aria-label", "Repetir");'
+    de: '    els.repeat.setAttribute("aria-label", t(ETIQUETA_REPETIR[modo]));',
+    a: '    els.repeat.setAttribute("aria-label", t("repetir"));'
   },
   {
     etiqueta: "render deja de pintar el modo",
@@ -99,57 +97,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-console.log(`\n${muertas} de ${MUTACIONES.length} mutaciones detectadas; ${sobreviven} sobreviven.`);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

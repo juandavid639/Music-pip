@@ -36,8 +36,6 @@
  * Mismo arnes que los demas: de usar y tirar, fuera de `npm test`, y
  * restaura los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -186,8 +184,8 @@ const MUTACIONES = [
   {
     etiqueta: "el titulo de la cancion deja de llegar a su sitio",
     archivo: "src/popup/popup.js",
-    de: '    els.title.textContent = state.title || "Sin reproducción";',
-    a: '    els.title.textContent = "Sin reproducción";'
+    de: '    els.title.textContent = state.title || t("sin_reproduccion");',
+    a: '    els.title.textContent = t("sin_reproduccion");'
   },
   {
     etiqueta: "el boton grande deja de cambiar de dibujo entre reproducir y pausar",
@@ -197,70 +195,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-let deliberadas = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (!caidas.length) {
-    if (m.deliberada) {
-      deliberadas++;
-      console.log(`  (vive) ${m.etiqueta}\n         superviviente documentada: no puede cambiar el comportamiento`);
-    } else {
-      sobreviven++;
-      console.error(`  VIVE  ${m.etiqueta}`);
-    }
-  } else {
-    muertas++;
-    if (m.deliberada) {
-      console.error(`  ??  ${m.etiqueta}\n      (se declaro inmatable y una prueba la mato: revisa el comentario)`);
-    }
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-const enJuego = MUTACIONES.length - deliberadas;
-console.log(
-  `\n${muertas} de ${enJuego} mutaciones detectadas; ${sobreviven} sobreviven.` +
-    (deliberadas ? ` (${deliberadas} mas viven a proposito y estan documentadas.)` : "")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

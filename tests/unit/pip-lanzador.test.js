@@ -191,3 +191,53 @@ test("un mundo HUERFANO no pone boton ni roba el ajeno (si no, los dos se lo qui
   assert.strictEqual(p.doc.getElementById(ID), p.ajeno, "el huerfano le quito el boton al mundo vivo");
   assert.equal(p.doc.querySelectorAll(`#${ID}`).length, 1);
 });
+
+/* ---------- Que dice open() (tanda AF) ---------- */
+
+test("REGRESION TANDA AF: sin Document PiP, open() dice «respaldo» y pide la ventana de respaldo", async () => {
+  const enviados = [];
+  const { win } = crearEntorno(leerFixture("controles-completos.html"), {
+    sendMessage: (m) => {
+      enviados.push(m.type);
+      return Promise.resolve({ ok: true });
+    }
+  });
+  cargar(
+    win,
+    "src/shared/constants.js",
+    "src/shared/textos.js",
+    "src/shared/messages.js",
+    "src/shared/ecualizador.js",
+    "src/shared/settings.js",
+    "src/content/adapter-registry.js",
+    "src/content/youtube-music-adapter.js",
+    "src/content/track-timeline.js",
+    "src/content/player-controller.js",
+    "src/content/audio-spectrum.js",
+    "src/shared/iconos.js",
+    "src/pip/pip.js"
+  );
+  assert.strictEqual("documentPictureInPicture" in win, false, "premisa: jsdom no trae Document PiP");
+  assert.strictEqual(await win.YTMPip.PipView.open(), "respaldo");
+  assert.ok(enviados.includes("OPEN_FALLBACK_WINDOW"));
+});
+
+test("...y con la extension recargada, open() dice «sin-extension» en vez de fingir que abrio", async () => {
+  const { win } = crearEntorno(leerFixture("controles-completos.html"), { contextoValido: false });
+  cargar(
+    win,
+    "src/shared/constants.js",
+    "src/shared/textos.js",
+    "src/shared/messages.js",
+    "src/shared/ecualizador.js",
+    "src/shared/settings.js",
+    "src/content/adapter-registry.js",
+    "src/content/youtube-music-adapter.js",
+    "src/content/track-timeline.js",
+    "src/content/player-controller.js",
+    "src/content/audio-spectrum.js",
+    "src/shared/iconos.js",
+    "src/pip/pip.js"
+  );
+  assert.strictEqual(await win.YTMPip.PipView.open(), "sin-extension");
+});

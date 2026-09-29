@@ -1069,6 +1069,127 @@
     banda.input.addEventListener("change", save);
   });
 
+  /*
+   * TUS PREFERENCIAS: EXPORTAR, IMPORTAR Y VOLVER A LAS DE FABRICA (tanda AJ).
+   *
+   * Que viaja: las claves que settings.js clasifica como «se aplican» (la
+   * misma lista que vigila el censo de settings-recargas.test.js), y nada
+   * mas. El ultimo estado, el tamaño anotado y las canciones fijadas son
+   * anotaciones de ESTE equipo, y la politica de privacidad promete que el
+   * archivo no las lleva.
+   *
+   * Que entra: un archivo de fuera es entrada no confiable. Tiene que ser
+   * nuestro (app "music-pip"), las claves que no son preferencias se tiran,
+   * y cada valor pasa por Settings.normalize, las mismas reglas con las que
+   * la ventana lee storage: un tema que no existe entra como el de serie,
+   * no como una palabra rara que la pagina no sabria pintar. Lo que el
+   * archivo no trae no se toca.
+   *
+   * Despues de escribir o borrar NO se llama a load(): ya lo hace el oyente
+   * de storage.onChanged de mas arriba (tanda V), porque lo importado o
+   * borrado no es eco de un save(). Llamarlo tambien aqui serian dos
+   * repintados del mismo cambio, y un mutante que lo quitara no lo veria
+   * ninguna prueba: codigo que parece prudente y no hace nada.
+   */
+  const ARCHIVO_APP = "music-pip";
+  const ARCHIVO_FORMATO = 1;
+
+  function clavesDePreferencias() {
+    return Object.values(STORAGE_KEYS).filter((clave) => self.YTMPip.Settings.seAplica(clave));
+  }
+
+  function avisar(texto) {
+    status.textContent = texto;
+    setTimeout(() => (status.textContent = ""), 2500);
+  }
+
+  function exportarPreferencias() {
+    chrome.storage.local.get(clavesDePreferencias(), (guardado) => {
+      /*
+       * Se exporta lo que MANDA, no lo guardado a pelo: una clave que nunca
+       * se toco no esta en storage y viajaria vacia, y en el otro equipo
+       * se quedaria con lo que tuviera. normalize la rellena con el valor
+       * de serie, que es lo que de verdad esta en uso aqui.
+       */
+      const limpio = self.YTMPip.Settings.normalize(guardado || {});
+      const preferencias = {};
+      clavesDePreferencias().forEach((clave) => (preferencias[clave] = limpio[clave]));
+      let version = "";
+      try {
+        version = chrome.runtime.getManifest().version;
+      } catch (err) {
+        // Sin manifiesto (contexto invalidado): el archivo sirve igual.
+      }
+      const archivo = {
+        app: ARCHIVO_APP,
+        formato: ARCHIVO_FORMATO,
+        version,
+        fecha: new Date().toISOString(),
+        preferencias
+      };
+      const blob = new Blob([JSON.stringify(archivo, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = "music-pip-preferencias-" + archivo.fecha.slice(0, 10) + ".json";
+      enlace.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      avisar(t("preferencias_exportadas"));
+    });
+  }
+
+  /** Lo que se puede escribir de un archivo leido, o null si no es nuestro. */
+  function preferenciasDelArchivo(texto) {
+    let datos;
+    try {
+      datos = JSON.parse(texto);
+    } catch (err) {
+      return null;
+    }
+    if (!datos || datos.app !== ARCHIVO_APP || !datos.preferencias || typeof datos.preferencias !== "object") {
+      return null;
+    }
+    const entrada = datos.preferencias;
+    const limpio = self.YTMPip.Settings.normalize(entrada);
+    const salida = {};
+    clavesDePreferencias().forEach((clave) => {
+      if (Object.prototype.hasOwnProperty.call(entrada, clave) && limpio[clave] !== undefined) {
+        salida[clave] = limpio[clave];
+      }
+    });
+    return salida;
+  }
+
+  function importarPreferencias(archivo) {
+    const lector = new FileReader();
+    lector.onload = () => {
+      const valores = preferenciasDelArchivo(String(lector.result));
+      if (!valores) {
+        avisar(t("preferencias_no_validas"));
+        return;
+      }
+      chrome.storage.local.set(valores, () => avisar(t("preferencias_importadas")));
+    };
+    lector.onerror = () => avisar(t("preferencias_no_validas"));
+    lector.readAsText(archivo);
+  }
+
+  function restaurarPreferencias() {
+    if (!window.confirm(t("confirmar_restaurar"))) return;
+    chrome.storage.local.remove(clavesDePreferencias(), () => avisar(t("preferencias_restauradas")));
+  }
+
+  const archivoPreferencias = document.getElementById("archivoPreferencias");
+  document.getElementById("exportarPreferencias").addEventListener("click", exportarPreferencias);
+  document.getElementById("importarPreferencias").addEventListener("click", () => archivoPreferencias.click());
+  document.getElementById("restaurarPreferencias").addEventListener("click", restaurarPreferencias);
+  archivoPreferencias.addEventListener("change", () => {
+    const archivo = archivoPreferencias.files && archivoPreferencias.files[0];
+    if (archivo) importarPreferencias(archivo);
+    // Vaciarlo: elegir el MISMO archivo otra vez tiene que volver a importar.
+    archivoPreferencias.value = "";
+  });
+
   leerAcentosDelCss();
   load();
 })();

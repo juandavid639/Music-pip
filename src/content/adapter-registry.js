@@ -59,6 +59,13 @@
    * prueba de contrato compara esta lista contra los adaptadores
    * registrados y delata al que se quede corto.
    */
+  // Lo que la salud del adaptador exige mientras suena algo (ver salud()).
+  const PIEZAS_VITALES = [
+    ["getPlayPauseButton", "boton de reproducir"],
+    ["getNextButton", "boton de siguiente"],
+    ["getTitleElement", "titulo"]
+  ];
+
   const METODOS_DEL_CONTRATO = [
     // El reproductor y el <video> (incluido el mecanismo de prestamo del PiP)
     "getPlayerBar",
@@ -240,6 +247,42 @@
 
     registradosIds() {
       return registrados.map((def) => def.id);
+    },
+
+    /*
+     * LA SALUD DEL ADAPTADOR (tanda AK): si mientras SUENA algo faltan las
+     * piezas sin las que la ventana no sirve. Solo mientras suena: sin
+     * musica, que no haya titulo ni boton es lo normal (la portada de
+     * YouTube, Spotify recien abierto) y acusar ahi seria mentir.
+     *
+     * Las piezas vitales son pocas a proposito, las que cualquier sitio
+     * tiene: una lista larga saltaria con cada recorte ya confesado (YouTube
+     * no tiene panel de letra, por ejemplo) y un aviso que siempre esta
+     * encendido no avisa de nada. La misma lista para los tres sitios,
+     * porque se pregunta a traves del contrato, no de los selectores.
+     *
+     * Devuelve { comprobable, faltan }: faltan son nombres internos, para
+     * la consola y para tools/diagnostico-publicacion.js.
+     */
+    salud() {
+      const A = YTMPip.Adapter;
+      if (!A) return { comprobable: false, faltan: [] };
+      let suena = false;
+      try {
+        const medio = A.getMediaElement();
+        suena = medio ? !medio.paused && !medio.ended : A.isPagePlaying() === true;
+      } catch (err) {
+        suena = false;
+      }
+      if (!suena) return { comprobable: false, faltan: [] };
+      const faltan = PIEZAS_VITALES.filter(([getter]) => {
+        try {
+          return !A[getter]();
+        } catch (err) {
+          return true;
+        }
+      }).map(([, nombre]) => nombre);
+      return { comprobable: true, faltan };
     }
   };
 })(typeof self !== "undefined" ? self : globalThis);

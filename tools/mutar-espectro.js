@@ -9,8 +9,6 @@
  * forma parte de `npm test`. Restaura siempre los archivos, incluso si
  * las pruebas revientan.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -70,38 +68,38 @@ const MUTACIONES = [
   {
     etiqueta: "conectar se queda pegado al <video> anterior",
     archivo: "src/content/audio-spectrum.js",
-    de: "if (video === elementoConectado && analizador && !pistaTerminada() && !fuenteCambio(video)) {",
-    a: "if (analizador && !pistaTerminada() && !fuenteCambio(video)) {"
+    de: "      video === elementoConectado &&\n      analizador &&",
+    a: "      analizador &&"
   },
   {
     etiqueta: "barrasParaAncho pierde el tope de arriba",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "Math.max(BARRAS_MIN, Math.min(BARRAS_MAX, Math.floor(ancho / ANCHO_POR_BARRA)))",
     a: "Math.max(BARRAS_MIN, Math.floor(ancho / ANCHO_POR_BARRA))"
   },
   {
     etiqueta: "barrasParaAncho pierde el tope de abajo",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "Math.max(BARRAS_MIN, Math.min(BARRAS_MAX, Math.floor(ancho / ANCHO_POR_BARRA)))",
     a: "Math.min(BARRAS_MAX, Math.floor(ancho / ANCHO_POR_BARRA))"
   },
   {
     etiqueta: "el espectro sigue encendido con la letra en grande",
     archivo: "src/pip/pip.js",
-    de: "espectroPedido && !letraEnGrande && YTMPip.Espectro.conectar(media)",
-    a: "espectroPedido && YTMPip.Espectro.conectar(media)"
+    de: "    const alguienQuiere = (espectroPedido || pulsoPedido || haloQuiereLatir) && !letraEnGrande;",
+    a: "    const alguienQuiere = espectroPedido || pulsoPedido || haloQuiereLatir;"
   },
   {
     etiqueta: "el espectro se enciende sin conectar el analizador",
     archivo: "src/pip/pip.js",
-    de: "espectroPedido && !letraEnGrande && YTMPip.Espectro.conectar(media)",
-    a: "espectroPedido && !letraEnGrande"
+    de: "    const conectado = alguienQuiere && YTMPip.Espectro.conectar(media);",
+    a: "    const conectado = alguienQuiere;"
   },
   {
     etiqueta: "apagar el espectro no suelta el AudioContext",
     archivo: "src/pip/pip.js",
-    de: "if (!espectroPedido) YTMPip.Espectro.desconectar();",
-    a: ";"
+    de: "    if (!espectroPedido && !pulsoPedido && !haloQuiereLatir) YTMPip.Espectro.desconectar();",
+    a: "    ;"
   },
   {
     etiqueta: "el boton del espectro se ofrece siempre",
@@ -130,13 +128,13 @@ const MUTACIONES = [
   {
     etiqueta: "vuelve la guarda antigua: solo mira el elemento (el fallo reportado)",
     archivo: "src/content/audio-spectrum.js",
-    de: "    if (video === elementoConectado && analizador && !pistaTerminada() && !fuenteCambio(video)) {",
-    a: "    if (video === elementoConectado && analizador) {"
+    de: "      video === elementoConectado &&\n      analizador &&\n      Boolean(grafo) === prestado &&\n      !pistaTerminada() &&\n      !fuenteCambio(video)\n    ) {",
+    a: "      video === elementoConectado &&\n      analizador\n    ) {"
   },
   {
     etiqueta: "la pista capturada no se guarda: nunca consta que muera",
     archivo: "src/content/audio-spectrum.js",
-    de: "      pistaConectada = stream.getAudioTracks()[0];",
+    de: "      pistaConectada = stream ? stream.getAudioTracks()[0] : null;",
     a: ""
   },
   {
@@ -194,20 +192,20 @@ const MUTACIONES = [
   {
     etiqueta: "normalizarColor acepta la forma corta #abc, que fillStyle lee distinta",
     archivo: "src/shared/settings.js",
-    de: "/^#[0-9a-fA-F]{6}$/.test(value)",
-    a: "/^#[0-9a-fA-F]{3,6}$/.test(value)"
+    de: "  const UN_COLOR = /^#[0-9a-fA-F]{6}$/;",
+    a: "  const UN_COLOR = /^#[0-9a-fA-F]{3,6}$/;"
   },
   {
     etiqueta: "normalizarColor no normaliza a minusculas",
     archivo: "src/shared/settings.js",
-    de: "return value.toLowerCase();",
-    a: "return value;"
+    de: "    if (value === \"accent\" || value === \"rgb\" || value === \"source\") return value;\n    if (typeof value === \"string\" && UN_COLOR.test(value)) return value.toLowerCase();",
+    a: "    if (value === \"accent\" || value === \"rgb\" || value === \"source\") return value;\n    if (typeof value === \"string\" && UN_COLOR.test(value)) return value;"
   },
   {
     etiqueta: "normalizarColor acepta cualquier cadena",
     archivo: "src/shared/settings.js",
-    de: 'if (typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();',
-    a: 'if (typeof value === "string") return value.toLowerCase();'
+    de: "    if (value === \"accent\" || value === \"rgb\" || value === \"source\") return value;\n    if (typeof value === \"string\" && UN_COLOR.test(value)) return value.toLowerCase();",
+    a: "    if (value === \"accent\" || value === \"rgb\" || value === \"source\") return value;\n    if (typeof value === \"string\") return value.toLowerCase();"
   },
   {
     etiqueta: "unirBarras deja de acotar: guarda lo que se escriba",
@@ -230,8 +228,8 @@ const MUTACIONES = [
   {
     etiqueta: "unirColor ignora el modo y guarda siempre el color del cuentagotas",
     archivo: "src/shared/settings.js",
-    de: 'return modo === "custom" ? color : modo;',
-    a: "return color;"
+    de: "    if (modo === \"palette\") return (paleta || []).join(\",\");\n    return modo;",
+    a: "    return color;"
   },
   {
     /*
@@ -241,8 +239,8 @@ const MUTACIONES = [
      */
     etiqueta: "unirColor vuelve a escribir accent a mano y se traga el modo rgb",
     archivo: "src/shared/settings.js",
-    de: 'return modo === "custom" ? color : modo;',
-    a: 'return modo === "custom" ? color : "accent";'
+    de: "    if (modo === \"palette\") return (paleta || []).join(\",\");\n    return modo;",
+    a: "    if (modo === \"palette\") return (paleta || []).join(\",\");\n    return \"accent\";"
   },
   {
     etiqueta: "partirBarras deja la casilla vacia al elegir un numero fijo",
@@ -253,8 +251,8 @@ const MUTACIONES = [
   {
     etiqueta: "partirColor mete el nombre del modo dentro del cuentagotas",
     archivo: "src/shared/settings.js",
-    de: "      : { modo: limpio, color: SPECTRUM_LIMITS.COLOR_SUGGESTED };",
-    a: "      : { modo: limpio, color: limpio };"
+    de: "          modo: limpio,\n          color: SPECTRUM_LIMITS.COLOR_SUGGESTED,",
+    a: "          modo: limpio,\n          color: limpio,"
   },
   {
     etiqueta: "partirColor decide el modo por el nombre y no por la forma del valor",
@@ -264,7 +262,7 @@ const MUTACIONES = [
   },
   {
     etiqueta: "barrasParaAncho ignora el numero elegido en preferencias",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "    if (Number.isFinite(preferidas)) return preferidas;\n",
     a: ""
   },
@@ -329,8 +327,8 @@ const MUTACIONES = [
   {
     etiqueta: "conectar deja de mirar la fuente (el fallo del cambio de cancion a mano)",
     archivo: "src/content/audio-spectrum.js",
-    de: "!pistaTerminada() && !fuenteCambio(video)",
-    a: "!pistaTerminada()"
+    de: "      !pistaTerminada() &&\n      !fuenteCambio(video)\n    ) {",
+    a: "      !pistaTerminada()\n    ) {"
   },
   {
     etiqueta: "el hueco sin fuente cuenta como fuente nueva (un AudioContext por refresco)",
@@ -355,45 +353,45 @@ const MUTACIONES = [
 
   {
     etiqueta: "el arcoiris se queda quieto (solo reparto, sin giro)",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "const giro = ((ms % RGB_PERIODO_MS) / RGB_PERIODO_MS) * 360;",
     a: "const giro = 0;"
   },
   {
     etiqueta: "el espectro entero se pinta de un color liso (solo giro, sin reparto)",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "const reparto = total > 1 ? (indice / (total - 1)) * RGB_ARCO : 0;",
     a: "const reparto = 0;"
   },
   {
     etiqueta: "una sola barra divide por cero y sale sin pintar",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "const reparto = total > 1 ? (indice / (total - 1)) * RGB_ARCO : 0;",
     a: "const reparto = (indice / (total - 1)) * RGB_ARCO;"
   },
   {
     etiqueta: "el tono se sale de la rueda al cabo de un rato (sin cerrar la vuelta)",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "return (giro + reparto) % 360;",
     a: "return giro + reparto;"
   },
   {
     etiqueta: "el arco cierra la vuelta entera: los dos extremos del espectro coinciden",
-    archivo: "src/pip/pip.js",
+    archivo: "src/shared/formas-espectro.js",
     de: "const RGB_ARCO = 300;",
     a: "const RGB_ARCO = 360;"
   },
   {
     etiqueta: "el modo rgb deja de pintar barra a barra (vuelve al color fijo)",
-    archivo: "src/pip/pip.js",
-    de: 'const ciclico = preferencias.spectrumColor === "rgb";',
-    a: "const ciclico = false;"
+    archivo: "src/shared/formas-espectro.js",
+    de: "    if (modo === \"rgb\") {",
+    a: "    if (false) {"
   },
   {
     etiqueta: 'normalizarColor no conoce "rgb": el modo nuevo cae al de siempre',
     archivo: "src/shared/settings.js",
-    de: 'if (value === "accent" || value === "rgb") return value;',
-    a: 'if (value === "accent") return value;'
+    de: "    if (value === \"accent\" || value === \"rgb\" || value === \"source\") return value;",
+    a: "    if (value === \"accent\" || value === \"source\") return value;"
   },
 
   /* ---------- Atenuar la ventana mientras suena ---------- */
@@ -688,7 +686,7 @@ const MUTACIONES = [
   {
     etiqueta: "mover el borde vuelve a repasar tema, espectro, atenuado y video",
     archivo: "src/shared/settings.js",
-    de: "    (key) => key !== STORAGE_KEYS.PIP_LAST_SIZE",
+    de: "    (key) => CLAVES_QUE_NO_SE_APLICAN.indexOf(key) === -1",
     a: "    () => true"
   },
   {
@@ -762,65 +760,7 @@ const MUTACIONES = [
  * recuento por mutacion, y contarlas a mano seria inventarselas: se leen
  * las lineas "not ok" del TAP que escribe `node --test`.
  */
-function pruebasQueFallan() {
-  let salida;
-  try {
-    // El reporter se pide a mano: Node 24 usa `spec` aunque la salida vaya a
-    // una tuberia, y `spec` no da nombres que se puedan leer con una regla.
-    salida = execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    // El TAP marca tambien el fichero entero como "not ok"; esa no es una
-    // prueba, es el contenedor.
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
 
-function pruebasPasan() {
-  return pruebasQueFallan().length === 0;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-
-if (!pruebasPasan()) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.join(" | ")}`);
-  }
-}
-
-console.log(`\n${muertas} de ${MUTACIONES.length} mutaciones detectadas; ${sobreviven} sobreviven.`);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

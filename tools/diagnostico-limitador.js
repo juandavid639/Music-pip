@@ -524,7 +524,11 @@
       return;
     }
     log(`Subir los graves cambia el nivel en ${db(subida)}.`);
-    log(`El limitador se esta comiendo ${db(loQueSeCome)} frente a no tener red.`);
+    // Aqui habia una linea mas («el limitador se esta comiendo X frente a no
+    // tener red») que leia una variable de la fase SIN RED. La fase se fue
+    // con la version anterior y la linea se quedo: cada medicion acababa en
+    // un ReferenceError despues del resto del informe. Lo vio ESLint en la
+    // tanda AG; el contraste que queda es la fila SIN PREAMPLIFICAR, arriba.
   }
 
   window.ytmpipLimitador = { medir };

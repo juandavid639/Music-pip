@@ -11,6 +11,10 @@
 # pide >=21 (ver `engines`: el patron de `npm test` lo expande node --test
 # solo desde la 21).
 #
+# ESLint va ANTES que las pruebas (tanda AG): tarda segundos y un nombre mal
+# escrito se ve ahi sin esperar a la suite. Solo dos reglas, ver
+# eslint.config.js.
+#
 # Lo que NO hace: empaquetar. tools/empaquetar.ps1 es PowerShell de Windows
 # y el zip se sube a mano a la consola de la tienda.
 name: Pruebas
@@ -34,4 +38,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm test

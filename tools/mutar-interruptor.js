@@ -35,8 +35,6 @@
  * Mismo arnes que los otros: de usar y tirar, fuera de `npm test`, y restaura
  * los archivos pase lo que pase.
  */
-const { execFileSync } = require("node:child_process");
-const fs = require("node:fs");
 const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "..");
@@ -131,14 +129,14 @@ const MUTACIONES = [
   {
     etiqueta: "ESCRITOR: se guarda solo lo que suena y la anotacion no llega a storage",
     archivo: AJUSTES,
-    de: "      chrome.storage.local.set(claves);",
-    a: "      chrome.storage.local.set({ [STORAGE_KEYS.EQUALIZER]: limpio });"
+    de: "    try {\n      chrome.storage.local.set(claves);\n    } catch (err) {\n      // Contexto invalidado: la cache ya esta puesta, asi que el ecualizador",
+    a: "    try {\n      chrome.storage.local.set({ [STORAGE_KEYS.EQUALIZER]: limpio });\n    } catch (err) {\n      // Contexto invalidado: la cache ya esta puesta, asi que el ecualizador"
   },
   {
     etiqueta: "ESCRITOR: la anotacion vuelve a la lista que recarga (apagar releeria storage dos veces)",
     archivo: AJUSTES,
-    de: "    (key) => key !== STORAGE_KEYS.PIP_LAST_SIZE && key !== STORAGE_KEYS.EQUALIZER_LAST",
-    a: "    (key) => key !== STORAGE_KEYS.PIP_LAST_SIZE"
+    de: "    STORAGE_KEYS.EQUALIZER_LAST,\n",
+    a: ""
   },
 
   /* ---------- EL INTERRUPTOR: lo que hace al pulsarlo ---------- */
@@ -202,8 +200,8 @@ const MUTACIONES = [
      */
     etiqueta: "INTERRUPTOR: el estado se pinta al reves",
     archivo: VENTANA,
-    de: "    const encendido = !Eq.estaApagado(valor);",
-    a: "    const encendido = Eq.estaApagado(valor);"
+    de: "    const encendido = !YTMPip.Ecualizador.estaApagado(valor);",
+    a: "    const encendido = YTMPip.Ecualizador.estaApagado(valor);"
   },
   {
     etiqueta: "INTERRUPTOR: quien no ve no puede leer el estado (la etiqueta se queda fija)",
@@ -258,84 +256,6 @@ const MUTACIONES = [
   }
 ];
 
-function pruebasQueFallan() {
-  let salida;
-  try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap", ...PRUEBAS], {
-      cwd: RAIZ,
-      stdio: "pipe",
-      encoding: "utf8"
-    });
-    return [];
-  } catch (err) {
-    salida = String(err.stdout || "");
-  }
-  const nombres = [];
-  for (const linea of salida.split(/\r?\n/)) {
-    const m = /^\s*not ok \d+ - (.+?)\s*$/.exec(linea);
-    if (m && !m[1].endsWith(".test.js")) nombres.push(m[1]);
-  }
-  return nombres;
-}
-
-let sobreviven = 0;
-let muertas = 0;
-/*
- * Las marcadas `equivalente` se cuentan aparte y NO tumban el proceso. El
- * motivo, entero, esta en tools/mutar-mandos.js; en resumen: no hay prueba
- * que pueda distinguirlas, asi que contarlas como cobertura que falta seria
- * mentir. Si alguna vez MUERE una, hay que venir aqui: el codigo cambio y el
- * razonamiento de su comentario ya no vale.
- */
-let equivalentes = 0;
-
-if (pruebasQueFallan().length) {
-  console.error("La suite no esta en verde SIN mutar. Arregla eso antes de mutar nada.");
-  process.exit(1);
-}
-
-for (const m of MUTACIONES) {
-  const ruta = path.join(RAIZ, m.archivo);
-  const original = fs.readFileSync(ruta, "utf8");
-  if (!original.includes(m.de)) {
-    console.error(`  ??  ${m.etiqueta}\n      (el texto a mutar ya no existe: la mutacion no prueba nada)`);
-    sobreviven++;
-    continue;
-  }
-  fs.writeFileSync(ruta, original.replace(m.de, m.a));
-  let caidas;
-  try {
-    caidas = pruebasQueFallan();
-  } finally {
-    fs.writeFileSync(ruta, original);
-  }
-  if (m.equivalente) {
-    equivalentes++;
-    if (caidas.length) {
-      sobreviven++;
-      console.error(
-        `  OJO   ${m.etiqueta}\n` +
-          "        estaba marcada como EQUIVALENTE y ahora muere: el codigo " +
-          "cambio y el motivo escrito en tools/mutar-interruptor.js ya no vale. " +
-          "Quitale la marca."
-      );
-    } else {
-      console.log(`  (equivalente, a proposito) ${m.etiqueta}`);
-    }
-    continue;
-  }
-  if (!caidas.length) {
-    sobreviven++;
-    console.error(`  VIVE  ${m.etiqueta}`);
-  } else {
-    muertas++;
-    console.log(`  muere ${m.etiqueta}  -> ${caidas.length}: ${caidas.slice(0, 3).join(" | ")}`);
-  }
-}
-
-console.log(
-  `\n${muertas} de ${MUTACIONES.length - equivalentes} mutaciones detectadas; ` +
-    `${sobreviven} sobreviven` +
-    (equivalentes ? `; ${equivalentes} equivalente(s) aparte.` : ".")
-);
-process.exit(sobreviven ? 1 : 0);
+// El bucle, los reintentos y la restauracion viven en tools/mutar-comun.js
+// desde la tanda AG (antes cada script llevaba su copia).
+require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

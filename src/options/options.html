@@ -364,6 +364,29 @@
         transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
       }
 
+      /* Las acciones de «Tus preferencias» (tanda AJ): la misma piel que
+         las pildoras, pero sueltas y sin estado elegido. */
+      .ytmpip-acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ytmpip-acciones button {
+        font: inherit;
+        font-size: 12px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--hueco);
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .ytmpip-acciones button:hover {
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
       .ytmpip-pildoras button:hover {
         color: var(--text);
       }
@@ -1969,6 +1992,29 @@
           botón 🎬 lo abre en el vídeo flotante del propio navegador, al que
           el cifrado no le afecta.
         </p>
+      </section>
+
+      <!-- ================= TUS PREFERENCIAS (tanda AJ) ================= -->
+      <!--
+        Acciones, no ajustes: por eso van en .ytmpip-acciones y no en
+        .ytmpip-pildoras (sin aria-pressed, sin data-para; el censo de
+        pildoras no las cuenta). El <input type=file> esta escondido y lo
+        abre su boton: un boton se ve igual que los de al lado y se alcanza
+        con el teclado como ellos.
+      -->
+      <section id="seccion-copia" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_copia">Tus preferencias</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_copia_intro">
+          Llévatelas a otro equipo en un archivo, o vuelve a como venía la
+          extensión. El archivo solo lleva las preferencias de esta página y
+          se queda donde tú lo guardes.
+        </p>
+        <div class="ytmpip-acciones">
+          <button type="button" id="exportarPreferencias" data-t="boton_exportar">Exportar a un archivo</button>
+          <button type="button" id="importarPreferencias" data-t="boton_importar">Importar de un archivo</button>
+          <button type="button" id="restaurarPreferencias" data-t="boton_restaurar">Volver a los valores de fábrica</button>
+          <input type="file" id="archivoPreferencias" accept="application/json,.json" hidden />
+        </div>
       </section>
 
       <!-- ================= LA MATRIZ DE SITIOS ================= -->

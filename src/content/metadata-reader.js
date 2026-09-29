@@ -239,7 +239,14 @@
         repeatMode,
         repeatOn: repeatMode === undefined ? undefined : repeatMode !== "NONE",
         shuffleOn: Adapter.isToggleActive(Adapter.getShuffleButton()),
-        upNext: readUpNext()
+        upNext: readUpNext(),
+        /*
+         * Lo que falta del sitio mientras suena (tanda AK): la ventana lo
+         * dice y la consola lo nombra. Fuera de la firma, como
+         * nativePipAvailable: no es un cambio de pista, y si lo que falta
+         * es el titulo la firma ya cambia por su cuenta.
+         */
+        piezasQueFaltan: YTMPip.Adaptadores && YTMPip.Adaptadores.salud ? YTMPip.Adaptadores.salud().faltan : []
       };
     }
   };

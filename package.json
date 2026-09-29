@@ -8,9 +8,12 @@
   "description": "Pruebas y utilidades de desarrollo. La extension NO se compila: se carga tal cual desde la raiz del proyecto.",
   "scripts": {
     "test": "node --test \"tests/**/*.test.js\"",
+    "lint": "eslint .",
     "empaquetar": "powershell -ExecutionPolicy Bypass -File tools/empaquetar.ps1"
   },
   "devDependencies": {
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
     "jsdom": "^26.0.0"
   }
 }
