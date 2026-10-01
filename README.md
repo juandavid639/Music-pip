@@ -7866,6 +7866,22 @@ privacidad** suma una frase por la pestaña recordada.
 scripts del propio HTML. Mutación 10 de 10, exactas. **Sin probar en vivo**:
 el menú dentro de la extensión de verdad.
 
+## La 1.2.1 (el halo al abrir, la onda y el menú)
+
+Lleva las tandas AM, AN y AO, pedidas por el autor tras probar la 1.2.0.
+Tercer número, aunque el menú es una función nueva, porque la 1.2.0 aún no
+estaba asentada en la tienda y esto la completa; si se prefiere la receta
+al pie de la letra, sería la 1.3.0 (subir los tres archivos y
+reempaquetar). `manifest.json`, `package.json` y `package-lock.json` suben
+juntos; el `CHANGELOG.md` pasa «Sin publicar» a «[1.2.1]». Suite entera:
+**1159/1159**.
+
+**Permisos: ninguno nuevo.** El zip sigue en 41 archivos: el menú carga
+`settings.js` y `ecualizador.js`, que ya viajaban. **La política de
+privacidad sí cambia** (la pestaña recordada del menú) y se publica sola al
+hacer push. Preparada **sin push**, a petición del autor, que quiere
+probarla antes.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
