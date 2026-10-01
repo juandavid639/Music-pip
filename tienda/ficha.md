@@ -19,6 +19,10 @@ https://chrome.google.com/webstore/devconsole
 
 ## 2. Descripción larga — ESPAÑOL
 
+Al día con la 1.2.1 (2026-10-01): menú con ajustes rápidos, onda de serie,
+cuatro temas, vinilo, acento propio, estado en el icono, copia de
+preferencias y aviso de «el sitio cambió».
+
 ```
 Una ventana flotante que se queda encima de todo mientras trabajas, con la música
 que suena en YouTube Music, YouTube o Spotify.
@@ -29,18 +33,34 @@ QUÉ HACE
 • Letra sincronizada (karaoke) donde el sitio la ofrece, con un modo escenario
   limpio que deja la letra en grande.
 • Ecualizador de 5 bandas con presets (graves, voz, nocturno…) y memoria por
-  canción, y barras de espectro que bailan con el audio.
-• Halo de luz al borde de la ventana: fijo, latiendo con la música, del color
+  canción.
+• Visualizador de audio en tres formas: onda (de serie), barras o un anillo
+  alrededor de la carátula, del color del tema, de un color tuyo, en arcoíris,
+  con tu paleta o del color de lo que suena.
+• La carátula puede verse como un disco de vinilo que gira mientras suena, y
+  al cambiar de canción se funde con la siguiente.
+• Halo de luz al borde de la ventana: fijo o latiendo con la música, del color
   del tema, de un color tuyo o del color de la carátula.
+• Cuatro temas: oscuro, claro, automático (sigue a tu sistema) y «del vídeo o
+  la carátula», que tiñe la ventana con el color de lo que suena. Y el color de
+  acento, a tu elección.
+• El icono de la barra de Chrome dice si la música suena o está en pausa, o
+  los minutos que le quedan al apagado programado.
 • En Spotify: el vídeo animado de fondo (Canvas) puede verse de fondo en la
   ventana.
 • Vídeo flotante nativo del navegador (🎬) donde hay vídeo.
 • Atajos de teclado configurables y apagado programado.
-• Tema claro y oscuro; todo se configura en la página de Preferencias, con
-  vista previa real incluida.
+• Lo más usado se cambia desde el menú del icono (pestaña «Ajustes»: halo,
+  vinilo, letra, vídeo, tema y forma de las barras), y todo lo demás en
+  Preferencias, con una vista previa real que te acompaña mientras eliges.
+  Tus preferencias se pueden exportar a un archivo, importar en otro equipo
+  o devolver a los valores de fábrica.
+• Si el sitio de música cambia y algún mando deja de encontrarse, la ventana
+  te lo dice en vez de quedarse muda.
 
 QUÉ NO HACE
-• No recopila ningún dato: las preferencias se guardan solo en tu navegador.
+• No recopila ningún dato: las preferencias se guardan solo en tu navegador, y
+  el archivo exportado lo guardas tú donde quieras.
 • No toca nada fuera de music.youtube.com, www.youtube.com y open.spotify.com.
 • No añade anuncios ni modifica la reproducción: manda sobre los controles que
   la propia página ya tiene.
@@ -48,8 +68,8 @@ QUÉ NO HACE
 LÍMITES HONESTOS (medidos, no supuestos)
 • El vídeo de Spotify va cifrado (DRM): dentro de la ventana no puede pintarse;
   el botón 🎬 abre el vídeo flotante nativo del navegador.
-• El sonido de Spotify no pasa por la página: el ecualizador y las barras solo
-  funcionan en YouTube y YouTube Music.
+• El sonido de Spotify no pasa por la página: el ecualizador y el visualizador
+  solo funcionan en YouTube y YouTube Music.
 • YouTube no tiene panel de letra: el karaoke vive en YouTube Music y Spotify.
 
 Requiere Chrome 116 o superior (usa la API Document Picture-in-Picture).
@@ -69,18 +89,33 @@ WHAT IT DOES
   next/previous, seek, volume and speed.
 • Synced lyrics (karaoke) where the site offers them, with a clean stage mode
   that shows the lyrics big.
-• 5-band equalizer with presets (bass, voice, night…) and per-song memory,
-  plus spectrum bars dancing with the audio.
+• 5-band equalizer with presets (bass, voice, night…) and per-song memory.
+• Audio visualizer in three shapes: wave (default), bars or a ring around the
+  artwork, in the theme color, your own color, rainbow, your palette or the
+  color of what is playing.
+• The artwork can show as a vinyl record spinning while music plays, and it
+  crossfades into the next song's artwork.
 • A light halo around the window edge: steady or beating with the music, in
   the theme color, your own color, or the artwork's color.
+• Four themes: dark, light, automatic (follows your system) and "from the
+  video or artwork", which tints the window with the color of what is playing.
+  Plus an accent color of your choice.
+• The Chrome toolbar icon shows whether music is playing or paused, or the
+  minutes left on the sleep timer.
 • On Spotify: the animated Canvas video can play as the window background.
 • The browser's native floating video (🎬) where there is video.
 • Configurable keyboard shortcuts and a sleep timer.
-• Light and dark theme; everything is configured on the Options page, with a
-  real embedded preview.
+• The most-used settings are one click away in the icon's menu ("Settings"
+  tab: halo, vinyl, lyrics, video, theme and bars shape), and everything else
+  on the Options page, with a real preview that follows you as you choose.
+  Your preferences can be exported to a file, imported on another computer,
+  or reset to factory settings.
+• If the music site changes and a control can no longer be found, the window
+  tells you instead of going silent.
 
 WHAT IT DOES NOT DO
-• It collects no data: preferences are stored only in your browser.
+• It collects no data: preferences are stored only in your browser, and the
+  exported file stays wherever you save it.
 • It touches nothing outside music.youtube.com, www.youtube.com and
   open.spotify.com.
 • No ads, no playback tampering: it drives the controls the page already has.
@@ -89,7 +124,7 @@ HONEST LIMITS (measured, not assumed)
 • Spotify's video is encrypted (DRM): it cannot be drawn inside the window;
   the 🎬 button opens the browser's native floating video instead.
 • Spotify's audio never passes through the page: the equalizer and the
-  spectrum bars only work on YouTube and YouTube Music.
+  visualizer only work on YouTube and YouTube Music.
 • YouTube has no lyrics panel: karaoke lives on YouTube Music and Spotify.
 
 Requires Chrome 116+ (it uses the Document Picture-in-Picture API).
