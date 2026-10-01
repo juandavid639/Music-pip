@@ -4,6 +4,26 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Añadido
+
+- El menú del icono tiene pestañas, como el de Better Lyrics: **Ahora suena**
+  (la canción y sus mandos), **Ajustes** (lo más usado a un clic: el halo y
+  su latido, el disco de vinilo, la letra, el vídeo, el estado en el icono,
+  el tema y la forma de las barras) y **Avanzada**, que abre todas las
+  preferencias en detalle.
+
+### Cambiado
+
+- La forma de serie de las barras de sonido es ahora la **onda**. Las
+  barras y el anillo siguen a un clic.
+
+### Corregido
+
+- El halo en modo «latiendo con la música» ya late con los graves en cuanto
+  se abre la ventana. Antes salía quieto hasta pulsar el botón ✨ dos veces.
+
 ## [1.2.0] — 2026-09-29
 
 ### Añadido

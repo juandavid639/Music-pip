@@ -201,5 +201,110 @@
       });
   });
 
+  /* ------------------------------------------------------------------
+   * LAS PESTAÑAS (tanda AO)
+   *
+   * El patron de pestañas del WAI: la elegida es la unica que entra en el
+   * orden de tabulacion (tabindex 0, las otras -1), y las flechas mueven
+   * entre ellas. La ultima que se abrio se recuerda en localStorage (cosa
+   * de este equipo, no una preferencia: no viaja ni se exporta), con
+   * try/catch porque el almacen puede no estar.
+   * ------------------------------------------------------------------ */
+  const RECUERDO_PESTANA = "ytmpip-popup-pestana";
+  const pestanas = Array.from(document.querySelectorAll('[role="tab"]'));
+
+  function elegirPestana(pestana, conFoco) {
+    pestanas.forEach((p) => {
+      const elegida = p === pestana;
+      p.setAttribute("aria-selected", String(elegida));
+      p.tabIndex = elegida ? 0 : -1;
+      const panel = document.getElementById(p.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !elegida;
+    });
+    if (conFoco) pestana.focus();
+    try {
+      localStorage.setItem(RECUERDO_PESTANA, pestana.id);
+    } catch (err) {
+      // Sin almacen la pestaña no se recuerda, y ya esta.
+    }
+  }
+
+  pestanas.forEach((p, i) => {
+    p.addEventListener("click", () => elegirPestana(p, false));
+    p.addEventListener("keydown", (evento) => {
+      const paso = evento.key === "ArrowRight" ? 1 : evento.key === "ArrowLeft" ? -1 : 0;
+      if (!paso) return;
+      evento.preventDefault();
+      elegirPestana(pestanas[(i + paso + pestanas.length) % pestanas.length], true);
+    });
+  });
+
+  try {
+    const recordada = document.getElementById(localStorage.getItem(RECUERDO_PESTANA) || "");
+    if (recordada && pestanas.indexOf(recordada) !== -1) elegirPestana(recordada, false);
+  } catch (err) {
+    // Sin almacen se abre en la primera, que es lo que dice el HTML.
+  }
+
+  /* ------------------------------------------------------------------
+   * LOS AJUSTES RAPIDOS (tanda AO)
+   *
+   * Cada mando dice en el HTML que clave toca y con que valores. Aqui no
+   * hay ni una clave escrita: un mando nuevo es una linea de popup.html.
+   *
+   * SE ESCRIBE EN STORAGE Y NADA MAS. La ventana flotante, la pagina de
+   * opciones y el icono ya escuchan storage.onChanged (tandas S y V) y se
+   * repintan solos; este menu tambien, por Settings.subscribe, asi que
+   * pinta lo guardado venga de aqui o de otro sitio. No hay un segundo
+   * camino que pueda discrepar del primero.
+   *
+   * LO QUE SE PINTA ES LO NORMALIZADO, no lo guardado a pelo: con la clave
+   * sin tocar, Settings.get() ya trae el valor de serie, que es el que de
+   * verdad esta en uso (la onda, el halo latiendo...).
+   * ------------------------------------------------------------------ */
+  const interruptores = Array.from(document.querySelectorAll('[role="switch"][data-clave]'));
+  const grupos = Array.from(document.querySelectorAll(".ytmpip-popup-segmentos[data-clave]"));
+
+  function guardar(clave, valor) {
+    try {
+      chrome.storage.local.set({ [clave]: valor });
+    } catch (err) {
+      // Contexto invalidado: el menu se queda como estaba.
+      console.warn("[YTMPip] No se pudo guardar el ajuste", clave, err);
+    }
+  }
+
+  function pintarAjustes(ajustes) {
+    if (!ajustes) return;
+    interruptores.forEach((el) => {
+      el.setAttribute("aria-checked", String(ajustes[el.dataset.clave] === el.dataset.si));
+    });
+    grupos.forEach((grupo) => {
+      grupo.querySelectorAll("button[data-valor]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(ajustes[grupo.dataset.clave] === b.dataset.valor));
+      });
+    });
+  }
+
+  interruptores.forEach((el) => {
+    el.addEventListener("click", () => {
+      const encendido = el.getAttribute("aria-checked") === "true";
+      // Se pinta ya, sin esperar al aviso de storage: el clic tiene que
+      // verse en el acto. El aviso llega despues y pinta lo mismo.
+      el.setAttribute("aria-checked", String(!encendido));
+      guardar(el.dataset.clave, encendido ? el.dataset.no : el.dataset.si);
+    });
+  });
+  grupos.forEach((grupo) => {
+    grupo.addEventListener("click", (evento) => {
+      const boton = evento.target.closest("button[data-valor]");
+      if (!boton) return;
+      grupo.querySelectorAll("button[data-valor]").forEach((b) => b.setAttribute("aria-pressed", String(b === boton)));
+      guardar(grupo.dataset.clave, boton.dataset.valor);
+    });
+  });
+
+  if (self.YTMPip.Settings) self.YTMPip.Settings.subscribe(pintarAjustes);
+
   refreshState();
 })();

@@ -205,7 +205,14 @@
       spectrumFall: 12,
       spectrumHeight: 34,
       spectrumColor: "source",
-      spectrumStyle: "bars",
+      /*
+       * La onda de serie desde la 1.2.1, por decision del autor tras
+       * probarla («el espectro nuevo que creaste, no la barra sino la onda,
+       * que me gusto»). Las barras siguen a un clic en Preferencias. Quien
+       * nunca eligio forma pasa a ver la onda: es lo que significa cambiar
+       * un valor de serie, como paso con el halo en la 1.0.1.
+       */
+      spectrumStyle: "wave",
       coverStyle: "square",
       badgePreference: "shown",
       accentColor: "default",

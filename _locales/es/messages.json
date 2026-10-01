@@ -751,5 +751,53 @@
   },
   "preferencias_restauradas": {
     "message": "Valores de fábrica restaurados."
+  },
+  "menu": {
+    "message": "Menú"
+  },
+  "pestana_ahora": {
+    "message": "Ahora suena"
+  },
+  "pestana_ajustes": {
+    "message": "Ajustes"
+  },
+  "avanzada": {
+    "message": "Avanzada"
+  },
+  "avanzada_titulo": {
+    "message": "Todas las preferencias, en detalle"
+  },
+  "ajustes_rapidos": {
+    "message": "Ajustes rápidos"
+  },
+  "rapido_halo": {
+    "message": "Halo de luz"
+  },
+  "rapido_halo_latido": {
+    "message": "Halo latiendo con la música"
+  },
+  "rapido_vinilo": {
+    "message": "Carátula en disco de vinilo"
+  },
+  "rapido_letra": {
+    "message": "Mostrar la letra"
+  },
+  "rapido_video": {
+    "message": "Ver el vídeo musical"
+  },
+  "rapido_icono": {
+    "message": "Estado en el icono"
+  },
+  "rapido_tema": {
+    "message": "Tema"
+  },
+  "rapido_tema_fuente": {
+    "message": "Carátula"
+  },
+  "rapido_forma": {
+    "message": "Forma de las barras"
+  },
+  "ajustes_nota": {
+    "message": "El ecualizador, los colores, los atajos y todo lo demás, en Avanzada."
   }
 }

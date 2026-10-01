@@ -7790,6 +7790,82 @@ blanca.
 Si la 1.1.1 no llegó a subirse a la tienda, se puede saltar: la 1.2.0 la
 lleva dentro.
 
+## El halo late desde el principio (la tanda AM)
+
+Lo reportó el autor con la 1.2.0: «cuando coloco el pip el halo responde,
+pero no está funcionando con los bajos, me toca pulsar el botón nuevamente
+para que funcione correctamente». Era la **regla del gesto** de la tanda J.
+El latido es una preferencia guardada, y se razonó que al abrir la ventana
+«no hay gesto que valga». Un AudioContext sin gesto nace suspendido, así que
+el halo salía FIJO hasta el primer clic que tocara el audio. Por eso
+funcionaba tras apagar y encender el ✨.
+
+El razonamiento era media verdad. Chrome no exige un gesto *ahora*: le basta
+con que la página haya tenido **alguno** (la activación «pegajosa»,
+`navigator.userActivation.hasBeenActive`). Para abrir la ventana el usuario
+acaba de pulsar el botón PiP, porque `requestWindow` lo exige, y casi
+siempre le dio a reproducir antes. Ahora `paginaConGesto()` desbloquea el
+latido igual que un clic de la sesión. Si el navegador no tiene la API, o la
+página nunca tuvo un gesto, manda la regla de antes. El contexto del
+analizador vive en la página (`audio-spectrum.js`), que es la activación que
+cuenta.
+
+Tres pruebas nuevas en `pip-halo.test.js`: el caso reportado, la página sin
+ningún gesto, y que el gesto no haga latir un halo en modo fijo. Mutación
+(`tools/mutar-tanda-am.js`): 3 de 3, con 2 de 3 recuentos exactos en la
+primera pasada y refijada por escrito. **No medido en vivo**: abrir la
+ventana con el halo en latido en Chrome de verdad.
+
+## La onda de serie y el menú con ajustes rápidos (las tandas AN y AO)
+
+Las pidió el autor con una captura del menú de Better Lyrics: «guarda ahora
+como por defecto para nuevos usuarios el halo con latido, color de vídeo o
+carátula, y el espectro nuevo que creaste no la barra si no la onda que me
+gustó». Y además: «un menú así como el que te comparto para tener un
+control pequeño de las opciones y agregar otra opción que diga avanzada».
+
+**Tanda AN, los valores de serie.** El halo latiendo y el color «del vídeo o
+la carátula» ya lo eran desde la 1.0.1; lo nuevo es `spectrumStyle: "wave"`.
+Como pasó con el halo, quien nunca eligió forma pasa a ver la onda (eso
+significa cambiar un valor de serie). La píldora pulsada en el HTML de
+Preferencias se movió con él, porque la vigila el censo estático. Una
+prueba fija la decisión con las palabras del autor. Dos bancos que leen el
+color de cada barra (la prueba del arcoíris y `pip-color-fuente.test.js`)
+siembran `"bars"`: la suite entera lo destapó, tres pruebas que asumían la
+forma de serie.
+Mutación 1 de 1, exacta.
+
+**Tanda AO, el menú.** Tres cosas en la barra de arriba:
+
+- **Ahora suena**: lo de siempre (la canción, los mandos y abrir la
+  ventana).
+- **Ajustes**: seis interruptores (el halo, su latido, el vinilo, la letra,
+  el vídeo y el estado en el icono) y dos selectores (el tema y la forma de
+  las barras).
+- **Avanzada ↗**: un enlace, fuera del `tablist` a propósito, que abre
+  Preferencias.
+
+Las pestañas siguen el patrón del WAI: flechas del teclado, solo la elegida
+en el orden de tabulación, y la última abierta recordada en el
+`localStorage` del menú. Cada mando declara en el HTML su clave y sus
+valores, y `popup.js` no conoce ninguna clave. **Solo escribe en storage**:
+la ventana, Preferencias y el icono ya escuchan `storage.onChanged`. El menú
+pinta lo normalizado por `Settings` (carga `settings.js`), así que enseña
+también lo que se cambie desde otro sitio. Un **censo** coteja cada clave y
+cada valor del HTML contra `seAplica` y `Settings.normalize`: una errata
+(«vinilo») caería ahí.
+
+El menú pasa de 260 a 300 px de ancho. Las filas se apretaron a 32 px
+porque con 38 medía 598 px, a dos del tope de 600 que Chrome pone a los
+menús. **Visto en el navegador** con una página de usar y tirar que carga el
+menú real con un `chrome` falso (borrada después): pestañas, interruptores
+y segmentos se pintan bien y escriben lo que deben. **La política de
+privacidad** suma una frase por la pestaña recordada.
+
+`tests/unit/popup-ajustes.test.js`: 14 pruebas, con un banco que lee los
+scripts del propio HTML. Mutación 10 de 10, exactas. **Sin probar en vivo**:
+el menú dentro de la extensión de verdad.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

@@ -519,7 +519,9 @@ test("EL CABLE: en modo RGB cada barra se pinta de su color", async () => {
    * liso. Lo que se mira aqui es con que fillStyle se pinta CADA barra, que
    * es lo unico que separa el arcoiris de un color fijo.
    */
-  const v = ventana({ storage: { spectrumColor: "rgb" } });
+  // En BARRAS a proposito: desde la 1.2.1 la forma de serie es la onda, y
+  // esta prueba cuenta un fillRect por barra (la onda pinta un trazo).
+  const v = ventana({ storage: { spectrumColor: "rgb", spectrumStyle: "bars" } });
   await v.win.YTMPip.Settings.load();
 
   conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));

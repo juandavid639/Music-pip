@@ -288,6 +288,21 @@ test("la 1.0.1 estrena de serie: halo latiendo y colores segun la fuente (decisi
   assert.strictEqual(s.spectrumColor, "source", "las barras de serie toman el color de la fuente");
 });
 
+test("la 1.2.1 estrena de serie la ONDA, y el halo y los colores siguen como en la 1.0.1 (decision fijada)", async () => {
+  /*
+   * Decision del autor tras la 1.2.0, con sus palabras: «guarda ahora como
+   * por defecto para nuevos usuarios el halo con latido, color de video o
+   * caratula, y el espectro nuevo que creaste no la barra si no la onda que
+   * me gusto». Las dos primeras ya lo eran desde la 1.0.1 (la prueba de
+   * arriba); la forma es lo nuevo.
+   */
+  const s = (await preferencias({})).get();
+  assert.strictEqual(s.spectrumStyle, "wave", "la forma de serie es la onda");
+  assert.strictEqual(s.haloMode, "pulse");
+  assert.strictEqual(s.haloColor, "source");
+  assert.strictEqual(s.spectrumColor, "source");
+});
+
 test("espectro: numeros fuera de rango caen al valor por defecto", async () => {
   const fuera = {
     spectrumBars: [7, 41, -1, 0, "muchas", null, {}],

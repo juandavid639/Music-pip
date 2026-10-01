@@ -303,9 +303,12 @@ function ventana(opciones) {
    * getFloatFrequencyData y el doble de audio de este archivo no lo
    * implementa a proposito (aqui se mide el color de la fuente, no el
    * halo). Fijo salvo que una prueba siembre otra cosa.
+   *
+   * Y en BARRAS (tanda AN): desde la 1.2.1 la forma de serie es la onda,
+   * y las pruebas de aqui leen el fillStyle de cada barra.
    */
   opciones = Object.assign({}, opciones);
-  opciones.storage = Object.assign({ haloMode: "fixed" }, opciones.storage);
+  opciones.storage = Object.assign({ haloMode: "fixed", spectrumStyle: "bars" }, opciones.storage);
   const { win } = crearEntorno(leerFixture("controles-completos.html"), opciones);
   ventanas.push(win);
   cargar(

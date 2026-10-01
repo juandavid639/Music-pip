@@ -40,6 +40,25 @@
           <span id="ytmpip-popup-status" class="ytmpip-popup-status" data-t="buscando_musica">Buscando la música…</span>
         </header>
 
+        <!--
+          LAS PESTAÑAS (tanda AO), a la manera del menú de Better Lyrics que
+          enseñó el autor: «tener un control pequeño de las opciones y
+          agregar otra opción que diga avanzada para ver en detalle todo».
+
+          Dos pestañas de verdad (role=tab, flechas del teclado) y un ENLACE
+          al lado, fuera del tablist: «Avanzada» no cambia de panel, abre
+          otra página, y un enlace dentro de un tablist sería mentirle al
+          lector de pantalla sobre qué hace.
+        -->
+        <nav class="ytmpip-popup-barra" aria-label="Menú" data-t-aria="menu">
+          <div class="ytmpip-popup-pestanas" role="tablist">
+            <button type="button" role="tab" id="ytmpip-pestana-ahora" aria-selected="true" aria-controls="ytmpip-panel-ahora" data-t="pestana_ahora">Ahora suena</button>
+            <button type="button" role="tab" id="ytmpip-pestana-ajustes" aria-selected="false" aria-controls="ytmpip-panel-ajustes" tabindex="-1" data-t="pestana_ajustes">Ajustes</button>
+          </div>
+          <a id="ytmpip-popup-options-link" href="../options/options.html" target="_blank" class="ytmpip-popup-avanzada" title="Todas las preferencias, en detalle" data-t-title="avanzada_titulo"><span data-t="avanzada">Avanzada</span> ↗</a>
+        </nav>
+
+        <section id="ytmpip-panel-ahora" class="ytmpip-popup-panel" role="tabpanel" aria-labelledby="ytmpip-pestana-ahora">
         <div class="ytmpip-popup-body">
           <img id="ytmpip-popup-artwork" class="ytmpip-popup-artwork" alt="Sin portada" data-t-alt="sin_portada" />
           <div class="ytmpip-popup-info">
@@ -68,14 +87,79 @@
         </div>
 
         <button id="ytmpip-popup-open-pip" type="button" class="ytmpip-popup-primary" data-t="abrir_ventana_flotante">Abrir ventana flotante</button>
+        </section>
 
-        <a id="ytmpip-popup-options-link" href="../options/options.html" target="_blank" class="ytmpip-popup-options-link" data-t="preferencias">Preferencias</a>
+        <!--
+          LOS AJUSTES RÁPIDOS. Lo más usado, a un clic; todo lo demás sigue en
+          Avanzada. Cada mando nombra su clave de storage y sus valores en el
+          propio HTML (data-clave, data-si/data-no, data-valor) y popup.js los
+          trata a todos igual: un mando nuevo es una línea aquí, sin código.
+          Una prueba coteja cada clave y cada valor contra settings.js, para
+          que una errata no escriba algo que la ventana no entiende.
+        -->
+        <section id="ytmpip-panel-ajustes" class="ytmpip-popup-panel" role="tabpanel" aria-labelledby="ytmpip-pestana-ajustes" hidden>
+          <div class="ytmpip-popup-tarjeta">
+            <h2 class="ytmpip-popup-tarjeta-titulo" data-t="ajustes_rapidos">Ajustes rápidos</h2>
+
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-halo" data-t="rapido_halo">Halo de luz</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="true" aria-labelledby="ytmpip-et-halo" data-clave="haloPreference" data-si="shown" data-no="hidden"></button>
+            </div>
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-latido" data-t="rapido_halo_latido">Halo latiendo con la música</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="true" aria-labelledby="ytmpip-et-latido" data-clave="haloMode" data-si="pulse" data-no="fixed"></button>
+            </div>
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-vinilo" data-t="rapido_vinilo">Carátula en disco de vinilo</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="false" aria-labelledby="ytmpip-et-vinilo" data-clave="coverStyle" data-si="vinyl" data-no="square"></button>
+            </div>
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-letra" data-t="rapido_letra">Mostrar la letra</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="true" aria-labelledby="ytmpip-et-letra" data-clave="lyricsPreference" data-si="shown" data-no="hidden"></button>
+            </div>
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-video" data-t="rapido_video">Ver el vídeo musical</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="true" aria-labelledby="ytmpip-et-video" data-clave="videoPreference" data-si="shown" data-no="hidden"></button>
+            </div>
+            <div class="ytmpip-popup-fila">
+              <span id="ytmpip-et-icono" data-t="rapido_icono">Estado en el icono</span>
+              <button type="button" role="switch" class="ytmpip-popup-interruptor" aria-checked="true" aria-labelledby="ytmpip-et-icono" data-clave="badgePreference" data-si="shown" data-no="hidden"></button>
+            </div>
+
+            <div class="ytmpip-popup-fila ytmpip-popup-fila-segmentos">
+              <span id="ytmpip-et-tema" data-t="rapido_tema">Tema</span>
+              <div class="ytmpip-popup-segmentos" role="group" aria-labelledby="ytmpip-et-tema" data-clave="theme">
+                <button type="button" data-valor="dark" aria-pressed="true" data-t="opcion_oscuro">Oscuro</button>
+                <button type="button" data-valor="light" aria-pressed="false" data-t="opcion_claro">Claro</button>
+                <button type="button" data-valor="auto" aria-pressed="false" data-t="opcion_automatico">Automático</button>
+                <button type="button" data-valor="source" aria-pressed="false" data-t="rapido_tema_fuente">Carátula</button>
+              </div>
+            </div>
+            <div class="ytmpip-popup-fila ytmpip-popup-fila-segmentos">
+              <span id="ytmpip-et-forma" data-t="rapido_forma">Forma de las barras</span>
+              <div class="ytmpip-popup-segmentos" role="group" aria-labelledby="ytmpip-et-forma" data-clave="spectrumStyle">
+                <button type="button" data-valor="bars" aria-pressed="false" data-t="opcion_forma_barras">Barras</button>
+                <button type="button" data-valor="wave" aria-pressed="true" data-t="opcion_forma_onda">Onda</button>
+                <button type="button" data-valor="ring" aria-pressed="false" data-t="opcion_forma_anillo">Anillo</button>
+              </div>
+            </div>
+          </div>
+          <p class="ytmpip-popup-nota" data-t="ajustes_nota">El ecualizador, los colores, los atajos y todo lo demás, en Avanzada.</p>
+        </section>
       </div>
     </main>
     <script src="../shared/constants.js"></script>
     <script src="../shared/messages.js"></script>
     <script src="../shared/textos.js"></script>
     <script src="../shared/iconos.js"></script>
+    <!--
+      Las preferencias, para los ajustes rápidos (tanda AO): settings.js lee
+      storage al cargar (messages.js va antes: su load() necesita
+      isContextValid) y avisa de cada cambio, venga de aquí o de otro sitio.
+      ecualizador.js lo pide settings.js al normalizar.
+    -->
+    <script src="../shared/ecualizador.js"></script>
+    <script src="../shared/settings.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

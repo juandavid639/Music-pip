@@ -310,6 +310,56 @@ test("EL CASO PEDIDO: el propio ✨ es gesto — apagar y encender arranca el la
   assert.strictEqual(v.raiz.style.getPropertyValue("--ytmpip-halo-golpe"), "1.000");
 });
 
+/*
+ * LA REGLA DEL GESTO, CORREGIDA (tanda AM). El autor, con la 1.2.0: «cuando
+ * coloco el pip el halo responde, pero no está funcionando con los bajos,
+ * me toca pulsar el botón nuevamente». Chrome deja arrancar un AudioContext
+ * si la PAGINA tuvo alguna vez un gesto (activacion pegajosa), y para abrir
+ * la ventana el usuario acaba de pulsar el boton PiP. El doble de esa
+ * activacion es navigator.userActivation, que jsdom no trae.
+ */
+function conGestoEnLaPagina(win, tuvo) {
+  Object.defineProperty(win.navigator, "userActivation", {
+    value: { hasBeenActive: tuvo, isActive: false },
+    configurable: true
+  });
+}
+
+test("EL CASO REPORTADO: si la pagina ya tuvo un gesto, el latido guardado arranca al abrir, sin tocar el ✨", async () => {
+  const v = ventana({ storage: { haloMode: "pulse" } });
+  conGestoEnLaPagina(v.win, true);
+  conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
+  v.PipView.onStateUpdate(sinVideo());
+  await v.Settings.load();
+
+  assert.strictEqual(v.banco.haloLateAhora(), true, "el halo sale fijo aunque la pagina ya tuvo un gesto");
+  assert.strictEqual(v.contextos.length, 1, "no se monto el analizador");
+  golpear(v);
+  assert.strictEqual(v.raiz.style.getPropertyValue("--ytmpip-halo-golpe"), "1.000", "el golpe no llega al halo");
+});
+
+test("una pagina que NUNCA tuvo un gesto sigue con la regla de siempre: fijo hasta el primer clic", async () => {
+  const v = ventana({ storage: { haloMode: "pulse" } });
+  conGestoEnLaPagina(v.win, false);
+  conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
+  v.PipView.onStateUpdate(sinVideo());
+  await v.Settings.load();
+
+  assert.strictEqual(v.banco.haloLateAhora(), false);
+  assert.strictEqual(v.contextos.length, 0, "se conecto audio en una pagina sin ningun gesto");
+});
+
+test("el gesto de la pagina solo desbloquea el LATIDO: con el halo en modo fijo no se monta nada", async () => {
+  const v = ventana({ storage: { haloMode: "fixed" } });
+  conGestoEnLaPagina(v.win, true);
+  conAudio(conTiempos(v.Adapter.getPageMediaElement(), 35, 220));
+  v.PipView.onStateUpdate(sinVideo());
+  await v.Settings.load();
+
+  assert.strictEqual(v.banco.haloLateAhora(), false);
+  assert.strictEqual(v.contextos.length, 0, "un halo fijo monto un analizador");
+});
+
 test("el gesto del 📊 tambien desbloquea el latido, y los dos comparten UN analizador", async () => {
   /*
    * Cualquier clic que conecte audio vale, no solo el ✨: si el espectro

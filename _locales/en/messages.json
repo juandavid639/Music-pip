@@ -751,5 +751,53 @@
   },
   "preferencias_restauradas": {
     "message": "Factory settings restored."
+  },
+  "menu": {
+    "message": "Menu"
+  },
+  "pestana_ahora": {
+    "message": "Now playing"
+  },
+  "pestana_ajustes": {
+    "message": "Settings"
+  },
+  "avanzada": {
+    "message": "Advanced"
+  },
+  "avanzada_titulo": {
+    "message": "All preferences, in detail"
+  },
+  "ajustes_rapidos": {
+    "message": "Quick settings"
+  },
+  "rapido_halo": {
+    "message": "Light halo"
+  },
+  "rapido_halo_latido": {
+    "message": "Halo beating with the music"
+  },
+  "rapido_vinilo": {
+    "message": "Artwork as a vinyl record"
+  },
+  "rapido_letra": {
+    "message": "Show lyrics"
+  },
+  "rapido_video": {
+    "message": "Show the music video"
+  },
+  "rapido_icono": {
+    "message": "Status on the icon"
+  },
+  "rapido_tema": {
+    "message": "Theme"
+  },
+  "rapido_tema_fuente": {
+    "message": "Artwork"
+  },
+  "rapido_forma": {
+    "message": "Bars shape"
+  },
+  "ajustes_nota": {
+    "message": "The equalizer, colors, shortcuts and everything else, in Advanced."
   }
 }

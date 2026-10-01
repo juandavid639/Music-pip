@@ -197,11 +197,18 @@
    *
    * `gestoEnSesion`: el AudioContext nace suspendido si no lo pide un
    * gesto del usuario (la regla escrita junto al boton del pulso). El
-   * modo latido es una PREFERENCIA guardada, asi que al abrir la ventana
-   * no hay gesto que valga: conectar solos daria un golpe plano leido de
-   * un contexto suspendido. El halo con latido guardado sale FIJO y
-   * empieza a latir con el primer clic que conecte el audio (el suyo, el
-   * del pulso o el del espectro), que son los tres que encienden esto.
+   * modo latido es una PREFERENCIA guardada, asi que se penso que al
+   * abrir la ventana no habia gesto que valiera, y el halo salia FIJO
+   * hasta el primer clic que conectara el audio (el suyo, el del pulso o
+   * el del espectro).
+   *
+   * ESO ERA MEDIA VERDAD, y el autor lo vio en la 1.2.0: «el halo responde
+   * pero no con los bajos, me toca pulsar el boton nuevamente». Chrome no
+   * mira si HAY un gesto ahora: mira si la pagina tuvo ALGUNO (la
+   * activacion «pegajosa», navigator.userActivation.hasBeenActive). Y
+   * para abrir esta ventana el usuario ya pulso el boton PiP de la pagina
+   * —requestWindow lo exige— y casi siempre le dio a reproducir antes. Ver
+   * paginaConGesto: el gesto de la sesion O el de la pagina desbloquean.
    */
   let haloEncendido = false;
   let haloModoLatido = false;
@@ -1012,6 +1019,22 @@
     if (lastState) render(lastState);
   }
 
+  /*
+   * Si la PAGINA ya tuvo un gesto del usuario (tanda AM). Es lo que Chrome
+   * mira para dejar arrancar un AudioContext, y el contexto del analizador
+   * vive en la pagina (audio-spectrum.js), no en la ventana. Sin la API
+   * (navegadores viejos, jsdom) se contesta que no y manda la regla de
+   * siempre: fijo hasta el primer clic.
+   */
+  function paginaConGesto() {
+    try {
+      const activacion = root.navigator && root.navigator.userActivation;
+      return Boolean(activacion && activacion.hasBeenActive);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function arrancarAnimacion() {
     if (animacionFrame !== null || !pipWindow || pipWindow.closed) return;
     animacionFrame = pipWindow.requestAnimationFrame(fotograma);
@@ -1620,7 +1643,7 @@
      * y el espectro con letra en grande es la regresion documentada. Con
      * letra en grande el halo queda fijo, que ademas molesta menos leyendo.
      */
-    const haloQuiereLatir = haloEncendido && haloModoLatido && gestoEnSesion;
+    const haloQuiereLatir = haloEncendido && haloModoLatido && (gestoEnSesion || paginaConGesto());
     const alguienQuiere = (espectroPedido || pulsoPedido || haloQuiereLatir) && !letraEnGrande;
     const conectado = alguienQuiere && YTMPip.Espectro.conectar(media);
 
