@@ -538,7 +538,17 @@ async function intentarAbrir(target, origen) {
   return result || "error";
 }
 
-chrome.action.onClicked.addListener((clickedTab) => abrirPipDesdeElNavegador(clickedTab, "El icono"));
+/*
+ * EL ICONO ABRE EL MENU (tanda AP, 1.2.1). Aqui habia un
+ * chrome.action.onClicked que intentaba abrir la ventana desde el icono;
+ * con default_popup en el manifiesto Chrome ya no lo dispara, asi que se
+ * quito en vez de dejarlo como codigo muerto. No se pierde nada: la fase 0
+ * ya demostro que el clic en el icono no le pasa la activacion a la
+ * pestaña, y lo unico que conseguia era hacer parpadear el boton PiP. Eso
+ * mismo lo hace ahora el boton «Abrir ventana flotante» del menu
+ * (OPEN_PIP_REQUEST -> intentarAbrir), y el atajo Alt+Shift+P sigue
+ * pasando por abrirPipDesdeElNavegador.
+ */
 
 /*
  * Atajos de teclado del NAVEGADOR (chrome://extensions/shortcuts), no los de
@@ -570,8 +580,9 @@ const COMANDOS_DE_ATAJO = {
 
 chrome.commands.onCommand.addListener(async (atajo, tab) => {
   if (atajo === "abrir-ventana") {
-    abrirPipDesdeElNavegador(tab, "El atajo");
-    return;
+    // Devolviendo el resultado: Chrome lo ignora, y quien dispare el oyente
+    // (las pruebas, tanda AP) sabe cuando termino y QUE paso.
+    return abrirPipDesdeElNavegador(tab, "El atajo");
   }
 
   const tipo = COMANDOS_DE_ATAJO[atajo];

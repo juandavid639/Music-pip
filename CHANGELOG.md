@@ -16,6 +16,9 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
 
 ### Cambiado
 
+- El icono de la barra de Chrome abre ahora ese menú. Para abrir la ventana
+  flotante: el botón PiP de la página, «Abrir ventana flotante» en el menú
+  o Alt+Shift+P.
 - La forma de serie de las barras de sonido es ahora la **onda**. Las
   barras y el anillo siguen a un clic.
 

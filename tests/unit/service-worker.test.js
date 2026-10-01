@@ -389,9 +389,18 @@ test("sin pestaña musical, el menu recibe not_found como siempre", async () => 
   assert.deepStrictEqual(plano(r), { ok: false, reason: "not_found" });
 });
 
-test("el icono sobre una pestaña sin script vivo le da script y reintenta", async () => {
+test("TANDA AP: con el menu en el icono, el service worker no deja un onClicked muerto", () => {
+  // Con default_popup Chrome no dispara chrome.action.onClicked: un oyente
+  // ahi seria codigo que no corre nunca y que parece que hace algo.
+  const w = trabajador();
+  assert.strictEqual(w.oyentes ? w.oyentes.icono : undefined, undefined);
+  assert.doesNotMatch(fs.readFileSync(path.join(RAIZ, "src/background/service-worker.js"), "utf8"), /action.onClicked.addListener/);
+});
+
+test("el atajo de abrir sobre una pestaña sin script vivo le da script y reintenta", async () => {
+  // Con el atajo y no con el icono desde la tanda AP: el icono abre el menu.
   const w = trabajador({ pestanas: [pestana(7, YTM, { vivo: false })] });
-  const [resultado] = await w.disparar("icono", pestana(7, YTM));
+  const [resultado] = await w.disparar("atajo", "abrir-ventana", pestana(7, YTM));
   assert.deepStrictEqual(w.registro.inyecciones.map((i) => i.id), [7]);
   assert.strictEqual(resultado, "opened", "se le dio script pero no se volvio a intentar");
   assert.deepStrictEqual(w.registro.destacados, [], "se abrio al segundo intento: no habia nada que destacar");
@@ -405,7 +414,7 @@ test("TANDA AI: sin script vivo no se dispara ningun evento en la pagina (la pue
    * script y reintenta, que es lo que ya hacia.
    */
   const w = trabajador({ pestanas: [pestana(7, YTM, { vivo: false })] });
-  await w.disparar("icono", pestana(7, YTM));
+  await w.disparar("atajo", "abrir-ventana", pestana(7, YTM));
   assert.deepStrictEqual(w.registro.avisos.filter((a) => a[0] === "evento"), []);
   assert.deepStrictEqual(w.registro.inyecciones.map((i) => i.id), [7], "sin script, se le da script");
 });

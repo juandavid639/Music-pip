@@ -3116,6 +3116,11 @@ Segunda prueba en Chrome real: incluso vía `chrome.action.onClicked` +
 `executeScript`, `requestWindow()` sigue fallando — la activación de usuario NO se
 transfiere desde el contexto del navegador hasta el documento de la pestaña.
 
+> **Actualización (1.2.1, tanda AP):** el icono vuelve a tener `default_popup`
+> y abre el menú con pestañas. Lo que se describe aquí sigue siendo verdad (el
+> icono no puede abrir la ventana), y por eso mismo no se pierde nada: ver «El
+> icono abre el menú».
+
 **Conclusión (Fase 0):** el único disparador confiable es un clic real dentro del
 propio documento de YouTube Music. Por eso `pip.js` inyecta un botón flotante
 "PiP" en la página (abajo a la derecha, sobre la barra del reproductor); su
@@ -7866,15 +7871,45 @@ privacidad** suma una frase por la pestaña recordada.
 scripts del propio HTML. Mutación 10 de 10, exactas. **Sin probar en vivo**:
 el menú dentro de la extensión de verdad.
 
+## El icono abre el menú (la tanda AP)
+
+Lo destapó el autor al probar la 1.2.1: «no está funcionando cuando hago
+click», con un `Fallo al abrir el PiP` en la consola del service worker. El
+menú con pestañas de la tanda AO **no se podía abrir**. Desde la fase 0 el
+manifiesto no tenía `default_popup`, porque el icono intentaba abrir la
+ventana directamente (`chrome.action.onClicked`), y `popup.html` solo se
+usaba como ventana de respaldo. Construí el menú sin mirar cómo se llegaba a
+él, y las pruebas lo montaban directamente, así que tampoco lo vieron.
+
+El autor eligió que el icono abra el menú, como en Better Lyrics. **No se
+pierde nada**: la fase 0 ya demostró que el clic en el icono no le pasa la
+activación a la pestaña, y lo único que conseguía era hacer parpadear el
+botón PiP de la página. Eso lo hace ahora el botón «Abrir ventana flotante»
+del menú (`OPEN_PIP_REQUEST` → `intentarAbrir`, tanda T). El atajo
+Alt+Shift+P y el botón de la página siguen igual.
+
+- `manifest.json`: `action.default_popup` apunta a `src/popup/popup.html`.
+- El `onClicked` del service worker **se quitó**. Con menú, Chrome no lo
+  dispara, y dejarlo era código que parece que hace algo. Sus dos pruebas
+  pasan ahora por el atajo, que llama a la misma función; el oyente del atajo
+  devuelve su resultado (Chrome lo ignora) para que se pueda esperar.
+- Una prueba exige el `default_popup` y otra que no vuelva un `onClicked`.
+  Mutación 2 de 2, exactas.
+
+El error concreto de la consola no se llegó a ver entero (la captura mostraba
+la línea del código, no el mensaje). Con el icono abriendo el menú, ese
+camino ya no se recorre al pulsarlo; el atajo sí lo recorre. Si vuelve a
+salir con Alt+Shift+P, hace falta el mensaje completo.
+
 ## La 1.2.1 (el halo al abrir, la onda y el menú)
 
-Lleva las tandas AM, AN y AO, pedidas por el autor tras probar la 1.2.0.
+Lleva las tandas AM, AN, AO y AP (esta, tras la primera prueba de la 1.2.1), pedidas por el autor tras probar la 1.2.0.
 Tercer número, aunque el menú es una función nueva, porque la 1.2.0 aún no
 estaba asentada en la tienda y esto la completa; si se prefiere la receta
 al pie de la letra, sería la 1.3.0 (subir los tres archivos y
 reempaquetar). `manifest.json`, `package.json` y `package-lock.json` suben
 juntos; el `CHANGELOG.md` pasa «Sin publicar» a «[1.2.1]». Suite entera:
-**1159/1159**.
+**1162/1162**.
 
 **Permisos: ninguno nuevo.** El zip sigue en 41 archivos: el menú carga
 `settings.js` y `ecualizador.js`, que ya viajaban. **La política de

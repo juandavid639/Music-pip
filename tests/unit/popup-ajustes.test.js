@@ -219,3 +219,16 @@ test("cada interruptor tiene nombre (aria-labelledby a un texto que existe)", as
     assert.ok(etiqueta && etiqueta.textContent.trim(), "interruptor sin nombre: " + el.dataset.clave);
   });
 });
+
+test("TANDA AP: el icono de la extension abre ESTE menu", () => {
+  /*
+   * Lo destapo el autor al probar la 1.2.1: el menu con pestañas no salia
+   * al pulsar el icono, porque desde la fase 0 el manifiesto no tenia
+   * default_popup (el icono intentaba abrir la ventana y solo conseguia
+   * hacer parpadear el boton de la pagina). Sin esta linea del manifiesto
+   * todo lo de arriba se prueba en un menu al que no llega nadie.
+   */
+  const manifiesto = JSON.parse(fs.readFileSync(path.join(RAIZ, "manifest.json"), "utf8"));
+  assert.strictEqual(manifiesto.action.default_popup, "src/popup/popup.html");
+  assert.ok(fs.existsSync(path.join(RAIZ, manifiesto.action.default_popup)));
+});
