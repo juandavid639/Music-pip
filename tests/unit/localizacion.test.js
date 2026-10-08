@@ -397,3 +397,26 @@ test("cada catalogo declara SU idioma en la clave `idioma`", () => {
   assert.equal(ES.idioma.message, "es");
   assert.equal(EN.idioma.message, "en");
 });
+
+test("EL INGLES ES EL IDIOMA POR DEFECTO, el español el segundo (decision fijada, 2026-10-08)", () => {
+  /*
+   * Decision del autor, con sus palabras: «pongamos por defecto el idioma
+   * ingles, hemos tenido instalaciones pero desinstalaciones tambien y
+   * creeria tambien por el tema del idioma». Con default_locale "es", todo
+   * Chrome que no estuviera en español ni en inglés (portugués, francés,
+   * aleman...) veia la extension y su ficha en español. Con "en", esos
+   * pasan al ingles; quien tiene Chrome en español sigue en español.
+   */
+  const manifiesto = JSON.parse(fs.readFileSync(path.join(RAIZ, "manifest.json"), "utf8"));
+  assert.strictEqual(manifiesto.default_locale, "en");
+
+  // Lo bilingue publicado va en ese orden: primero ingles, luego español.
+  const politica = fs.readFileSync(path.join(RAIZ, "tienda", "politica-de-privacidad.html"), "utf8");
+  assert.match(politica, /<html lang="en">/);
+  assert.ok(
+    politica.indexOf('<section lang="en">') < politica.indexOf('<section lang="es">'),
+    "la politica tiene que abrir en ingles"
+  );
+  const ficha = fs.readFileSync(path.join(RAIZ, "tienda", "ficha.md"), "utf8");
+  assert.ok(ficha.indexOf("— ENGLISH") < ficha.indexOf("— ESPAÑOL"), "la ficha tiene que poner primero el ingles");
+});

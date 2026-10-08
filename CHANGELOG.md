@@ -4,6 +4,19 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Changed / Cambiado
+
+- **English is now the default language.** If your browser is in a language
+  the extension does not speak yet (Portuguese, French, German…), you will
+  see it in English instead of Spanish. With Chrome in Spanish, nothing
+  changes.
+- **El inglés es ahora el idioma por defecto.** Si tu navegador está en un
+  idioma que la extensión aún no habla (portugués, francés, alemán…), la
+  verás en inglés en vez de en español. Con Chrome en español, no cambia
+  nada.
+
 ## [1.2.1] — 2026-10-01
 
 ### Añadido

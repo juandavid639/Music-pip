@@ -13,15 +13,80 @@ https://chrome.google.com/webstore/devconsole
 | Nombre | Music PiP *(lo lee del manifiesto; no se escribe)* |
 | Resumen (132 máx.) | *(lo lee del manifiesto: `extension_descripcion`, ya cabe y ya dice «no oficial»)* |
 | Categoría | **Entretenimiento** (alternativa razonable: Herramientas) |
-| Idioma principal | Español |
+| Idioma principal | **English** (desde 2026-10-08; el español va como traducción) |
 
 ---
 
-## 2. Descripción larga — ESPAÑOL
+## 2. Descripción larga — ENGLISH (idioma principal)
+
+Desde el 2026-10-08 el inglés es el idioma principal de la ficha y de la
+extensión (`default_locale: "en"`), por decisión del autor: con el español
+de principal, quien tenía Chrome en otro idioma (portugués, francés,
+alemán…) veía la extensión y la ficha en español. En la consola: «Ficha de
+Play Store» → idioma predeterminado **English**, y el español se añade
+como traducción.
 
 Al día con la 1.2.1 (2026-10-01): menú con ajustes rápidos, onda de serie,
 cuatro temas, vinilo, acento propio, estado en el icono, copia de
 preferencias y aviso de «el sitio cambió».
+
+
+```
+A floating window that stays on top while you work, showing whatever is playing
+on YouTube Music, YouTube or Spotify.
+
+WHAT IT DOES
+• Artwork, title and artist of the current song, with controls: play, pause,
+  next/previous, seek, volume and speed.
+• Synced lyrics (karaoke) where the site offers them, with a clean stage mode
+  that shows the lyrics big.
+• 5-band equalizer with presets (bass, voice, night…) and per-song memory.
+• Audio visualizer in three shapes: wave (default), bars or a ring around the
+  artwork, in the theme color, your own color, rainbow, your palette or the
+  color of what is playing.
+• The artwork can show as a vinyl record spinning while music plays, and it
+  crossfades into the next song's artwork.
+• A light halo around the window edge: steady or beating with the music, in
+  the theme color, your own color, or the artwork's color.
+• Four themes: dark, light, automatic (follows your system) and "from the
+  video or artwork", which tints the window with the color of what is playing.
+  Plus an accent color of your choice.
+• The Chrome toolbar icon shows whether music is playing or paused, or the
+  minutes left on the sleep timer.
+• On Spotify: the animated Canvas video can play as the window background.
+• The browser's native floating video (🎬) where there is video.
+• Configurable keyboard shortcuts and a sleep timer.
+• The most-used settings are one click away in the icon's menu ("Settings"
+  tab: halo, vinyl, lyrics, video, theme and bars shape), and everything else
+  on the Options page, with a real preview that follows you as you choose.
+  Your preferences can be exported to a file, imported on another computer,
+  or reset to factory settings.
+• If the music site changes and a control can no longer be found, the window
+  tells you instead of going silent.
+
+WHAT IT DOES NOT DO
+• It collects no data: preferences are stored only in your browser, and the
+  exported file stays wherever you save it.
+• It touches nothing outside music.youtube.com, www.youtube.com and
+  open.spotify.com.
+• No ads, no playback tampering: it drives the controls the page already has.
+
+HONEST LIMITS (measured, not assumed)
+• Spotify's video is encrypted (DRM): it cannot be drawn inside the window;
+  the 🎬 button opens the browser's native floating video instead.
+• Spotify's audio never passes through the page: the equalizer and the
+  visualizer only work on YouTube and YouTube Music.
+• YouTube has no lyrics panel: karaoke lives on YouTube Music and Spotify.
+
+Requires Chrome 116+ (it uses the Document Picture-in-Picture API).
+
+Unofficial. Not affiliated with Google or Spotify. YouTube, YouTube Music and
+Spotify are trademarks of their owners; this extension only works with their
+websites.
+```
+
+## 3. Descripción larga — ESPAÑOL (traducción)
+
 
 ```
 Una ventana flotante que se queda encima de todo mientras trabajas, con la música
@@ -76,62 +141,6 @@ Requiere Chrome 116 o superior (usa la API Document Picture-in-Picture).
 
 No oficial. No afiliado a Google ni a Spotify. YouTube, YouTube Music y Spotify
 son marcas de sus dueños; esta extensión solo funciona con sus sitios web.
-```
-
-## 3. Descripción larga — ENGLISH
-
-```
-A floating window that stays on top while you work, showing whatever is playing
-on YouTube Music, YouTube or Spotify.
-
-WHAT IT DOES
-• Artwork, title and artist of the current song, with controls: play, pause,
-  next/previous, seek, volume and speed.
-• Synced lyrics (karaoke) where the site offers them, with a clean stage mode
-  that shows the lyrics big.
-• 5-band equalizer with presets (bass, voice, night…) and per-song memory.
-• Audio visualizer in three shapes: wave (default), bars or a ring around the
-  artwork, in the theme color, your own color, rainbow, your palette or the
-  color of what is playing.
-• The artwork can show as a vinyl record spinning while music plays, and it
-  crossfades into the next song's artwork.
-• A light halo around the window edge: steady or beating with the music, in
-  the theme color, your own color, or the artwork's color.
-• Four themes: dark, light, automatic (follows your system) and "from the
-  video or artwork", which tints the window with the color of what is playing.
-  Plus an accent color of your choice.
-• The Chrome toolbar icon shows whether music is playing or paused, or the
-  minutes left on the sleep timer.
-• On Spotify: the animated Canvas video can play as the window background.
-• The browser's native floating video (🎬) where there is video.
-• Configurable keyboard shortcuts and a sleep timer.
-• The most-used settings are one click away in the icon's menu ("Settings"
-  tab: halo, vinyl, lyrics, video, theme and bars shape), and everything else
-  on the Options page, with a real preview that follows you as you choose.
-  Your preferences can be exported to a file, imported on another computer,
-  or reset to factory settings.
-• If the music site changes and a control can no longer be found, the window
-  tells you instead of going silent.
-
-WHAT IT DOES NOT DO
-• It collects no data: preferences are stored only in your browser, and the
-  exported file stays wherever you save it.
-• It touches nothing outside music.youtube.com, www.youtube.com and
-  open.spotify.com.
-• No ads, no playback tampering: it drives the controls the page already has.
-
-HONEST LIMITS (measured, not assumed)
-• Spotify's video is encrypted (DRM): it cannot be drawn inside the window;
-  the 🎬 button opens the browser's native floating video instead.
-• Spotify's audio never passes through the page: the equalizer and the
-  visualizer only work on YouTube and YouTube Music.
-• YouTube has no lyrics panel: karaoke lives on YouTube Music and Spotify.
-
-Requires Chrome 116+ (it uses the Document Picture-in-Picture API).
-
-Unofficial. Not affiliated with Google or Spotify. YouTube, YouTube Music and
-Spotify are trademarks of their owners; this extension only works with their
-websites.
 ```
 
 ---

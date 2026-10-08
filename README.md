@@ -7917,6 +7917,37 @@ privacidad sí cambia** (la pestaña recordada del menú) y se publica sola al
 hacer push. Preparada **sin push**, a petición del autor, que quiere
 probarla antes.
 
+## El inglés, idioma por defecto (la tanda AQ)
+
+Decisión del autor (2026-10-08): «pongamos por defecto el idioma inglés,
+hemos tenido instalaciones pero desinstalaciones también y creería también
+por el tema del idioma». Tenía razón en el mecanismo. Chrome elige el
+catálogo del idioma del navegador si existe, y si no, el de
+`default_locale`, que era `"es"`. Todo Chrome que no estuviera en español
+ni en inglés (portugués, francés, alemán…) veía **la extensión entera y su
+ficha en español**. Con `"en"` esos usuarios pasan al inglés; con Chrome en
+español no cambia nada. Antes del cambio se comprobó que el catálogo
+inglés está completo: 267 claves, y la única igual al español es
+`fila_color` («Color»).
+
+- `manifest.json`: `default_locale: "en"`.
+- La **política de privacidad** abre en inglés (`<html lang="en">`, cada
+  mitad en su `<section lang>`) y el español va después. Se publica en
+  Pages con el push.
+- La **ficha** (`tienda/ficha.md`) tiene el inglés como idioma principal:
+  la descripción inglesa es la sección 2 y la española la 3. En la consola
+  de la tienda hay que poner el idioma predeterminado en English y dejar el
+  español como traducción; ese paso es del autor.
+- El texto de respaldo que llevan el HTML y `constants.js` (lo que se ve si
+  el catálogo no contesta, por ejemplo con la extensión recargada) **sigue en
+  español**, a propósito. Con `default_locale` en inglés, Chrome siempre
+  contesta, y cambiarlo rompería la regla de «el español del HTML es el del
+  catálogo» sin que nadie lo viera.
+
+Una prueba fija la decisión con sus palabras (manifiesto, orden de la
+política y de la ficha). Mutación (`tools/mutar-tanda-aq.js`): 2 de 2,
+exactas.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
