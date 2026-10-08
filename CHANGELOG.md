@@ -35,6 +35,13 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
   y Chrome te pide permiso solo para ese sitio. Carátula, título, mandos y
   saltos; sin letra, ecualizador ni barras, porque su sonido no pasa por la
   página.
+- **Deezer**, as an optional site like SoundCloud: turn it on in the options
+  page ("More sites"). Artwork, title, controls, seeking and favourites; no
+  lyrics, equalizer or bars. Without Premium, Deezer only plays 30 seconds.
+- **Deezer**, como sitio opcional igual que SoundCloud: actívalo en
+  Preferencias («Más sitios»). Carátula, título, mandos, saltos y favoritos;
+  sin letra, ecualizador ni barras. Sin Premium, Deezer solo deja oír 30
+  segundos.
 
 ### Privacy / Privacidad
 

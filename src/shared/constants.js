@@ -45,6 +45,13 @@
         prefijo: "https://soundcloud.com/",
         // Lo que funciona y lo que no, en Preferencias (clave del catalogo).
         nota: "sitio_nota_soundcloud"
+      },
+      {
+        id: "deezer",
+        nombre: "Deezer",
+        patron: "https://www.deezer.com/*",
+        prefijo: "https://www.deezer.com/",
+        nota: "sitio_nota_deezer"
       }
     ],
 

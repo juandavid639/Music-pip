@@ -168,6 +168,7 @@ function entornoContenido(fixture, opciones) {
     "src/content/youtube-adapter.js",
     "src/content/spotify-adapter.js",
     "src/content/soundcloud-adapter.js",
+    "src/content/deezer-adapter.js",
     "src/content/track-timeline.js",
     "src/content/metadata-reader.js",
     "src/content/lyrics-reader.js"
@@ -228,6 +229,7 @@ function entornoPagina(fixture, opciones = {}) {
     "src/content/youtube-adapter.js",
     "src/content/spotify-adapter.js",
     "src/content/soundcloud-adapter.js",
+    "src/content/deezer-adapter.js",
     "src/content/track-timeline.js",
     "src/content/metadata-reader.js",
     "src/content/lyrics-reader.js",

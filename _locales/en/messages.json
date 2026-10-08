@@ -955,5 +955,8 @@
   },
   "sitio_nota_soundcloud": {
     "message": "Artwork, title, controls and seeking; no lyrics, equalizer or bars, because its audio does not go through the page."
+  },
+  "sitio_nota_deezer": {
+    "message": "Artwork, title, controls, seeking and favourites; no lyrics, equalizer or bars, because its audio does not go through the page. Without Premium, Deezer only plays 30 seconds."
   }
 }

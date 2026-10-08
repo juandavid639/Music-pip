@@ -8200,36 +8200,69 @@ Chromium (~150 MB) se instala aparte con `npx playwright install chromium`
 y no viaja en el CI, que no lo usa. La ficha (sección 10) lo añade a la
 receta de publicar, junto al guion de consola de la tanda AL.
 
-## Deezer: el guion para medirlo (preparación de la tanda AW)
+## Deezer, medido en la cuenta del autor (la tanda AW)
 
-Deezer pide sesión iniciada, así que el adaptador no se puede escribir sin
-medir en la cuenta del autor. `tools/diagnostico/diagnostico-deezer.js` se
-pega en la consola de su pestaña con una canción sonando y mide dos veces,
-sonando y en pausa. Recoge si hay `<audio>`/`<video>` en el documento y,
-de la barra del reproductor, todo lo que lleva `data-testid`, `aria-label`
-o es un deslizador, con sus atributos. Lo deja en el portapapeles. No pulsa
-nada ni lee nada de la cuenta. Con ese resultado se escribe el adaptador
-como el de SoundCloud: un sitio opcional más en `SITIOS_OPCIONALES`.
+Deezer pide sesión iniciada. El guion de consola
+(`tools/diagnostico/diagnostico-deezer.js`) funcionó, pero su resultado no
+llegó a pegarse en el chat. El autor propuso que lo midiera yo, y se midió
+en su Chrome con Claude en Chrome, en su sesión y en una pestaña nueva:
+solo se leyó la barra y se reprodujo y pausó una canción. **Favoritos no
+se pulsó**, porque cambiaría su cuenta. Su cuenta no tiene Premium, así que
+Deezer da **avances de 30 segundos**; el adaptador lee lo que haya.
 
-## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud)
+- **Ni `<audio>` ni `<video>` en el DOM**: sin ecualizador ni barras.
+- **El estado va en el `data-testid`**: `play_button_pause` mientras
+  suena, `repeat_button_off` → `all` → `single`,
+  `shuffle_play_button_off`/`on`, `add_to_favorite_button_off`. Los
+  `aria-label` **describen la acción siguiente** («Repetir esta canción»
+  cuando ya repite la lista): leer el estado de ahí sería leerlo al revés.
+- El progreso es un `<input type=range>` en segundos, y «remaining_time»
+  enseña la duración, pese al nombre. La carátula ya viene a 500×500.
+- Los artistas son enlaces seguidos y separados por comas sin espacio. El
+  adaptador devuelve un `<span>` aparte con «, » entre ellos.
+- **Saltar** costó tres intentos medidos. Escribir el range con el setter
+  nativo e `input`/`change` (lo que sirve en Spotify) **no salta**. Un clic
+  sintético en la barra (lo que sirve en SoundCloud) **tampoco**. Salta la
+  secuencia de arrastrar: pulsar, escribir el valor y **soltar** (17 → 7).
+  Deezer confirma el salto al soltar.
+- El volumen y la cola solo existen con su panel abierto, así que no se
+  ofrecen.
+- Favoritos se lee del testid. El final `_on` se infiere del `_off`
+  medido; **no se midió**.
 
-Lleva las tandas AR a AX, elegidas por el autor de la lista de mejoras.
+Es un sitio opcional más en `SITIOS_OPCIONALES` (`www.deezer.com`), con su
+nota en Preferencias. Todo lo de la tanda AV (registro en marcha, recursos
+de la ventana y tarjeta) lo cubre sin una línea nueva fuera del adaptador.
+Política y ficha nombran a los dos sitios opcionales.
+`tests/fixtures/deezer-sonando.html` reproduce lo medido.
+`adaptador-deezer.test.js`: 6 pruebas. Mutación
+(`tools/mutar/mutar-tanda-aw.js`): 7 de 7. Un mutante, el que lee repetir
+del `aria-label`, cayó en dos pruebas y no en una, con razón: apagado, el
+label dice «todas». Se refijó por escrito.
+
+**No medido**: la extensión de verdad en Deezer (activar el permiso, abrir
+la ventana con el botón PiP de la página y usar sus mandos).
+
+## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud y Deezer)
+
+Lleva las tandas AR a AX, elegidas por el autor de la lista de mejoras (AW,
+Deezer, entró después de etiquetarla: la versión no se había publicado y el
+autor eligió meterlo dentro).
 Segundo número porque hay funciones nuevas. `manifest.json`, `package.json`
 y `package-lock.json` suben juntos, y el CHANGELOG pasa «Sin publicar» a
-«[1.3.0]». Suite entera: **1216/1216**. Prueba de humo contra YouTube real
-(`npm run humo`): 8/8. Zip de **47 archivos** (bienvenida, historial, su
-módulo compartido y el adaptador de SoundCloud).
+«[1.3.0]». Suite entera: **1223/1223**. Prueba de humo contra YouTube real
+(`npm run humo`): 8/8. Zip de **48 archivos** (bienvenida, historial, su
+módulo compartido y los adaptadores de SoundCloud y Deezer).
 
-**Permisos.** Ninguno obligatorio nuevo. Hay un **permiso de host opcional**,
-`soundcloud.com`: no se concede al instalar ni al actualizar, así que nadie
+**Permisos.** Ninguno obligatorio nuevo. Hay dos **permisos de host
+opcionales**, `soundcloud.com` y `www.deezer.com`: no se concede al instalar ni al actualizar, así que nadie
 ve ningún aviso ni queda desactivado. La consola de la tienda pide su
 justificación, que está en la sección 5 de la ficha. **La política de
-privacidad cambió**: el historial (una cuarta cosa, solo si se enciende), el
-permiso opcional de SoundCloud y la pestaña recordada del menú. Se publica en
+privacidad cambió**: el historial (una cuarta cosa, solo si se enciende), los
+permisos opcionales de SoundCloud y Deezer, y la pestaña recordada del menú. Se publica en
 Pages con el push.
 
-Preparada **sin push**, a petición del autor, para probarla antes. Deezer
-(tanda AW) queda para la siguiente, con el guion de medición listo.
+Preparada **sin push**, a petición del autor, para probarla antes.
 
 ## Pendiente (ver documento de arquitectura completo)
 

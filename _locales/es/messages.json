@@ -955,5 +955,8 @@
   },
   "sitio_nota_soundcloud": {
     "message": "Carátula, título, mandos y saltos; sin letra, ecualizador ni barras, porque su sonido no pasa por la página."
+  },
+  "sitio_nota_deezer": {
+    "message": "Carátula, título, mandos, saltos y favoritos; sin letra, ecualizador ni barras, porque su sonido no pasa por la página. Sin Premium, Deezer solo deja oír 30 segundos."
   }
 }

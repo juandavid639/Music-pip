@@ -213,15 +213,15 @@ skip, volume). Only on those three music sites; the extension does not load
 anywhere else.
 ```
 
-**Permiso de host OPCIONAL (soundcloud.com)** — tanda AV. Va en
+**Permisos de host OPCIONALES (soundcloud.com, tanda AV; www.deezer.com, tanda AW)**. Va en
 `optional_host_permissions`: no se concede al instalar ni al actualizar; lo
 pide el usuario desde Preferencias («Más sitios»). Justificación:
 
 ```
-Optional, requested only when the user turns SoundCloud on in the options
-page. With it, the same content script reads the song metadata and drives the
-player controls on soundcloud.com, exactly as on the other music sites. Without
-it, the extension never runs there.
+Optional, requested only when the user turns SoundCloud or Deezer on in the
+options page. With it, the same content script reads the song metadata and
+drives the player controls on that site, exactly as on the other music sites.
+Without it, the extension never runs there.
 ```
 
 **¿Usa código remoto?** → **No.** Todo el código viaja en el paquete.

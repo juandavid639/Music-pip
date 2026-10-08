@@ -184,16 +184,17 @@ test("un adaptador al que le falta un metodo muere nombrando el metodo", () => {
   assert.throws(() => YTMPip.Adaptadores.registrar(sinCapacidad), /«cola»/);
 
   // Ninguno de los dos intentos fallidos debe haber quedado registrado.
-  // Los CUATRO ids legitimos vienen de serie: el entorno carga los
+  // Los CINCO ids legitimos vienen de serie: el entorno carga los
   // adaptadores en el orden del manifest (YouTube normal desde la tanda
-  // 2, Spotify desde la 3, SoundCloud desde la AV). Array.from cruza el
+  // 2, Spotify desde la 3, SoundCloud desde la AV, Deezer desde la AW). Array.from cruza el
   // reino: registradosIds() devuelve un Array DE LA VENTANA jsdom, y
   // deepStrictEqual tambien compara prototipos.
   assert.deepStrictEqual(Array.from(YTMPip.Adaptadores.registradosIds()), [
     "youtube-music",
     "youtube",
     "spotify",
-    "soundcloud"
+    "soundcloud",
+    "deezer"
   ]);
 });
 

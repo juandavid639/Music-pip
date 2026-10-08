@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  La barra del reproductor de Deezer, sonando. Medida en vivo el 2026-10-08
+  (tanda AW) en la cuenta del autor (sin Premium: avances de 30 segundos).
+
+  - Ni <audio> ni <video> en el documento.
+  - El ESTADO va en el data-testid: play_button_pause mientras suena,
+    repeat_button_off/all/single, shuffle_play_button_off/on,
+    add_to_favorite_button_off. Los aria-label dicen la accion SIGUIENTE, no
+    el estado: no sirven para leerlo.
+  - El progreso es un <input type=range> en SEGUNDOS; «remaining_time»,
+    pese al nombre, enseña la duracion.
+  - La caratula ya viene a 500x500.
+  - Los artistas son enlaces seguidos, separados por comas sin espacio.
+-->
+<html lang="es">
+  <body>
+    <div data-testid="miniplayer_container" class="page-player css-0">
+      <div data-testid="item_cover" class="css-13jjase">
+        <img class="chakra-image css-b87eug" src="https://cdn-images.dzcdn.net/images/cover/f794dd1931dac42fc13f938850b686c6/500x500.jpg" alt="" />
+      </div>
+      <h2 data-testid="item_title" class="chakra-heading css-1khuizq"><a class="chakra-link css-o05beu" href="/es/track/1">BbY WOW</a></h2>
+      <div data-testid="item_subtitle" class="css-70qvj9"><a class="chakra-link" href="/es/artist/1">KAROL G</a>,<a class="chakra-link" href="/es/artist/2">Judeline</a>,<a class="chakra-link" href="/es/artist/3">Rusowsky</a></div>
+      <button type="button" data-testid="add_to_favorite_button_off" aria-label="Añadir a Canciones favoritas" class="chakra-button"></button>
+      <button type="button" data-testid="shuffle_play_button_off" aria-label="Activar modo aleatorio" class="chakra-button"></button>
+      <button type="button" data-testid="previous_track_button" aria-label="Anterior" class="chakra-button"></button>
+      <button type="button" data-testid="play_button_pause" aria-label="Pausa" class="chakra-button"></button>
+      <button type="button" data-testid="next_track_button" aria-label="Siguiente" class="chakra-button"></button>
+      <button type="button" data-testid="repeat_button_off" aria-label="Repetir todas las canciones de la lista" class="chakra-button"></button>
+      <p data-testid="elapsed_time" class="chakra-text">00:03</p>
+      <input data-testid="progress_bar" class="slider-track-input mousetrap" type="range" min="0" max="30" step="1" value="3" aria-valuemin="0" aria-valuemax="30" aria-valuenow="3" />
+      <p data-testid="remaining_time" class="chakra-text">00:30</p>
+      <button type="button" data-testid="queue_list_button" aria-label="open queuelist" class="chakra-button"></button>
+      <button type="button" data-testid="volume_button_default" aria-label="volume button" class="chakra-button"></button>
+    </div>
+  </body>
+</html>
