@@ -56,7 +56,7 @@ function pagina(html, opciones) {
 }
 
 function pegar(win, archivo) {
-  win.eval(fs.readFileSync(path.join(RAIZ, "tools", archivo), "utf8"));
+  win.eval(fs.readFileSync(path.join(RAIZ, "tools", "diagnostico", archivo), "utf8"));
 }
 
 test("fixture: sin el contexto de la extension, lo dice y no copia nada", () => {

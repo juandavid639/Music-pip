@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+  La barra del reproductor de SoundCloud, sonando, con lo que lee el
+  adaptador. Medido en vivo el 2026-10-08 (tanda AV) sobre
+  soundcloud.com/forss/flickermood, sin cuenta:
+
+  - Ni <audio> ni <video> en el documento: el audio no esta en el DOM.
+  - El boton de reproducir lleva «playing» mientras suena.
+  - El enlace del titulo trae delante una frase para lectores de pantalla;
+    el titulo limpio es su span[aria-hidden].
+  - La caratula es un background-image de 50x50 (-t50x50).
+  - El tiempo, en la barra de progreso, en SEGUNDOS (aria-valuenow / max).
+  - Repetir apagado sin clase; aleatorio sin m-shuffling.
+-->
+<html lang="es">
+  <body>
+    <div class="playControls g-z-index-control-bar m-visible">
+      <section class="playControls__inner">
+        <div class="playControls__elements">
+          <button type="button" class="skipControl sc-ir playControls__control playControls__prev sc-button sc-button-secondary skipControl__previous">Saltar a anterior</button>
+          <button type="button" class="playControl sc-ir playControls__control playControls__play sc-button-play playing" title="Pausar actual" aria-label="Pausar actual">Pausar actual</button>
+          <button type="button" class="skipControl sc-ir playControls__control playControls__next sc-button sc-button-secondary skipControl__next">Saltar a siguiente</button>
+          <button type="button" class="shuffleControl sc-ir sc-button sc-button-secondary sc-button-small" title="Aleatorio">Aleatorio</button>
+          <button type="button" class="repeatControl sc-ir sc-button sc-button-secondary sc-button-small" title="Repetir">Repetir pista</button>
+          <div class="playbackTimeline">
+            <div class="playbackTimeline__timePassed sc-text-primary sc-text-h5"><span class="sc-visuallyhidden">Hora actual: 10 segundos</span><span aria-hidden="true">0:10</span></div>
+            <div class="playbackTimeline__progressWrapper" role="progressbar" aria-valuemin="0" aria-valuemax="213" aria-valuenow="10"></div>
+            <div class="playbackTimeline__duration sc-text-primary sc-text-h5"><span class="sc-visuallyhidden">Duración: 3 minutos 33 segundos</span><span aria-hidden="true">3:33</span></div>
+          </div>
+          <div class="playControls__soundBadge">
+            <div class="playbackSoundBadge">
+              <a class="playbackSoundBadge__avatar sc-media-image" href="/forss/flickermood">
+                <div class="sc-artwork"><span style="background-image: url(&quot;https://i1.sndcdn.com/artworks-000067273316-smsiqx-t50x50.jpg&quot;);"></span></div>
+              </a>
+              <div class="playbackSoundBadge__titleContextContainer">
+                <a class="playbackSoundBadge__lightLink sc-link-light sc-link-secondary sc-truncate sc-text-h5" href="/forss" title="Forss">Forss</a>
+                <a class="playbackSoundBadge__titleLink sc-truncate sc-text-h5 sc-link-primary" href="/forss/flickermood" title="Flickermood"><span class="sc-visuallyhidden">Pista actual: Flickermood</span><span aria-hidden="true">Flickermood</span></a>
+              </div>
+              <button type="button" class="sc-button-like playbackSoundBadge__like sc-button-secondary sc-button" title="Me gusta" aria-label="Me gusta">Me gusta</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

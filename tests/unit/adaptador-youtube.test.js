@@ -4,7 +4,7 @@
  *
  * Todos los numeros raros de estas pruebas (8 "#title", 3 botones de like,
  * la barra que dice 16 con el video en 40.3, la duracion 1318.6) son
- * MEDIDOS: salen de dos pasadas de tools/diagnostico-youtube.js sobre
+ * MEDIDOS: salen de dos pasadas de tools/diagnostico/diagnostico-youtube.js sobre
  * paginas reales de www.youtube.com, no de la imaginacion. El fixture
  * (youtube-watch.html) los calca, y las pruebas ademas los CUENTAN, para
  * que un fixture recortado no las deje en verde vigilando nada.

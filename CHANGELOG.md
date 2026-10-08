@@ -4,6 +4,45 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Added / Añadido
+
+- **A welcome page** opens right after installing: how to open the floating
+  window (with the PiP button on the music page) and where the menu is.
+- **Una página de bienvenida** se abre justo al instalar: cómo abrir la
+  ventana flotante (con el botón PiP de la página de música) y dónde está el
+  menú.
+- **Your own equalizer settings**: save the band values under a name
+  (up to 8) and come back to them in one click from the options page. The
+  window's equalizer button says its name while it is playing.
+- **Tus propios ajustes de ecualizador**: guarda los números de las bandas
+  con un nombre (hasta 8) y vuelve a ellos con un clic desde Preferencias.
+  El botón del ecualizador de la ventana dice su nombre mientras suena.
+- **What you listened to** (off by default): if you turn it on, a page
+  shows your most played songs and artists and your latest plays, for 7
+  days, 30 days or everything. It stays on your computer and can be turned
+  off and deleted at any time.
+- **Lo que escuchaste** (apagado de serie): si lo enciendes, una página te
+  enseña tus canciones y artistas más escuchados y lo último que sonó, de 7
+  días, 30 días o todo. Se queda en tu equipo y lo puedes apagar y borrar
+  cuando quieras.
+- **SoundCloud**, as an optional site: turn it on in the options page ("More
+  sites") and Chrome asks for that site's permission only. Artwork, title,
+  controls and seeking; no lyrics, equalizer or bars, because its audio does
+  not go through the page.
+- **SoundCloud**, como sitio opcional: actívalo en Preferencias («Más sitios»)
+  y Chrome te pide permiso solo para ese sitio. Carátula, título, mandos y
+  saltos; sin letra, ecualizador ni barras, porque su sonido no pasa por la
+  página.
+
+### Privacy / Privacidad
+
+- Websites can no longer tell whether you have Music PiP installed by
+  probing its files (from Chrome 130).
+- Las páginas web ya no pueden saber si tienes Music PiP instalado
+  preguntando por sus archivos (desde Chrome 130).
+
 ## [1.2.2] — 2026-10-08
 
 ### Changed / Cambiado

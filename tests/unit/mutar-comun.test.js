@@ -1,8 +1,8 @@
 /*
  * EL ARNES DE MUTACION Y SUS VEINTICUATRO CLIENTES (tanda AG).
  *
- * De donde sale. Al juntar los veinticuatro bucles de tools/mutar-*.js en
- * uno solo (tools/mutar-comun.js) se le añadio un modo que no muta nada y
+ * De donde sale. Al juntar los veinticuatro bucles de tools/mutar/mutar-*.js en
+ * uno solo (tools/mutar/mutar-comun.js) se le añadio un modo que no muta nada y
  * solo mira que cada texto a mutar siga existiendo, una vez. La primera
  * pasada destapo 64 mutaciones —de 485— que buscaban un texto que el
  * codigo ya no tenia: el catalogo de idiomas, el halo y el modulo de
@@ -29,7 +29,8 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const RAIZ = path.join(__dirname, "..", "..");
-const TOOLS = path.join(RAIZ, "tools");
+// Los scripts de mutacion viven en tools/mutar/ desde la tanda AU.
+const TOOLS = path.join(RAIZ, "tools", "mutar");
 const ARNES = path.join(TOOLS, "mutar-comun.js");
 
 /*

@@ -25,7 +25,7 @@ extension makes not a single network request of its own.</p>
 
 <h2>What is stored and where</h2>
 <p>Everything the extension stores is stored exclusively in your browser, via
-<code>chrome.storage.local</code>. There are three things:</p>
+<code>chrome.storage.local</code>. There are three things, and a fourth only if you turn it on:</p>
 <ul>
   <li><strong>Your preferences</strong>: theme, window size, equalizer
   settings, halo, spectrum and the like.</li>
@@ -36,6 +36,12 @@ extension makes not a single network request of its own.</p>
   and artist, along with the chosen setting, up to 200 (beyond that the oldest
   one is forgotten). Only the ones you pin yourself are stored, and you can
   unpin each one with the same pin button.</li>
+  <li><strong>What you listened to, only if you turn it on</strong> (it is off
+  by default): the title, artist and site of each song you listen to for more
+  than 30 seconds, and when, for the last 90 days and up to 1,000 plays. It is
+  shown only to you, on the "What you listened to" page, it is not included
+  when you export your preferences, and you can turn it off and delete it
+  from that page at any time.</li>
 </ul>
 <p>Also, the toolbar menu remembers, in the menu page's own local storage,
 which tab you opened last ("Now playing" or "Settings"). That name is all.</p>
@@ -62,6 +68,9 @@ is what is described above.</p>
   code into already-open music tabs when it is installed or updated.</li>
   <li><strong>Access to the three music sites</strong>: read metadata and drive
   the controls those pages already offer. The extension loads nowhere else.</li>
+  <li><strong>Optional access to SoundCloud</strong>: only if you turn it on
+  in the options page (Chrome asks you first), and then for the same use as
+  above. You can turn it off there or in chrome://extensions at any time.</li>
 </ul>
 
 <h2>Third parties</h2>
@@ -88,7 +97,7 @@ servidores propios: la extensión no hace ni una sola petición de red propia.</
 
 <h2>Qué se guarda y dónde</h2>
 <p>Todo lo que la extensión guarda se guarda exclusivamente en tu navegador,
-mediante <code>chrome.storage.local</code>. Son tres cosas:</p>
+mediante <code>chrome.storage.local</code>. Son tres cosas, y una cuarta solo si la enciendes:</p>
 <ul>
   <li><strong>Tus preferencias</strong>: tema, tamaño de la ventana, ajustes del
   ecualizador, halo, espectro y similares.</li>
@@ -99,6 +108,11 @@ mediante <code>chrome.storage.local</code>. Son tres cosas:</p>
   su título y artista, junto al ajuste elegido, hasta un máximo de 200 (al
   pasar de ahí se olvida la más antigua). Solo se guardan las que fijas tú con
   la chincheta, y puedes quitar cada una con la misma chincheta.</li>
+  <li><strong>Lo que escuchaste, solo si lo enciendes</strong> (viene apagado):
+  el título, el artista y el sitio de cada canción que escuchas más de 30
+  segundos, y cuándo, de los últimos 90 días y hasta 1.000 escuchas. Solo lo
+  ves tú, en la página «Lo que escuchaste»; no va en el archivo de exportar
+  preferencias, y desde esa página lo puedes apagar y borrar cuando quieras.</li>
 </ul>
 <p>Además, el menú de la barra recuerda, en el almacenamiento local de la
 propia página del menú, qué pestaña abriste la última vez («Ahora suena» o
@@ -128,6 +142,9 @@ Esa lectura ocurre solo en tu navegador y no se envía a ninguna parte. Lo
   <li><strong>Acceso a los tres sitios de música</strong>: leer los metadatos y
   manejar los controles que esas páginas ya ofrecen. La extensión no se carga
   en ningún otro sitio.</li>
+  <li><strong>Acceso opcional a SoundCloud</strong>: solo si lo activas en
+  Preferencias (Chrome te pide permiso antes), y entonces para lo mismo que
+  arriba. Lo puedes desactivar allí o en chrome://extensions cuando quieras.</li>
 </ul>
 
 <h2>Terceros</h2>

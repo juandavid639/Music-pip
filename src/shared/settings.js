@@ -433,6 +433,10 @@
        */
       equalizer: YTMPip.Ecualizador.normalizar(stored[STORAGE_KEYS.EQUALIZER]),
       equalizerLast: ultimoEcualizador(stored[STORAGE_KEYS.EQUALIZER_LAST]),
+      // Los ajustes con nombre (tanda AS): la regla vive con el resto de lo
+      // que define un ecualizador valido, en shared/ecualizador.js.
+      equalizerCustom: YTMPip.Ecualizador.normalizarPropios(stored[STORAGE_KEYS.EQUALIZER_CUSTOM]),
+      historyPreference: pick(stored[STORAGE_KEYS.HISTORY_PREFERENCE], ["on", "off"], DEFAULT_SETTINGS.historyPreference),
       /*
        * Cuatro temas desde la tanda Y: los dos de siempre, «auto» (el del
        * sistema) y «source» (la ventana teñida con el color de lo que suena,
@@ -677,7 +681,10 @@
     STORAGE_KEYS.EQUALIZER_LAST,
     STORAGE_KEYS.EQUALIZER_BY_SONG,
     STORAGE_KEYS.SELECTOR_SCHEMA_VERSION,
-    STORAGE_KEYS.LAST_KNOWN_STATE
+    STORAGE_KEYS.LAST_KNOWN_STATE,
+    // El historial crece con cada cancion (tanda AT): si «se aplicara», cada
+    // escucha anotada haria releer las preferencias a todas las pestañas.
+    STORAGE_KEYS.LISTENING_HISTORY
   ];
   const CLAVES_QUE_SE_APLICAN = Object.values(STORAGE_KEYS).filter(
     (key) => CLAVES_QUE_NO_SE_APLICAN.indexOf(key) === -1

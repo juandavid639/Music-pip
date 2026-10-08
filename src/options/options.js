@@ -94,6 +94,7 @@
     coverStyle: document.getElementById("coverStyle"),
     // El estado en el icono de la barra (tanda AC).
     badgePreference: document.getElementById("badgePreference"),
+    historyPreference: document.getElementById("historyPreference"),
     spectrumColorMode: document.getElementById("spectrumColorMode"),
     spectrumColor: document.getElementById("spectrumColor"),
     spectrumPaletteCount: document.getElementById("spectrumPaletteCount"),
@@ -301,6 +302,7 @@
    */
   function pintarEcualizador() {
     const valor = valorDelEcualizador();
+    pintarPropios(valor);
     const db = Ecualizador.ganancias(valor);
     bandInputs.forEach((banda, i) => {
       banda.input.value = String(db[i] ?? 0);
@@ -326,7 +328,7 @@
      *   2. El segundo decia que la entrada no se toca porque «de los picos se
      *      encarga un limitador, que solo actua cuando hace falta, asi que
      *      subir una banda se oye como una subida de verdad». Medido sobre
-     *      musica real (tools/diagnostico-limitador.js), el limitador actuaba
+     *      musica real (tools/diagnostico/diagnostico-limitador.js), el limitador actuaba
      *      el 100 % del tiempo y la subida era de 0,7 dB. Las dos mitades de
      *      la frase eran falsas.
      *
@@ -867,6 +869,8 @@
         equalizer: stored[STORAGE_KEYS.EQUALIZER],
         equalizerLast: stored[STORAGE_KEYS.EQUALIZER_LAST]
       };
+      // Los ajustes con nombre (tanda AS), saneados con la regla de siempre.
+      propiosGuardados = Ecualizador.normalizarPropios(stored[STORAGE_KEYS.EQUALIZER_CUSTOM]);
       fields.equalizerPreset.value =
         ecualizador === Ecualizador.APAGADO
           ? Ecualizador.APAGADO
@@ -883,6 +887,7 @@
       fields.spectrumStyle.value = stored[STORAGE_KEYS.SPECTRUM_STYLE] ?? DEFAULT_SETTINGS.spectrumStyle;
       fields.coverStyle.value = stored[STORAGE_KEYS.COVER_STYLE] ?? DEFAULT_SETTINGS.coverStyle;
       fields.badgePreference.value = stored[STORAGE_KEYS.BADGE_PREFERENCE] ?? DEFAULT_SETTINGS.badgePreference;
+      fields.historyPreference.value = stored[STORAGE_KEYS.HISTORY_PREFERENCE] ?? DEFAULT_SETTINGS.historyPreference;
       // El acento: la regla de settings.js decide si lo guardado es un color.
       const acento = self.YTMPip.Settings.normalizarAcento(stored[STORAGE_KEYS.ACCENT_COLOR]);
       fields.accentColorMode.value = acento === "default" ? "default" : "custom";
@@ -956,6 +961,7 @@
       [STORAGE_KEYS.SPECTRUM_STYLE]: fields.spectrumStyle.value,
       [STORAGE_KEYS.COVER_STYLE]: fields.coverStyle.value,
       [STORAGE_KEYS.BADGE_PREFERENCE]: fields.badgePreference.value,
+      [STORAGE_KEYS.HISTORY_PREFERENCE]: fields.historyPreference.value,
       [STORAGE_KEYS.ACCENT_COLOR]: fields.accentColorMode.value === "custom" ? fields.accentColor.value : "default",
       [STORAGE_KEYS.SPECTRUM_COLOR]: unirColor(fields.spectrumColorMode.value, fields.spectrumColor.value, coloresElegidos()),
       [STORAGE_KEYS.PIP_TRANSPARENCY]: Number(fields.pipTransparency.value)
@@ -1189,6 +1195,167 @@
     // Vaciarlo: elegir el MISMO archivo otra vez tiene que volver a importar.
     archivoPreferencias.value = "";
   });
+
+  /*
+   * MAS SITIOS (tanda AV). Una fila por sitio de SITIOS_OPCIONALES, con lo
+   * que Chrome dice del permiso AHORA (chrome.permissions.contains): no se
+   * guarda en storage, porque la verdad la tiene Chrome y el usuario puede
+   * retirarlo tambien desde chrome://extensions. Activar lo pide en el
+   * momento del clic; desactivar lo retira. El service worker se entera por
+   * permissions.onAdded/onRemoved y registra o quita el script del sitio.
+   */
+  const SITIOS_OPCIONALES = self.YTMPip.CONSTANTS.SITIOS_OPCIONALES || [];
+  const cajaSitios = document.getElementById("sitiosOpcionales");
+
+  function filaDeSitio(sitio, activo) {
+    const fila = document.createElement("div");
+    fila.className = "ytmpip-fila";
+    fila.dataset.sitio = sitio.id;
+    const texto = document.createElement("div");
+    texto.className = "ytmpip-fila-texto";
+    const nombre = document.createElement("span");
+    nombre.className = "ytmpip-fila-titulo";
+    nombre.textContent = sitio.nombre;
+    const ayuda = document.createElement("span");
+    ayuda.className = "ytmpip-ayuda";
+    ayuda.textContent = (activo ? t("sitio_activado") : t("sitio_sin_activar")) + " · " + t(sitio.nota);
+    texto.append(nombre, ayuda);
+    const acciones = document.createElement("div");
+    acciones.className = "ytmpip-acciones";
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.textContent = activo ? t("sitio_desactivar") : t("sitio_activar");
+    boton.setAttribute("aria-label", (activo ? t("sitio_desactivar") : t("sitio_activar")) + " " + sitio.nombre);
+    boton.addEventListener("click", () => alternarSitio(sitio, activo));
+    acciones.appendChild(boton);
+    fila.append(texto, acciones);
+    return fila;
+  }
+
+  async function pintarSitios() {
+    if (!cajaSitios || !chrome.permissions || !chrome.permissions.contains) return;
+    const filas = [];
+    for (const sitio of SITIOS_OPCIONALES) {
+      let activo = false;
+      try {
+        activo = await chrome.permissions.contains({ origins: [sitio.patron] });
+      } catch (err) {
+        activo = false;
+      }
+      filas.push(filaDeSitio(sitio, activo));
+    }
+    cajaSitios.replaceChildren(...filas);
+  }
+
+  async function alternarSitio(sitio, activo) {
+    try {
+      if (activo) {
+        await chrome.permissions.remove({ origins: [sitio.patron] });
+      } else {
+        const concedido = await chrome.permissions.request({ origins: [sitio.patron] });
+        if (!concedido) avisar(t("sitio_no_concedido"));
+      }
+    } catch (err) {
+      avisar(t("sitio_no_concedido"));
+    }
+    pintarSitios();
+  }
+
+  try {
+    if (chrome.permissions && chrome.permissions.onAdded) {
+      chrome.permissions.onAdded.addListener(pintarSitios);
+      chrome.permissions.onRemoved.addListener(pintarSitios);
+    }
+  } catch (err) {
+    // Sin la API: la tarjeta se queda como se pinto.
+  }
+  pintarSitios();
+
+  /*
+   * MIS AJUSTES DEL ECUALIZADOR (tanda AS).
+   *
+   * Guardar: los cinco numeros que estan puestos ahora (tambien los de un
+   * preset: «Graves» guardado como «Coche» son sus numeros) con el nombre
+   * escrito. Un nombre que ya existe se sobrescribe; con la lista llena solo
+   * se puede sobrescribir. Usar: escribe esos numeros en el ecualizador con
+   * clavesEcualizador, la MISMA regla que save(), y el aviso de storage
+   * repinta la pagina entera (no es eco). Borrar: sin confirmacion, porque
+   * es un clic deshacer volviendo a guardar.
+   *
+   * La lista viaja sola en el archivo de exportar (es una preferencia que se
+   * aplica) y entra saneada al importar.
+   */
+  const LIMITES_PROPIOS = self.YTMPip.CONSTANTS.EQUALIZER_CUSTOM_LIMITS;
+  const nombrePropio = document.getElementById("nombrePropio");
+  const guardarPropio = document.getElementById("guardarPropio");
+  const listaPropios = document.getElementById("listaPropios");
+  const propiosVacio = document.getElementById("propiosVacio");
+  const propiosLleno = document.getElementById("propiosLleno");
+  let propiosGuardados = [];
+
+  function pintarPropios(valorActual) {
+    if (!listaPropios) return;
+    const enUso = Ecualizador.normalizar(valorActual);
+    listaPropios.textContent = "";
+    for (const propio of propiosGuardados) {
+      const fila = document.createElement("li");
+      const usar = document.createElement("button");
+      usar.type = "button";
+      usar.textContent = propio.nombre;
+      usar.setAttribute("aria-pressed", String(propio.valor === enUso));
+      usar.addEventListener("click", () => usarPropio(propio));
+      const borrar = document.createElement("button");
+      borrar.type = "button";
+      borrar.className = "ytmpip-borrar";
+      borrar.textContent = "×";
+      borrar.setAttribute("aria-label", t("propios_borrar", [propio.nombre]));
+      borrar.addEventListener("click", () => borrarPropio(propio.nombre));
+      fila.append(usar, borrar);
+      listaPropios.appendChild(fila);
+    }
+    const nombre = nombrePropio.value.trim();
+    const lleno = propiosGuardados.length >= LIMITES_PROPIOS.MAX;
+    const sobrescribe = propiosGuardados.some((p) => p.nombre === nombre);
+    propiosVacio.hidden = propiosGuardados.length > 0;
+    propiosLleno.hidden = !lleno;
+    guardarPropio.disabled = enUso === Ecualizador.APAGADO || !nombre || (lleno && !sobrescribe);
+  }
+
+  function escribirPropios(lista) {
+    propiosGuardados = Ecualizador.normalizarPropios(lista);
+    chrome.storage.local.set({ [STORAGE_KEYS.EQUALIZER_CUSTOM]: propiosGuardados });
+    pintarPropios(valorDelEcualizador());
+  }
+
+  function guardarElPropio() {
+    if (guardarPropio.disabled) return;
+    const valor = Ecualizador.ganancias(valorDelEcualizador()).join(",");
+    escribirPropios(propiosGuardados.concat([{ nombre: nombrePropio.value.trim(), valor }]));
+    nombrePropio.value = "";
+    pintarPropios(valorDelEcualizador());
+    avisar(t("guardado"));
+  }
+
+  function usarPropio(propio) {
+    const claves = clavesEcualizador(propio.valor, ecualizadorGuardado);
+    ecualizadorGuardado = {
+      equalizer: claves[STORAGE_KEYS.EQUALIZER],
+      equalizerLast: claves[STORAGE_KEYS.EQUALIZER_LAST]
+    };
+    chrome.storage.local.set(claves);
+  }
+
+  function borrarPropio(nombre) {
+    escribirPropios(propiosGuardados.filter((p) => p.nombre !== nombre));
+  }
+
+  if (guardarPropio) {
+    guardarPropio.addEventListener("click", guardarElPropio);
+    nombrePropio.addEventListener("input", () => pintarPropios(valorDelEcualizador()));
+    nombrePropio.addEventListener("keydown", (evento) => {
+      if (evento.key === "Enter") guardarElPropio();
+    });
+  }
 
   leerAcentosDelCss();
   load();

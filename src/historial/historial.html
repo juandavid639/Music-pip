@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-t="historial_titulo">Lo que escuchaste</title>
+    <!--
+      LO QUE ESCUCHASTE (tanda AT). La página que enseña el historial que
+      anota el service worker cuando el usuario lo enciende (apagado de
+      serie). Lee storage directamente y se repinta cuando cambia: no hay
+      nada que guardar aquí salvo el interruptor y el borrado.
+
+      Los colores son los de la bienvenida y el menú, para que parezca del
+      mismo programa.
+    -->
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f0f0f;
+        --surface: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #f1f1f1;
+        --text-dim: #b3b3b3;
+        --accent: #ff0000;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      .cabecera {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .cabecera img {
+        width: 44px;
+        height: 44px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+
+      .tarjeta {
+        margin-top: 20px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+      }
+
+      .tarjeta p {
+        margin: 0 0 12px;
+        color: var(--text-dim);
+      }
+
+      .barra {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .segmentos {
+        display: flex;
+        gap: 2px;
+        padding: 3px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+
+      button {
+        font: inherit;
+        font-size: 13px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .segmentos button {
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+      }
+
+      .segmentos button[aria-pressed="true"] {
+        background: rgba(255, 255, 255, 0.14);
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .principal {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .total {
+        font-size: 15px;
+        color: var(--text-dim);
+      }
+
+      .total strong {
+        color: var(--text);
+        font-size: 22px;
+      }
+
+      .rejilla {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 16px;
+      }
+
+      @media (max-width: 640px) {
+        .rejilla {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      ol,
+      ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .lista li {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 7px 0;
+        border-top: 1px solid var(--border);
+      }
+
+      .lista li:first-child {
+        border-top: none;
+      }
+
+      .lista .que {
+        min-width: 0;
+      }
+
+      .lista .titulo {
+        display: block;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .lista .artista,
+      .lista .cuanto {
+        color: var(--text-dim);
+        font-size: 13px;
+      }
+
+      .lista .cuanto {
+        flex-shrink: 0;
+      }
+
+      .pie {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="cabecera">
+        <img src="../../assets/icons/icon128.png" alt="" />
+        <h1 data-t="historial_titulo">Lo que escuchaste</h1>
+      </header>
+
+      <!-- Con el historial APAGADO (el estado de serie). -->
+      <section id="apagado" class="tarjeta" hidden>
+        <h2 data-t="historial_apagado_titulo">El historial está apagado</h2>
+        <p data-t="historial_apagado">Si lo enciendes, Music PiP anota en tu equipo cada canción que escuches más de 30 segundos. No sale nunca de aquí y lo puedes borrar cuando quieras.</p>
+        <button type="button" id="encender" class="principal" data-t="historial_encender">Encender el historial</button>
+      </section>
+
+      <!-- Con el historial ENCENDIDO. -->
+      <section id="encendido" hidden>
+        <div class="barra">
+          <div class="segmentos" role="group" aria-label="Periodo" data-t-aria="historial_periodo">
+            <button type="button" data-dias="7" aria-pressed="true" data-t="historial_7_dias">7 días</button>
+            <button type="button" data-dias="30" aria-pressed="false" data-t="historial_30_dias">30 días</button>
+            <button type="button" data-dias="0" aria-pressed="false" data-t="historial_todo">Todo</button>
+          </div>
+          <p id="total" class="total" role="status"></p>
+        </div>
+
+        <p id="vacio" class="tarjeta" data-t="historial_vacio" hidden>Todavía no hay nada aquí: pon música y vuelve en un rato.</p>
+
+        <div id="contenido" class="rejilla">
+          <section class="tarjeta">
+            <h2 data-t="historial_mas_escuchadas">Las más escuchadas</h2>
+            <ol id="canciones" class="lista"></ol>
+          </section>
+          <section class="tarjeta">
+            <h2 data-t="historial_artistas">Artistas</h2>
+            <ol id="artistas" class="lista"></ol>
+          </section>
+        </div>
+
+        <section class="tarjeta">
+          <h2 data-t="historial_recientes">Lo último</h2>
+          <ul id="recientes" class="lista"></ul>
+        </section>
+
+        <div class="pie">
+          <button type="button" id="apagar" data-t="historial_apagar">Apagar el historial</button>
+          <button type="button" id="borrar" data-t="historial_borrar">Borrar el historial</button>
+        </div>
+      </section>
+    </main>
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/textos.js"></script>
+    <script src="../shared/historial.js"></script>
+    <script src="historial.js"></script>
+  </body>
+</html>

@@ -3,7 +3,7 @@
  * `upNext` que la ventana flotante enseña bajo el boton "Siguientes".
  *
  * Lo que se fija aqui es la POLITICA del lector, no el DOM de Google (eso
- * se mira con tools/diagnostico-cola.js en la pagina real):
+ * se mira con tools/diagnostico/diagnostico-cola.js en la pagina real):
  *
  *   - "siguientes" son las de DESPUES del elemento `selected`, nunca las
  *     ya sonadas;

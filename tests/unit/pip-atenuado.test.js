@@ -11,7 +11,7 @@
  *  - NO SE PRUEBA que la ventana se vea traslucida. Bajar la opacidad del
  *    contenido enseña el fondo de la propia ventana, no el escritorio. Si
  *    una ventana Document PiP puede llegar a ser traslucida de verdad esta
- *    SIN COMPROBAR, y se comprueba con tools/diagnostico-transparencia.js,
+ *    SIN COMPROBAR, y se comprueba con tools/diagnostico/diagnostico-transparencia.js,
  *    no aqui: jsdom no pinta nada.
  */
 const test = require("node:test");

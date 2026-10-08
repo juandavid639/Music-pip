@@ -46,10 +46,31 @@ function pestana(id, url, extra = {}) {
  * Monta un service worker. `pestanas` se comparte entre despertares (son
  * las del navegador), igual que `sesion` y `local`.
  */
-function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", fallaVentana = false, contextos = [] } = {}) {
+function trabajador({
+  pestanas = [],
+  sesion = {},
+  local = {},
+  abrir = "opened",
+  fallaVentana = false,
+  contextos = [],
+  // Los permisos opcionales concedidos (tanda AV), como lista de patrones.
+  permisos = []
+} = {}) {
   const oyentes = {};
   const ev = (nombre) => ({ addListener: (fn) => (oyentes[nombre] = oyentes[nombre] || []).push(fn) });
-  const registro = { enviados: [], inyecciones: [], destacados: [], ventanas: [], creadas: [], avisos: [], insignias: [], colores: [], enfocadas: [] };
+  const registro = {
+    enviados: [],
+    inyecciones: [],
+    destacados: [],
+    ventanas: [],
+    creadas: [],
+    avisos: [],
+    insignias: [],
+    colores: [],
+    enfocadas: [],
+    // Los content scripts registrados en marcha (tanda AV), por id.
+    registrados: []
+  };
 
   const pick = (almacen, claves) => {
     if (claves == null) return Object.assign({}, almacen);
@@ -105,7 +126,14 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
       }
     },
     tabs: {
-      query: async () => pestanas.map((p) => Object.assign({}, p)),
+      // Respeta el filtro de URL (tanda AV): si no, no se podria ver que los
+      // sitios opcionales solo cuentan con el permiso concedido.
+      query: async (filtro = {}) => {
+        const patrones = filtro.url ? [].concat(filtro.url) : null;
+        return pestanas
+          .filter((p) => !patrones || patrones.some((pat) => p.url.startsWith(pat.replace(/\*$/, ""))))
+          .map((p) => Object.assign({}, p));
+      },
       get: async (id) => {
         const t = buscar(id);
         if (!t) throw new Error("No tab with id");
@@ -123,7 +151,20 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
       onRemoved: ev("cerrar"),
       onUpdated: ev("navegar")
     },
+    permissions: {
+      contains: async ({ origins }) => origins.every((o) => permisos.includes(o)),
+      onAdded: ev("permisoConcedido"),
+      onRemoved: ev("permisoRetirado")
+    },
     scripting: {
+      getRegisteredContentScripts: async ({ ids } = {}) =>
+        registro.registrados.filter((g) => !ids || ids.includes(g.id)).map((g) => Object.assign({}, g)),
+      registerContentScripts: async (lista) => {
+        for (const g of lista) registro.registrados.push(JSON.parse(JSON.stringify(g)));
+      },
+      unregisterContentScripts: async ({ ids }) => {
+        registro.registrados = registro.registrados.filter((g) => !ids.includes(g.id));
+      },
       executeScript: async ({ target, files, func }) => {
         const t = buscar(target.tabId);
         if (!t) throw new Error("No tab with id");
@@ -168,6 +209,7 @@ function trabajador({ pestanas = [], sesion = {}, local = {}, abrir = "opened", 
 
   return {
     registro,
+    permisos,
     contexto,
     sesion,
     local,
@@ -318,6 +360,19 @@ test("se inyectan EXACTAMENTE los archivos del manifiesto, en su orden", async (
   const w = trabajador({ pestanas: [pestana(7, YTM, { vivo: false })] });
   await w.disparar("instalar", { reason: "update" });
   assert.deepStrictEqual(w.registro.inyecciones[0].files, MANIFIESTO.content_scripts[0].js);
+});
+
+test("TANDA AR: al instalar se abre la bienvenida, y al actualizar no", async () => {
+  const nueva = trabajador();
+  await nueva.disparar("instalar", { reason: "install" });
+  assert.deepStrictEqual(
+    nueva.registro.creadas.map((c) => c.url),
+    ["chrome-extension://id-de-prueba/src/bienvenida/bienvenida.html"]
+  );
+
+  const vieja = trabajador();
+  await vieja.disparar("instalar", { reason: "update" });
+  assert.deepStrictEqual(vieja.registro.creadas, [], "una actualizacion abrio la bienvenida");
 });
 
 test("al instalar tambien: las pestañas que ya estaban abiertas no tienen nada", async () => {
@@ -527,4 +582,51 @@ test("...y si no hay ninguna, se abre", async () => {
   const w = trabajador();
   await w.mensaje("OPEN_FALLBACK_WINDOW");
   assert.strictEqual(w.registro.ventanas.length, 1);
+});
+
+/* ==================================================================
+ * Los sitios opcionales (tanda AV): SoundCloud con permiso en marcha
+ * ================================================================== */
+
+const SC = "https://soundcloud.com/*";
+
+test("TANDA AV: con el permiso concedido, al instalar se registra el script de SoundCloud con los MISMOS archivos del manifiesto", async () => {
+  const w = trabajador({ permisos: [SC] });
+  await w.disparar("instalar", { reason: "install" });
+  assert.strictEqual(w.registro.registrados.length, 1);
+  const [g] = w.registro.registrados;
+  assert.strictEqual(g.id, "sitio-soundcloud");
+  assert.deepStrictEqual(g.matches, [SC]);
+  assert.deepStrictEqual(g.js, MANIFIESTO.content_scripts[0].js, "dos listas de archivos que mantener");
+  assert.strictEqual(g.persistAcrossSessions, true);
+});
+
+test("sin el permiso no se registra nada (nadie lo pidio)", async () => {
+  const w = trabajador();
+  await w.disparar("instalar", { reason: "update" });
+  assert.deepStrictEqual(w.registro.registrados, []);
+});
+
+test("conceder el permiso registra el script y lo lleva a las pestañas de SoundCloud ya abiertas", async () => {
+  const w = trabajador({ pestanas: [pestana(7, "https://soundcloud.com/forss/flickermood", { vivo: false })] });
+  w.permisos.push(SC);
+  await w.disparar("permisoConcedido", { origins: [SC] });
+  await new Promise((r) => setTimeout(r, 10));
+  assert.strictEqual(w.registro.registrados.length, 1);
+  assert.deepStrictEqual(w.registro.inyecciones.map((i) => i.id), [7], "la pestaña abierta se quedo sin script");
+});
+
+test("retirar el permiso quita el registro", async () => {
+  const w = trabajador({ permisos: [SC] });
+  await w.disparar("instalar", { reason: "update" });
+  assert.strictEqual(w.registro.registrados.length, 1, "premisa: registrado");
+  w.permisos.length = 0;
+  await w.disparar("permisoRetirado", { origins: [SC] });
+  assert.deepStrictEqual(w.registro.registrados, []);
+});
+
+test("sin el permiso, una pestaña de SoundCloud no cuenta como musical", async () => {
+  const w = trabajador({ pestanas: [pestana(7, "https://soundcloud.com/forss/flickermood", { vivo: false })] });
+  await w.disparar("instalar", { reason: "update" });
+  assert.deepStrictEqual(w.registro.inyecciones, [], "se le metio script a un sitio sin permiso");
 });

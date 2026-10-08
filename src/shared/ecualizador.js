@@ -23,7 +23,8 @@
  */
 (function (root) {
   const YTMPip = root.YTMPip || (root.YTMPip = {});
-  const { EQUALIZER_BANDS, EQUALIZER_PRESETS, EQUALIZER_LIMITS, DEFAULT_SETTINGS } = YTMPip.CONSTANTS;
+  const { EQUALIZER_BANDS, EQUALIZER_PRESETS, EQUALIZER_LIMITS, EQUALIZER_CUSTOM_LIMITS, DEFAULT_SETTINGS } =
+    YTMPip.CONSTANTS;
 
   const APAGADO = "off";
   const NUM_BANDAS = EQUALIZER_BANDS.length;
@@ -224,7 +225,7 @@
    * devolvia 19 dB —mas de los 15 que se pueden pedir con los mandos— y de
    * ahi salia que la preamplificacion no hacia falta nunca. Medido sobre
    * musica real, la holgura era CERO y el limitador estaba trabajando el
-   * 100 % del tiempo (ver tools/diagnostico-limitador.js y el comentario del
+   * 100 % del tiempo (ver tools/diagnostico/diagnostico-limitador.js y el comentario del
    * UMBRAL_DB en constants.js).
    *
    * Con el umbral a cero las dos preguntas vuelven a coincidir: el margen es
@@ -381,7 +382,47 @@
     };
   }
 
+  /*
+   * LOS AJUSTES PROPIOS (tanda AS): una lista de { nombre, valor }, donde
+   * valor son los cinco numeros ya normalizados («3,0,-2,0,1»).
+   *
+   * NO son un formato nuevo de ecualizador. Usar uno escribe sus numeros en
+   * la clave de siempre, igual que «A mi gusto», y por eso el grafo de audio,
+   * la memoria por cancion y el interruptor no se enteran de que existen. El
+   * nombre solo se usa para NOMBRAR: si lo que suena coincide con uno, el
+   * boton de la ventana dice su nombre (propioDe).
+   *
+   * Lo guardado es entrada no confiable (puede venir de un archivo
+   * importado): se tira lo que no sea un nombre con texto y cinco numeros
+   * validos, se recorta el nombre, gana el ULTIMO con el mismo nombre
+   * (guardar con un nombre que ya existe es sobrescribirlo) y no pasan mas
+   * de MAX. Pura.
+   */
+  function normalizarPropios(lista) {
+    if (!Array.isArray(lista)) return [];
+    const porNombre = new Map();
+    for (const entrada of lista) {
+      if (!entrada || typeof entrada.nombre !== "string") continue;
+      const nombre = entrada.nombre.trim().slice(0, EQUALIZER_CUSTOM_LIMITS.NOMBRE_MAX).trim();
+      const ganancias = normalizarGanancias(entrada.valor);
+      if (!nombre || !ganancias) continue;
+      porNombre.delete(nombre);
+      porNombre.set(nombre, { nombre, valor: ganancias.join(",") });
+    }
+    return Array.from(porNombre.values()).slice(-EQUALIZER_CUSTOM_LIMITS.MAX);
+  }
+
+  /** El nombre del ajuste propio que suena, o null. Pura. */
+  function propioDe(valor, lista) {
+    const limpio = normalizar(valor);
+    if (limpio === APAGADO || EQUALIZER_PRESETS[limpio]) return null;
+    const propio = normalizarPropios(lista).find((p) => p.valor === limpio);
+    return propio ? propio.nombre : null;
+  }
+
   YTMPip.Ecualizador = {
+    normalizarPropios,
+    propioDe,
     APAGADO,
     normalizar,
     normalizarGanancias,

@@ -123,7 +123,7 @@ test("el texto '1:35 / 3:18' basta cuando el deslizador no se puede leer", () =>
 test("el texto tal y como lo escribe YouTube Music de verdad, con saltos de linea", () => {
   /*
    * Esta cadena no me la he inventado: es la que devolvio
-   * tools/diagnostico-tiempo.js sobre music.youtube.com. El resto de
+   * tools/diagnostico/diagnostico-tiempo.js sobre music.youtube.com. El resto de
    * pruebas usan "1:35 / 3:18" limpio, que es como YO supuse que venia; la
    * pagina lo envuelve en saltos de linea y sangria.
    *

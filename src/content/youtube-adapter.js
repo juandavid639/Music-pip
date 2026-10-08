@@ -5,7 +5,7 @@
  * necesitar actualizarse.
  *
  * NINGUN selector de este archivo es una conjetura. Todos salen de dos
- * pasadas de tools/diagnostico-youtube.js sobre paginas reales
+ * pasadas de tools/diagnostico/diagnostico-youtube.js sobre paginas reales
  * (2026-09-14): un video suelto (watch?v=5sSfADAsmfg) y un video dentro
  * de un Mix (watch?v=lw1FAHzBci4&list=RD..., panel de cola con 25
  * items). Es la leccion de la fase 0: los selectores imaginados de

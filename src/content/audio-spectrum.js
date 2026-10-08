@@ -24,7 +24,7 @@
  * ctx.destination: conectarla sonaria una segunda vez, con eco.
  *
  * VERIFICADO EN LA PAGINA REAL antes de escribir esto, con
- * tools/diagnostico-espectro.js sobre music.youtube.com:
+ * tools/diagnostico/diagnostico-espectro.js sobre music.youtube.com:
  *
  *     DRM: no
  *     pistas de audio: 1 (live)
@@ -106,7 +106,7 @@
    * Cuantos decibelios por encima de su propia referencia son un golpe
    * entero. En dB porque es la unidad en la que se mide, no un porcentaje
    * sobre un numero que no es lineal: esa confusion ya costo un instrumento
-   * roto en tools/diagnostico-ecualizador.js.
+   * roto en tools/diagnostico/diagnostico-ecualizador.js.
    */
   const GOLPE_DB = 9;
   // Lo que tarda el pulso en volver a cero desde arriba. Subir es
@@ -234,7 +234,7 @@
      * Este acotado SOBREVIVE a la verificacion por mutacion y se queda a
      * sabiendas. No puede cambiar el resultado: pasarse del final da
      * `undefined`, que el filtro de abajo descarta igual que un -Infinity.
-     * Lo que acota es EL BUCLE, no la media. Ver tools/mutar-pulso.js, donde
+     * Lo que acota es EL BUCLE, no la media. Ver tools/mutar/mutar-pulso.js, donde
      * esta anotado como superviviente en vez de fingir una prueba que lo
      * proteja.
      */

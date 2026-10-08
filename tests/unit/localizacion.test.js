@@ -42,7 +42,23 @@ const EN = JSON.parse(fs.readFileSync(path.join(RAIZ, "_locales", "en", "message
  * textos al catalogo y viaja en el paquete, asi que sus claves tambien
  * tienen que existir en los dos idiomas.
  */
-const HTMLS = ["src/pip/pip.html", "src/popup/popup.html", "src/options/options.html"];
+/*
+ * TODAS las paginas de src/, descubiertas y no listadas (tanda AR): la lista
+ * a mano tenia tres y se habia quedado sin vista-previa.html; la pagina de
+ * bienvenida habria nacido igual de suelta.
+ */
+function paginasDe(dir) {
+  return fs.readdirSync(path.join(RAIZ, dir), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? paginasDe(dir + "/" + e.name) : e.name.endsWith(".html") ? [dir + "/" + e.name] : []
+  );
+}
+// vista-previa.html es un marco sin texto propio: pinta pip.html, que ya
+// esta en la lista. Se excluye por nombre, no por «no tiene marcas»: esa
+// guarda es justo la que avisa si a otra pagina se le caen.
+const SIN_TEXTO_PROPIO = ["src/options/vista-previa.html"];
+const HTMLS = paginasDe("src")
+  .filter((p) => SIN_TEXTO_PROPIO.indexOf(p) === -1)
+  .sort();
 const SCRIPTS = ["src/pip/pip.js", "src/popup/popup.js", "src/options/options.js", "src/options/vista-previa.js"];
 
 /*

@@ -8,7 +8,7 @@
  * que se OIGA nada. Aqui no hay AudioContext ni BiquadFilterNode, y no puede
  * haberlos: jsdom no tiene Web Audio. Que un lowshelf a 60 Hz con +8 dB
  * levante de verdad los graves de una cancion es una medida que solo se hace
- * en el navegador, y ya se hizo una vez con tools/diagnostico-ecualizador.js
+ * en el navegador, y ya se hizo una vez con tools/diagnostico/diagnostico-ecualizador.js
  * sobre music.youtube.com (+12,0 dB medidos, 8,5 dB de separacion frente a
  * la banda de control). Lo que se clava aqui es la ARITMETICA que alimenta
  * esos filtros.
@@ -235,7 +235,7 @@ test("LA BANDA QUE MAS SUBES ACABA EN EL TECHO: NI RECORTADA NI REGALADA", () =>
    *   2. Se quito el peaje entero y se le dejo el trabajo al limitador. La
    *      banda mas alta acababa entonces en `maximo`, sobre el papel. Sobre
    *      musica real no: el limitador se lo comia, trabajando el 100 % del
-   *      tiempo (tools/diagnostico-limitador.js). Sonaba a lo mismo de antes,
+   *      tiempo (tools/diagnostico/diagnostico-limitador.js). Sonaba a lo mismo de antes,
    *      pero ahora sin que se viera en ningun numero.
    *
    *   3. Ahora acaba en CERO, o sea exactamente donde estaba con el

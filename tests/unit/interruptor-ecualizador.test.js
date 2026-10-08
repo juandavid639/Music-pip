@@ -28,7 +28,7 @@
  *
  * LO QUE NO:
  *  - que el audio suene distinto. Eso lo monta el grafo y solo se comprueba
- *    en un navegador de verdad (ver tools/diagnostico-ecualizador.js).
+ *    en un navegador de verdad (ver tools/diagnostico/diagnostico-ecualizador.js).
  *  - que el boton QUEPA en la fila. Se le ha hecho sitio con `flex-wrap` en
  *    pip.css, y jsdom no maqueta: cualquier assert sobre pixeles aqui seria
  *    inventado. Eso se mira en tools/vista-previa.html.

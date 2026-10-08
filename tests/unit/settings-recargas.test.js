@@ -55,7 +55,13 @@ const SE_APLICA = {
   selectorSchemaVersion: false, // la escribe el SW al instalar, nada que aplicar
   pipLastSize: false,
   equalizerLast: false,
-  equalizerBySong: false
+  equalizerBySong: false,
+  // Tanda AS: cambia el nombre que dice el boton del ecualizador de la ventana.
+  equalizerCustom: true,
+  // Tanda AT: el interruptor es una preferencia (Preferencias lo enseña y se
+  // exporta); la lista crece con cada cancion y NO puede despertar a nadie.
+  historyPreference: true,
+  listeningHistory: false
 };
 
 function montar() {

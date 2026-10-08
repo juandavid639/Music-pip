@@ -213,6 +213,17 @@ skip, volume). Only on those three music sites; the extension does not load
 anywhere else.
 ```
 
+**Permiso de host OPCIONAL (soundcloud.com)** — tanda AV. Va en
+`optional_host_permissions`: no se concede al instalar ni al actualizar; lo
+pide el usuario desde Preferencias («Más sitios»). Justificación:
+
+```
+Optional, requested only when the user turns SoundCloud on in the options
+page. With it, the same content script reads the song metadata and drives the
+player controls on soundcloud.com, exactly as on the other music sites. Without
+it, the extension never runs there.
+```
+
 **¿Usa código remoto?** → **No.** Todo el código viaja en el paquete.
 
 ## 6. Declaración de datos (pestaña «Privacidad» de la consola)
@@ -285,8 +296,10 @@ abre antes de pegarla en la consola.
    «Sin publicar» a una sección con el número y la fecha.
 4. Reempaquetar: `tools/empaquetar.ps1` + `tools/revisar-zip.js` — el zip
    sale con el número nuevo en el nombre.
-   Antes de subirlo, con la extensión desempaquetada de esa versión y una
-   canción sonando, pegar `tools/diagnostico-publicacion.js` en la consola
+   Antes de subirlo, `npm run humo` (tanda AX): carga la extensión en un
+   Chromium limpio y la prueba contra YouTube real, ventana flotante incluida.
+   Después, con la extensión desempaquetada de esa versión y una
+   canción sonando, pegar `tools/diagnostico/diagnostico-publicacion.js` en la consola
    de cada sitio (contexto «Music PiP» en el desplegable de DevTools): si
    dice FALLO, no se publica sin mirarlo (tanda AL).
 5. Consola → el elemento → **Package** → **Upload new package** → subir el

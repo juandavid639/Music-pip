@@ -19,7 +19,7 @@
  *
  * Lo que estas pruebas NO pueden ver, y hay que decirlo: si SUENA mas
  * rapido, y si el tono se corrige. Ninguna prueba de este proyecto oye. Eso
- * se comprueba con tools/diagnostico-velocidad.js en la pagina real.
+ * se comprueba con tools/diagnostico/diagnostico-velocidad.js en la pagina real.
  */
 const test = require("node:test");
 const assert = require("node:assert");
@@ -312,7 +312,7 @@ test("EL BOTON NO MIENTE: si la velocidad vuelve sola a 1x, el cartel lo dice", 
    * normal seria peor que no tener boton.
    *
    * Si esto se resetea DE VERDAD en la pagina real es otra pregunta, y no se
-   * contesta aqui: tools/diagnostico-velocidad.js.
+   * contesta aqui: tools/diagnostico/diagnostico-velocidad.js.
    */
   const v = ventana();
   v.PipView.onStateUpdate(estado({ playbackRate: 1.5 }));

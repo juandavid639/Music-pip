@@ -24,7 +24,7 @@
  *    es la diferencia entre un efecto medido y un efecto medido que no se ve.
  *  - NO SE PRUEBA que se vea bien creciendo. Cuanto crece lo decide pip.css
  *    y jsdom no maqueta. Eso es cosa de mirar la ventana, y para medirlo en
- *    la pagina real esta tools/diagnostico-pulso.js.
+ *    la pagina real esta tools/diagnostico/diagnostico-pulso.js.
  *
  * El AudioContext se finge, y sus NUMEROS tambien, al reves que en
  * pip-espectro.test.js. Ahi fingir niveles no probaria nada porque lo que
@@ -776,7 +776,7 @@ test("EL DIBUJO DEL VIDEO TAMBIEN CRECE: la hoja escala el hueco, no solo la por
    * borrar entera la fuerza propia del video la dejaba en verde.
    *
    * No lo vio ninguna lectura: lo enseño la mutacion "el video se queda sin
-   * su propia fuerza y crece como la portada" de tools/mutar-pulso.js, al
+   * su propia fuerza y crece como la portada" de tools/mutar/mutar-pulso.js, al
    * sobrevivir. Es el caso de manual de para que sirve mutar.
    *
    * Lo de ahora parte la hoja en reglas y busca una cuyo selector sea

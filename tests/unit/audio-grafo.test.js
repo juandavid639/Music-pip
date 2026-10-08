@@ -5,7 +5,7 @@
  * AudioContext es un doble de cartulina (tests/helpers/audio-falso.js) que
  * apunta quien se conecta con quien y que numero se le pide a cada mando, y
  * ningun doble sabe como suena un lowshelf. Eso se mide en el navegador con
- * tools/diagnostico-ecualizador.js.
+ * tools/diagnostico/diagnostico-ecualizador.js.
  *
  * LO QUE SI DICEN, y es justo lo que no se puede dejar al oido de nadie,
  * porque el fallo no se oye hasta que es tarde: que la puerta de un solo

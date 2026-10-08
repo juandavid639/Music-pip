@@ -115,7 +115,7 @@ backlog de prioridad crítica, ampliada tanda a tanda:
   entrada se baja antes de entrar al filtro, en la cantidad exacta que va a
   subir el pico. Medido, no supuesto: con el arreglo puesto, el preset «Más
   graves» activa el limitador el **0 %** del tiempo; sin preamplificar, el
-  **99 %**. La cifra sale de `tools/diagnostico-limitador.js`.
+  **99 %**. La cifra sale de `tools/diagnostico/diagnostico-limitador.js`.
 - **El ecualizador se puede fijar a una canción** (botón con chincheta junto a
   las barritas): fija el ajuste que suena a la canción actual y, cada vez que
   esa canción vuelva, se pone solo; al llegar la siguiente sin fijar se
@@ -373,7 +373,7 @@ ventana de tamaño aparece el error visual en la parte inferior"* y *"se oculta 
 opción de poner vídeo"* — eran el mismo fallo, y ninguno de los dos lo conseguí
 reproducir en `tools/vista-previa.html`. A los tamaños exactos del pantallazo la
 vista previa pintaba todo en su sitio. Así que en vez de arreglar a ciegas
-escribí `tools/diagnostico-ventana.js`, que se pega en la consola de la pestaña y
+escribí `tools/diagnostico/diagnostico-ventana.js`, que se pega en la consola de la pestaña y
 alcanza la ventana flotante por `documentPictureInPicture.window`. La respuesta
 fueron dos líneas:
 
@@ -773,7 +773,7 @@ conjeturas mías validadas sólo contra un fixture que también había escrito y
 decir, exactamente el error que costó los cinco intentos anteriores. Si los dos
 fallan, `getPageTrackTime()` devuelve `null` y la extensión se cae **en silencio**
 a los números acumulados. Así que antes de dar nada por bueno se ejecutó
-`tools/diagnostico-tiempo.js` (se pega en la consola de DevTools con música
+`tools/diagnostico/diagnostico-tiempo.js` (se pega en la consola de DevTools con música
 sonando) sobre `music.youtube.com` real:
 
 ```
@@ -1144,7 +1144,7 @@ siempre avanza desde donde está la música de verdad.
 Lo que **no** se ha hecho: reaplicar la velocidad al empezar cada canción. Sería
 fácil e inventaría una política —«la velocidad es pegajosa»— que nadie ha pedido.
 Antes hay que saber si YouTube Music la resetea de verdad, y eso no se responde
-leyendo la especificación: `tools/diagnostico-velocidad.js`.
+leyendo la especificación: `tools/diagnostico/diagnostico-velocidad.js`.
 
 ##### Dos listas que parecen la misma
 
@@ -1369,7 +1369,7 @@ donde sonaba. Si este módulo entero falla, lo peor que pasa es que no hay
 espectro. Por lo mismo la cadena termina en el analizador y **nunca** se conecta
 a `ctx.destination`: eso sonaría una segunda vez, con eco.
 
-Con eso escribí `tools/diagnostico-espectro.js` para pegarlo en la consola de
+Con eso escribí `tools/diagnostico/diagnostico-espectro.js` para pegarlo en la consola de
 `music.youtube.com` y contestar la pregunta con datos en vez de con una
 suposición. Lo ejecutó el usuario sobre su sesión real:
 
@@ -1420,7 +1420,7 @@ trozos de código míos que no hacían nada.
    pasa por `conectar`.
 
 Segunda vuelta: **16 de 16 mutaciones detectadas, 0 supervivientes**
-(`node tools/mutar-espectro.js`). Con el arreglo del apartado siguiente son
+(`node tools/mutar/mutar-espectro.js`). Con el arreglo del apartado siguiente son
 **20 de 21**, y el superviviente que queda es deliberado; se explica ahí. Con todo
 lo que vino después —las preferencias del espectro y el tercer intento contra el
 congelado— ese mismo mutador va por **42 de 45, con 3 supervivientes**, los tres
@@ -1680,7 +1680,7 @@ Dos peticiones en la misma frase, y la segunda es un informe de fallo disfrazado
 **Empiezo por la parte en la que me equivoqué**, porque es la que enseña algo. De
 *"el del tema… nada cambia"* deduje que el color no llegaba a pintarse, y monté la
 hipótesis de que `getComputedStyle` devolvía el literal `var(--ytmpip-accent)` y
-que el canvas lo rechazaba en silencio. Un `tools/diagnostico-*.js` en la ventana
+que el canvas lo rechazaba en silencio. Un `tools/diagnostico/diagnostico-*.js` en la ventana
 real la tumbó en una línea:
 
 ```
@@ -1814,7 +1814,7 @@ no es una ventana traslúcida de verdad.
 ¿Puede una ventana Document PiP llegar a ser traslúcida? **No lo sé, y no pienso
 afirmarlo sin medirlo.** Depende del compositor del sistema y de lo que Chrome
 decida para este tipo de ventana, y ninguna de las dos cosas se puede preguntar
-desde JavaScript. Por eso existe `tools/diagnostico-transparencia.js`: deja la
+desde JavaScript. Por eso existe `tools/diagnostico/diagnostico-transparencia.js`: deja la
 ventana en el estado en el que **sería** traslúcida si el navegador lo
 permitiera —quita los tres fondos opacos y esconde el difuminado de la portada— y
 le dice a la persona qué mirar. Si se ve el escritorio, la transparencia real es
@@ -1897,7 +1897,7 @@ me tumba algo en este proyecto.
 **Lo que sí cruza entre mundos es el estado del DOM.** Los prototipos son de cada
 mundo, pero el nodo es uno solo, así que `canvas.width` sirve de sonda: se le pone
 un valor absurdo, se esperan 150 ms y se mira si alguien lo reescribió. Si volvió,
-`pip.js` está dibujando. Eso es `tools/diagnostico-espectro-bucle.js`, y su
+`pip.js` está dibujando. Eso es `tools/diagnostico/diagnostico-espectro-bucle.js`, y su
 veredicto fue inequívoco:
 
 ```
@@ -1963,7 +1963,7 @@ un `<video>` se enchufa a un `AudioContext`, su sonido ya no sale por los altavo
 salvo a través del grafo. Si el grafo se rompe, el usuario se queda en silencio en
 la página de YouTube Music, sin ninguna pista de que fuimos nosotros.
 
-Por eso no se escribió el ecualizador: se escribió `tools/diagnostico-ecualizador.js`
+Por eso no se escribió el ecualizador: se escribió `tools/diagnostico/diagnostico-ecualizador.js`
 para preguntar antes. La respuesta, medida en la página real, es que **sí se puede**:
 el filtro `lowshelf` entrega exactamente los **+12,0 dB** que se le piden en la banda
 de 20–120 Hz, la banda de control de 2–6 kHz apenas se mueve en comparación
@@ -2053,7 +2053,7 @@ mejor. El usuario volvió a decir lo mismo con otras palabras: *«no diría que
 suena más fuerte particularmente»*.
 
 Aquí ya no valía discutir de oído, así que se escribió
-`tools/diagnostico-limitador.js`, que mide `DynamicsCompressorNode.reduction`
+`tools/diagnostico/diagnostico-limitador.js`, que mide `DynamicsCompressorNode.reduction`
 sobre la canción real. Tres canciones, tres géneros, seis vueltas. El resultado
 fue unánime:
 
@@ -2162,7 +2162,7 @@ el nombre y las ganancias ya no dicen lo mismo.
 
 #### El instrumento también se rompió, y tres veces
 
-`tools/diagnostico-limitador.js` es el que dio el veredicto, pero antes falló él.
+`tools/diagnostico/diagnostico-limitador.js` es el que dio el veredicto, pero antes falló él.
 Merece la pena porque los tres fallos son de familias distintas:
 
 **1. `%c` sólo se interpreta en el primer argumento.** El ayudante `log()` ya
@@ -2312,7 +2312,7 @@ lo contrario de lo que ocurría en el archivo.
 Peor: la mutación que yo había escrito para «proteger» esa regla **moría**, lo cual
 la daba por buena. Moría contra una prueba que lee el CSS como **texto**, así que
 lo único que demostraba era que el texto seguía ahí — y el texto no hacía nada.
-Ésa es la lección que quedó escrita en `tools/mutar-mandos.js`: *una mutación que
+Ésa es la lección que quedó escrita en `tools/mutar/mutar-mandos.js`: *una mutación que
 muere contra una prueba de texto sólo demuestra que el texto sigue ahí*. Ahora la
 regla borrada, el `[hidden]` global documentado, la prueba apuntando a él y la
 mutación quitándole el `!important`, que es la mitad que de verdad sostiene el
@@ -2366,7 +2366,7 @@ selectores por su nombre —que dejaría pasar un `[opne]` mal escrito—.
 
 #### Dos avisos del mutador que no eran del ecualizador
 
-Al pasar `tools/mutar-mandos.js` sobre todo esto salieron dos cosas, y ninguna
+Al pasar `tools/mutar/mutar-mandos.js` sobre todo esto salieron dos cosas, y ninguna
 tenía que ver con el rediseño.
 
 **Una mutación viva.** El bucle que escribe los nombres en el desplegable
@@ -2463,7 +2463,7 @@ anterior, las tres mueren. Las dos redes:
 - `Math.min(valores.length - 1, …)` al elegir la última banda: **no puede cambiar
   el resultado** (leer fuera de un `Float32Array` da `undefined`, que el filtro de
   abajo descarta igual). Se queda porque acota **el bucle**, y está marcada como
-  superviviente deliberada en `tools/mutar-pulso.js` en vez de fingir una prueba
+  superviviente deliberada en `tools/mutar/mutar-pulso.js` en vez de fingir una prueba
   que la proteja.
 - `Math.max(0, ahora - msUltimo)`: esa era la **misma regla escrita por tercera
   vez**. Los dos únicos sitios que usan ese hueco ya preguntan si es mayor que
@@ -2479,7 +2479,7 @@ cuenta desde que se cargó la página— no llega nunca. Ahora todas arrancan en
 `T0` que no es cero.
 
 Lo que ningún número dice es si **queda bien**. Para eso está
-`tools/diagnostico-pulso.js`, que hay que correr en `music.youtube.com` con una
+`tools/diagnostico/diagnostico-pulso.js`, que hay que correr en `music.youtube.com` con una
 canción de graves; el veredicto final es mirarlo.
 
 ##### El diagnóstico rompía lo que estaba midiendo
@@ -2619,7 +2619,7 @@ Tres decisiones que no son obvias:
   ocupa la ventana de lado a lado: ahí el mismo 10 % recorta cara, letra
   sobreimpresa o créditos. **Esto es un juicio, no una medición**, y conviene
   decirlo: el 0,1 de la carátula salió del reparto que midió
-  `tools/diagnostico-pulso.js`, pero eso midió la *señal*, que es idéntica para
+  `tools/diagnostico/diagnostico-pulso.js`, pero eso midió la *señal*, que es idéntica para
   los dos. Cuánto recorte tolera un vídeo no lo mide esa herramienta ni ninguna
   otra de aquí. Si al usarlo se queda corto o largo, el número a mover es ése y
   sólo ése.
@@ -2888,7 +2888,7 @@ lectura del estado que en el navegador no funcionaba jamás. Un fixture inventad
 una prueba: es la misma suposición escrita dos veces, una en el código y otra en el
 test, dándose la razón mutuamente.
 
-`tools/diagnostico-relevo.js`, ejecutado en la página real con música sonando, lo
+`tools/diagnostico/diagnostico-relevo.js`, ejecutado en la página real con música sonando, lo
 zanjó en tres líneas:
 
 ```
@@ -3053,7 +3053,7 @@ pide la otra, la ventana **encoge el grosor del marco en cada sesión**: 700, 66
 620… hasta pegarse al mínimo. El día uno no se nota nada. El día diez el usuario
 tiene una ventana diminuta y ninguna forma de relacionarlo con nada. Se anota el
 exterior (`outerWidth || innerWidth || 0`, con el interior de reserva por si el
-navegador no da el exterior) y se escribió `tools/diagnostico-tamano-ventana.js`
+navegador no da el exterior) y se escribió `tools/diagnostico/diagnostico-tamano-ventana.js`
 para comprobar en Chrome de verdad sobre cuál de las dos actúa `resizeTo`, en vez
 de suponerlo: jsdom no puede responder a eso.
 
@@ -3465,7 +3465,7 @@ son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
 > recuento medido de arriba dejó atrás. Las restantes no se tocaron y no se
 > volvieron a correr en aquella tanda.
 >
-> **Mutación dirigida**: `tools/mutar-manifiesto.js` (**nuevo**), **10 de 10**.
+> **Mutación dirigida**: `tools/mutar/mutar-manifiesto.js` (**nuevo**), **10 de 10**.
 > Ninguno de los otros nueve mutadores toca el manifiesto ni el empaquetador, así
 > que no se corrieron.
 >
@@ -3493,7 +3493,7 @@ son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
 > de la propia prueba, no del CSS. Está contado en «Tres formas de tener un
 > arnés de mutación roto y en verde», más abajo.
 >
-> **Mutación dirigida**: sólo `tools/mutar-mandos.js`, que es el único de los
+> **Mutación dirigida**: sólo `tools/mutar/mutar-mandos.js`, que es el único de los
 > cinco que toca esta página. **41 de 41**, y esa cuenta vale además como
 > comprobante de otra cosa: una de sus mutaciones dependía de la sangría del
 > HTML y hubo que repuntarla al partir la página en tarjetas. Si la nueva
@@ -3507,15 +3507,15 @@ son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
 > había. Los ~299 restantes no se tocaron y no se volvieron a correr.
 >
 > **Mutación dirigida, en serie** (no se pueden lanzar a la vez: reescriben el
-> mismo árbol de fuentes). `tools/mutar-pulso.js` **37 de 37**,
-> `tools/mutar-menu.js` **15 de 15** (nuevo), `tools/mutar-mandos.js` **41 de
-> 41** y `tools/mutar-interruptor.js` **28 de 28**. Cero supervivientes no
+> mismo árbol de fuentes). `tools/mutar/mutar-pulso.js` **37 de 37**,
+> `tools/mutar/mutar-menu.js` **15 de 15** (nuevo), `tools/mutar/mutar-mandos.js` **41 de
+> 41** y `tools/mutar/mutar-interruptor.js` **28 de 28**. Cero supervivientes no
 > previstos, pero **no a la primera**: la historia de las dos que fallaron está
 > justo debajo de la tabla, y las dos son fallos del arnés, no del código.
 >
 > **La tanda del ajuste del pulso no añadió pruebas, y hay que decir por qué.** El ajuste del
 > pulso tras mirarlo en la ventana real tocó `pip.css` (la curva y la fuerza) y
-> `tools/diagnostico-pulso.js`, que no se empaqueta. Ningún archivo de `src/`
+> `tools/diagnostico/diagnostico-pulso.js`, que no se empaqueta. Ningún archivo de `src/`
 > con lógica cambió: se corrió `pip-pulso.test.js` (**38 de 38**) por ser el de
 > la funcionalidad, y nada más. Lo que sí se verificó, porque jsdom no maqueta y
 > ninguna prueba unitaria puede verlo, fue **en el servidor de vista previa**: que
@@ -3532,7 +3532,7 @@ son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
 > había; los ~301 restantes (letras, opciones, service worker, vídeo prestado,
 > velocidad) no se tocaron y no se volvieron a correr.
 >
-> **Mutación dirigida**: `node tools/mutar-pulso.js`, **33 de 33 detectadas, 0
+> **Mutación dirigida**: `node tools/mutar/mutar-pulso.js`, **33 de 33 detectadas, 0
 > sobreviven**, más **1 que vive a propósito y está documentada** (el acotado de
 > `mediaDb`, que no puede cambiar el resultado; la historia entera está arriba).
 > A la primera pasada sobrevivieron siete: tres porque el analizador de mentira
@@ -3542,7 +3542,7 @@ son `(function (root) { ... })(self ?? globalThis)`, así que dentro de jsdom
 > corrieron.
 >
 > La tanda anterior (la velocidad) fueron seis archivos, **90 de 90**, con
-> `node tools/mutar-velocidad.js` en **15 de 15**; y la de antes (los iconos),
+> `node tools/mutar/mutar-velocidad.js` en **15 de 15**; y la de antes (los iconos),
 > los 16 archivos que cargan `pip.js`, **207 de 207**.
 >
 > Correr las 426 y las 109 mutaciones en cada mejora cuesta tiempo y no aporta
@@ -3566,7 +3566,7 @@ gratis: el botón de repetir de `controles-completos.html` estuvo inventado dura
 meses y sostuvo una lectura del estado que en el navegador no funcionó nunca (la
 historia entera, más arriba). Un fixture escrito de memoria no prueba el código,
 prueba que uno se acuerda de lo que supuso. De ahí que cada afirmación sobre el DOM
-de YouTube Music se compruebe antes con un script de `tools/diagnostico-*.js` en la
+de YouTube Music se compruebe antes con un script de `tools/diagnostico/diagnostico-*.js` en la
 página de verdad.
 
 El caso más importante es `letras-panel-cerrado.html`: la canción **sí** tiene
@@ -3832,7 +3832,7 @@ pruebas que le corresponden:
 | **ECUALIZADOR POR CANCIÓN**: el orquestador pierde la llamada del latido (la memoria queda sorda) | 1 (el cable entero) |
 | **ECUALIZADOR POR CANCIÓN**: el clic de la chincheta deja de repintar en el acto | 1 (la chincheta al clic) |
 
-Recuento de la última pasada de `tools/mutar-espectro.js`: **104 de 109 mutaciones
+Recuento de la última pasada de `tools/mutar/mutar-espectro.js`: **104 de 109 mutaciones
 detectadas, 5 supervivientes**, y los cinco son los marcados arriba como
 intencionados. Los otros dos mutadores siguen en **8 de 8** (`mutar-lanzador.js`)
 y **12 de 12** (`mutar-repetir.js`), ambos sin supervivientes.
@@ -3862,7 +3862,7 @@ Lo de ahora parte la hoja en reglas y busca una cuyo selector sea *exactamente*
 carátula —el sentido de la decisión— sin clavar el 0,06, que es un juicio y se
 afina a ojo.
 
-**Una mutación que apuntaba al vacío.** `tools/mutar-interruptor.js` tenía una
+**Una mutación que apuntaba al vacío.** `tools/mutar/mutar-interruptor.js` tenía una
 mutación cuyo texto era `!YTMPip.Ecualizador.estaApagado(valor)`. El día que
 `pintarEcualizador` se guardó el módulo en un `const Eq` de una línea —un
 renombrado de los que no cambian nada— ese texto dejó de existir, y desde entonces
@@ -3890,7 +3890,7 @@ la alternancia de una expresión regular coge la **primera** que encaja, no la m
 larga, así que `focus` se comía `:focus-visible` y lo dejaba en `-visible`. Las
 largas van primero.
 
-**Una mutación repuntada a tiempo, esta vez.** `tools/mutar-mandos.js` borra la
+**Una mutación repuntada a tiempo, esta vez.** `tools/mutar/mutar-mandos.js` borra la
 línea del preset «nocturno» del desplegable, con su sangría y su salto, para no
 dejar un hueco en blanco. Al partir la página en tarjetas ese `<option>` bajó dos
 niveles: de seis espacios a doce. La cadena vieja dejó de existir y la mutación se
@@ -4225,7 +4225,7 @@ que suena) y se queda con las cinco siguientes.
    escribieron sin HTML real de la página delante, que es el mismo pecado que
    costó el bug de las letras («no disponible» siempre, sin un solo error en
    consola). Esta vez la deuda quedó declarada: el adaptador lleva un aviso, y
-   `tools/diagnostico-cola.js` existe para pegarlo en la consola de la página real
+   `tools/diagnostico/diagnostico-cola.js` existe para pegarlo en la consola de la página real
    y responder cuatro preguntas: si hay elementos de cola en el DOM (y si existen
    sin abrir el panel lateral), si alguno lleva `selected`, si el título y el
    artista están donde se buscan, y cuántos hay en total (por si la lista está
@@ -4276,7 +4276,7 @@ verificados volviendo a correr las 12 en verde.
 la cola existan en la página real, que la marca se llame `selected` de verdad, y
 que la cola esté en el DOM sin abrir el panel lateral del reproductor. El fixture
 es la estructura que el adaptador ESPERA, no una copiada de Google. Eso se
-comprueba en un Chrome real con `tools/diagnostico-cola.js`; queda anotado en la
+comprueba en un Chrome real con `tools/diagnostico/diagnostico-cola.js`; queda anotado en la
 validación manual pendiente.
 
 ## La avería que destapó correrlo todo
@@ -4722,7 +4722,7 @@ firmados para `www.youtube.com`.
 el DOM real antes de escribir un selector, pero el navegador instrumentado se
 negó a entrar en youtube.com («Navigation to this domain is not allowed»,
 incluso con el permiso concedido dos veces). El plan B: un guion de solo
-lectura, `tools/diagnostico-youtube.js`, que el usuario pegó en la consola de
+lectura, `tools/diagnostico/diagnostico-youtube.js`, que el usuario pegó en la consola de
 DevTools y cuya salida pegó de vuelta — dos pasadas (un video suelto y un Mix
 con 25 elementos en la cola) más un mini-guion para la pregunta de la cola.
 Ningún selector del adaptador es una conjetura: cada uno lleva al lado su
@@ -4828,7 +4828,7 @@ para que las pruebas nuevas vivan en `www.youtube.com`.
 
 La tanda 3 y última del plan multi-sitio: `src/content/spotify-adapter.js`,
 el tercer firmante del contrato, para `open.spotify.com`. La evidencia:
-CUATRO guiones de solo lectura (`tools/diagnostico-spotify.js` a `-4.js`)
+CUATRO guiones de solo lectura (`tools/diagnostico/diagnostico-spotify.js` a `-4.js`)
 que el usuario pegó en la consola sobre páginas reales, más DOS experimentos
 de clic pedidos a propósito (los tres estados de repetir, los dos del
 aleatorio). Ningún selector es una conjetura.
@@ -5476,7 +5476,7 @@ Hasta esta tanda, en el modo audio de Spotify la ventana era de solo
 lectura para el tiempo y el volumen: sin `<video>` en el DOM no había
 `currentTime` ni `volume` que escribir, y la barra, los ±10 s y el
 deslizador se escondían o quedaban muertos. La medición del 16-09-2026
-(`tools/diagnostico-seek-volumen.js`, pegado por el usuario en su
+(`tools/diagnostico/diagnostico-seek-volumen.js`, pegado por el usuario en su
 pestaña real) cambió el mapa: **los deslizadores de la propia página
 aceptan la escritura sintética**. Escribiendo el `value` por el setter
 del prototipo (`HTMLInputElement.prototype.value`, el truco que React no
@@ -6253,7 +6253,7 @@ pintan.
 Y de propina `PALETTE_SUGGESTED`, cuyo invariante («hermanos del primero,
 misma luz y misma saturación, girando el tono») el rojo puro conserva de la
 manera más limpia posible: `#ff0000/#00ff00/#0000ff` son rotaciones puras de
-canales. Quedan FUERA a propósito los `#f15a5a` de los `tools/diagnostico-*`
+canales. Quedan FUERA a propósito los `#f15a5a` de los `tools/diagnostico/diagnostico-*`
 (tinte cosmético de consola, no viajan a la tienda) y las menciones
 históricas de esta crónica y de los comentarios, que describen la época en
 que ese era el rojo.
@@ -6399,7 +6399,7 @@ correr:
 dentro de `muestrearFuente` y de la sonda de la portada (el color que
 llega DURANTE la reproducción) son el camino del vídeo en vivo —
 píxeles y `onload` de imágenes que jsdom no tiene. Es el mismo camino ya
-validado en vivo para el espectro con `tools/diagnostico-color-video.js`
+validado en vivo para el espectro con `tools/diagnostico/diagnostico-color-video.js`
 y `diagnostico-color-portada.js`; la ventana solo añade una variable CSS
 en línea, el mecanismo ya validado del golpe del halo. La primera
 canción con el modo puesto es la medición.
@@ -6750,7 +6750,7 @@ decisión del autor se corrió solo ese archivo, no la suite entera (que
 queda para antes de empaquetar la próxima versión): el recuento total
 esperado es 896, pero NO SE HA CONTADO.
 
-**La mutación** (`tools/mutar-recargas.js`): 4 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-recargas.js`): 4 mutantes, todos muertos,
 **2/1/1/2 exactos** contra la predicción fijada por escrito en la cabecera
 del script antes de correrlo. El primer mutante es, letra por letra, el
 código de la 1.0.1: la prueba de regresión cae con él. Ningún mutante
@@ -6860,7 +6860,7 @@ nuevas en `pip-lanzador.test.js` (adopción y huérfano) y 3 en
 `popup.test.js` (la frase del menú). Por decisión del autor solo se
 corrieron los archivos de la tanda: la suite entera NO SE HA CONTADO.
 
-**La mutación** (`tools/mutar-tanda-t.js`): 18 mutantes, todos muertos, 9 de
+**La mutación** (`tools/mutar/mutar-tanda-t.js`): 18 mutantes, todos muertos, 9 de
 ellos devolviendo una regla a la 1.0.1. Predicción fijada por escrito antes
 de correr: 17 de 18 recuentos exactos. **El que fallé**: «no recuerda cuál
 es el suyo» (quitar `lanzadorPropio = btn`), predicho 1 y real 2. No conté
@@ -6965,7 +6965,7 @@ que mirara el volumen al reabrir, y la del «de» pasaba igual con el texto a
 mano, porque el catálogo del banco es el español (ahora le da a esa clave
 una respuesta en inglés).
 
-**La mutación** (`tools/mutar-tanda-u.js`): 11 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-u.js`): 11 mutantes, todos muertos,
 **11 de 11 recuentos exactos**. NO MEDIDO en vivo: el doble clic real sobre
 el botón PiP (el banco no pide activación de usuario) y cómo pronuncia un
 lector de pantalla de verdad con el `lang` nuevo.
@@ -7024,7 +7024,7 @@ escritura, propia o ajena, como Chrome) y 4 en
 `ecualizador-por-cancion.test.js`, más los archivos que tocan lo cambiado:
 todo verde.
 
-**La mutación** (`tools/mutar-tanda-v.js`): 9 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-v.js`): 9 mutantes, todos muertos,
 **9 de 9 recuentos exactos**. Dos mutantes se dejaron fuera a sabiendas, y
 así consta en la cabecera del script: vetar sin capacidades publicadas
 tumbaría casi todo `audio-grafo.test.js` (monta sin adaptador) y no sé
@@ -7083,7 +7083,7 @@ tocan lo cambiado: todo verde. Comprobado también a ojo con el servidor de
 la rejilla: la vista previa y Preferencias se ven igual, con la canción
 nueva.
 
-**La mutación** (`tools/mutar-tanda-w.js`): 8 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-w.js`): 8 mutantes, todos muertos,
 **8 de 8 recuentos exactos**. NO MEDIDO: la vista previa con Chrome en
 inglés dentro de la extensión de verdad (el banco le da un catálogo inglés
 de mentira) y un lector de pantalla real recorriendo Preferencias.
@@ -7138,7 +7138,7 @@ una que lee los zips reales de `dist/` si existen; 2 en
 entrada) se añadieron ANTES de fijar la predicción, porque sin ellas dos
 mutantes habrían sobrevivido.
 
-**La mutación** (`tools/mutar-tanda-x.js`): 9 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-x.js`): 9 mutantes, todos muertos,
 **9 de 9 recuentos exactos**. NO MEDIDO: la primera ejecución del flujo en
 GitHub (hace falta un push, y eso lo decide el autor), ni por tanto que la
 suite pase entera en Linux.
@@ -7179,7 +7179,7 @@ estrena la reinyección de la tanda T).
 La auditoría del 2026-09-28 dejó apuntado, sin medir, que en cada pestaña
 soportada el observador y `buildState` corren aunque la ventana esté
 cerrada, y que con Better Lyrics cada lectura clona la letra entera. Antes
-de tocar el bucle principal se midió: `tools/diagnostico-rendimiento.js`
+de tocar el bucle principal se midió: `tools/diagnostico/diagnostico-rendimiento.js`
 se pega en la consola de la pestaña, en el mundo «Music PiP», envuelve
 durante 30 s las funciones REALES del bucle y lo deja todo como estaba.
 Pasadas del autor, en su Chrome, con la 1.0.2:
@@ -7271,7 +7271,7 @@ y les hace las MISMAS cuentas que a los temas fijos: texto, tenue y acento
 sobre el fondo, tinta del botón sobre el acento, y el estado y «Sin
 conexión» bajo el peor velo, en reposo y en el escenario. Todos pasan.
 
-**La mutación** (`tools/mutar-tanda-y.js`): 12 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-y.js`): 12 mutantes, todos muertos,
 recuentos exactos contra una predicción **refijada por escrito** tras una
 primera pasada que dejó dos lecciones:
 - **OneDrive bloqueó `constants.js` justo al restaurarlo**, y el archivo
@@ -7337,11 +7337,11 @@ que APUNTA las órdenes, porque jsdom no pinta), 1 en
 fijar la predicción porque sin ella dos mutantes habrían sobrevivido) y el
 round-trip de `settings.test.js`.
 
-**La mutación** (`tools/mutar-tanda-z.js`, con el arnés de reintentos de
+**La mutación** (`tools/mutar/mutar-tanda-z.js`, con el arnés de reintentos de
 la tanda Y): 12 mutantes, todos muertos, **12 de 12 recuentos exactos**.
 NO MEDIDO: las tres formas con audio de verdad en la ventana flotante, y
 el coste por fotograma del anillo (más trazos que las barras; la medición
-de rendimiento se puede repetir con `tools/diagnostico-rendimiento.js`).
+de rendimiento se puede repetir con `tools/diagnostico/diagnostico-rendimiento.js`).
 
 ## La carátula en disco de vinilo (la tanda AA)
 
@@ -7384,7 +7384,7 @@ no `transform`, parado de serie y en marcha al sonar, la máscara, menos
 movimiento y la especificidad), 1 en `pip-espectro.test.js` (el recorte
 circular del anillo), 1 en `opciones-en-vivo.test.js` y el round-trip.
 
-**La mutación** (`tools/mutar-tanda-aa.js`): 12 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-aa.js`): 12 mutantes, todos muertos,
 **12 de 12 recuentos exactos**. NO MEDIDO: el disco con una carátula real
 y audio de verdad en la ventana flotante, y en la ventana compacta (la
 vista previa se miró ampliada).
@@ -7425,7 +7425,7 @@ fuera al medio segundo, y ninguna copia al reasignar la misma URL.
 tiene `decode()`; el código trata «sin decode» como «lista ya», que es lo
 que deja probar el reparto de la copia.
 
-**La mutación** (`tools/mutar-tanda-ab.js`): 12 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-ab.js`): 12 mutantes, todos muertos,
 **12 de 12 recuentos exactos**. NO MEDIDO: el fundido con carátulas reales
 de YouTube Music (que tardan más en llegar que un SVG en línea).
 
@@ -7459,7 +7459,7 @@ pinta en el icono; el color va un paso asíncrono detrás del texto y la
 primera versión de una prueba miraba demasiado pronto), 1 en
 `opciones-en-vivo.test.js` y el round-trip de las preferencias.
 
-**La mutación** (`tools/mutar-tanda-ac.js`): 12 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-ac.js`): 12 mutantes, todos muertos,
 **12 de 12 recuentos exactos**. NO MEDIDO: cómo se ven ▶ y ❚❚ en la
 etiqueta real de Chrome (el tamaño de los glifos depende del sistema).
 
@@ -7547,7 +7547,7 @@ propio `vista-previa.html` (la lista a mano se había quedado vieja), y la
 prueba de las reglas huérfanas de Preferencias pone la vista en «Grande»
 antes de mirar, como ya hacía abriendo los `<details>`.
 
-**La mutación** (`tools/mutar-tanda-ad.js`): 12 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-ad.js`): 12 mutantes, todos muertos,
 **12 de 12 recuentos exactos** contra la predicción refijada. NO MEDIDO: la
 vista previa dentro de la extensión de verdad, cambiando opciones con el
 ratón (el navegador de pruebas no tiene el storage de la extensión; allí se
@@ -7598,7 +7598,7 @@ dejar el tema de la carátula vuelve el color PROPIO, no el de la hoja), 4 en
 construible: jsdom no trae `CSSStyleSheet.replaceSync`), 1 en
 `vista-previa.test.js`, 2 en `service-worker.test.js` y el round-trip.
 
-**La mutación** (`tools/mutar-tanda-ae.js`): 13 mutantes, todos muertos,
+**La mutación** (`tools/mutar/mutar-tanda-ae.js`): 13 mutantes, todos muertos,
 **13 de 13 recuentos exactos** contra una predicción refijada: la guarda
 «no avisar con el tema de la carátula» sobrevivió con razón porque era
 redundante (ese tema no tiene fondo en la hoja y ya no avisaba), y se quitó.
@@ -7648,7 +7648,7 @@ Tres arreglos cuelgan de ahí:
   `pagehide`, su temporizador de muestreo seguía apuntado y ninguna ventana
   posterior volvía a leer el color. `abrirVentana` lo olvida todo.
 
-Mutación (`tools/mutar-tanda-af.js`): 9 de 9, **9 de 9 exactos** en la
+Mutación (`tools/mutar/mutar-tanda-af.js`): 9 de 9, **9 de 9 exactos** en la
 segunda pasada. En la primera, el olvido del muestreo sobrevivió por culpa
 del banco: en jsdom los temporizadores de la ventana «muerta» seguían vivos
 y hacían la lectura por la nueva; la prueba ahora los mata, como Chrome.
@@ -7657,9 +7657,9 @@ consola falso.
 
 ### El arnés de mutación, uno solo, y ESLint (tanda AG)
 
-Los 24 `tools/mutar-*.js` llevaban cada uno su bucle (cinco variantes; solo
+Los 24 `tools/mutar/mutar-*.js` llevaban cada uno su bucle (cinco variantes; solo
 las nuevas reintentaban al escribir, y eso ya costó un `constants.js`
-mutado en la tanda Y). Ahora todos llaman a **`tools/mutar-comun.js`**:
+mutado en la tanda Y). Ahora todos llaman a **`tools/mutar/mutar-comun.js`**:
 escribe con reintentos, restaura pase lo que pase (también con Ctrl+C) y
 **comprueba leyendo** que el archivo quedó byte a byte, compara cada
 mutante con su predicción (`esperadas`), y entiende `equivalente` y
@@ -7757,11 +7757,11 @@ Se pegan en la consola de la pestaña **con el contexto «Music PiP»
 elegido** en el desplegable de DevTools. Así leen el adaptador vivo, sin
 copiar selectores.
 
-- `tools/diagnostico-publicacion.js`: la comprobación de veinte segundos
+- `tools/diagnostico/diagnostico-publicacion.js`: la comprobación de veinte segundos
   por sitio. Dice qué selector casa (el principal o un respaldo, que es el
   aviso temprano), la salud, el estado leído, la letra, y si la ventana
   tiene botón y API. Deja el veredicto en el portapapeles.
-- `tools/diagnostico-fixture.js`: recorta del DOM vivo lo que leen los
+- `tools/diagnostico/diagnostico-fixture.js`: recorta del DOM vivo lo que leen los
   getters del adaptador, con sus antepasados vacíos, sin scripts, estilos
   ni manejadores. Deja una fixture lista en el portapapeles. **Léela antes
   de guardarla**: el texto (títulos, letra, cola) se queda.
@@ -7817,7 +7817,7 @@ cuenta.
 
 Tres pruebas nuevas en `pip-halo.test.js`: el caso reportado, la página sin
 ningún gesto, y que el gesto no haga latir un halo en modo fijo. Mutación
-(`tools/mutar-tanda-am.js`): 3 de 3, con 2 de 3 recuentos exactos en la
+(`tools/mutar/mutar-tanda-am.js`): 3 de 3, con 2 de 3 recuentos exactos en la
 primera pasada y refijada por escrito. **No medido en vivo**: abrir la
 ventana con el halo en latido en Chrome de verdad.
 
@@ -7945,7 +7945,7 @@ inglés está completo: 267 claves, y la única igual al español es
   catálogo» sin que nadie lo viera.
 
 Una prueba fija la decisión con sus palabras (manifiesto, orden de la
-política y de la ficha). Mutación (`tools/mutar-tanda-aq.js`): 2 de 2,
+política y de la ficha). Mutación (`tools/mutar/mutar-tanda-aq.js`): 2 de 2,
 exactas.
 
 ## La 1.2.2 (el inglés por defecto)
@@ -7958,6 +7958,258 @@ con el navegador en un tercer idioma pasan del español que veían sin
 haberlo elegido al inglés. Se ofreció un selector de idioma para
 conservarles el español, y el autor eligió dejarlo así. Suite entera:
 **1164/1164**. Sin permisos nuevos; zip de 41 archivos.
+
+## La página de bienvenida (la tanda AR)
+
+Primera de las mejoras elegidas para la siguiente versión (2026-10-08).
+También eligió las 4, 6, 8, 9 y 10 de la lista, y aparcó «escuchar juntos».
+
+**Por qué.** El clic en el icono no puede abrir la ventana: Chrome no le pasa
+la activación a la pestaña (ver «Decisión técnica importante»). Lo primero
+que hace quien instala es pulsar el icono, así que si nadie le cuenta que la
+ventana se abre con el botón PiP de la propia página, ve un menú, no ve
+ninguna ventana y desinstala. `src/bienvenida/` se lo enseña en tres pasos:
+abre tu música (con enlaces a los tres sitios), pon una canción y pulsa el
+botón PiP. El botón aparece dibujado con las mismas medidas y colores que el
+de verdad. También explica que el icono abre el menú y cómo fijarlo.
+
+- Se abre **solo al instalar** (`onInstalled`, `reason === "install"`) y
+  nunca al actualizar. Si no se puede abrir, la extensión sigue igual.
+- Los textos van por el catálogo, en inglés o en español, y se comprobaron
+  en el panel en los dos idiomas y a 375 px.
+- La prueba de localización **descubre** ahora todas las páginas de `src/`
+  en vez de listarlas a mano. La lista tenía tres y se había quedado sin
+  `vista-previa.html`, que se excluye por nombre porque es un marco sin
+  texto propio.
+- El zip suma dos archivos.
+
+Mutación (`tools/mutar/mutar-tanda-ar.js`): 2 de 2, exactas.
+
+## Mis ajustes del ecualizador (la tanda AS)
+
+La mejora 4 de la lista. **La decisión que lo hace pequeño**: un ajuste
+propio no es un formato nuevo de ecualizador, es **un nombre y cinco
+números**. «Usar» uno escribe esos números en la clave de siempre (como «A mi
+gusto»), así que el grafo de audio, la memoria por canción y el interruptor
+no cambian ni una línea. El nombre solo sirve para nombrar lo que suena.
+`Ecualizador.propioDe` busca si los números que suenan coinciden con uno
+guardado, y el botón del ecualizador de la ventana dice su nombre. Si se
+mueve un deslizador, deja de coincidir y vuelve a decir «ajuste propio», que
+es lo honesto.
+
+- Clave nueva `equalizerCustom`: lista de `{ nombre, valor }`, de serie
+  vacía. Se clasifica como preferencia «que se aplica» en el censo, porque
+  cambia lo que dice la ventana. Viaja sola en el archivo de exportar (tanda
+  AJ) y entra saneada al importar.
+- `normalizarPropios` es pura y está en `shared/ecualizador.js` con el resto
+  de lo que define un ecualizador válido. Tira lo que no sea un nombre con
+  texto y cinco números, **acota** lo que se pase de rango (la misma regla
+  que el ecualizador de siempre; mi primera prueba esperaba que se tirara, y
+  la equivocada era la prueba), recorta el nombre a 24 letras, hace que el
+  último con el mismo nombre sobrescriba y deja como mucho 8.
+- Preferencias tiene un bloque **Mis ajustes** al pie de la tarjeta del
+  ecualizador, fuera de las bandas a propósito: esas se esconden con el
+  ecualizador apagado, y la lista tiene que servir para encenderlo. Para
+  guardar hace falta algo encendido y un nombre; con 8 guardados solo se
+  puede sobrescribir uno. Usar pasa por `clavesEcualizador`, la misma regla
+  que `save()`. Borrar no pide confirmación (se deshace volviendo a guardar).
+- La prueba de reglas CSS huérfanas pone la página en el estado «con un
+  ajuste guardado y en uso», como ya hacía con los `<details>`, en vez de
+  perdonar `.ytmpip-borrar`. La prueba de «valores válidos» de
+  `settings.test.js` incluye la lista. Una mutación vieja de mandos se
+  reapuntó, porque la línea que vigilaba se partió en dos.
+
+Visto en el panel con una página de usar y tirar (borrada después).
+`tests/unit/ecualizador-propios.test.js`: 14 pruebas. Mutación
+(`tools/mutar/mutar-tanda-as.js`): 9 de 9, exactas.
+
+## Lo que escuchaste (la tanda AT)
+
+La mejora 8 de la lista: un historial que **solo existe si el usuario lo
+enciende**. Viene apagado, por decisión del autor: nadie empieza a tener su
+escucha anotada por una actualización sin enterarse.
+
+- **Qué es una escucha** (`shared/historial.js`, puro). Una canción cuenta
+  una vez cuando lleva 30 segundos sonando, o la mitad si es más corta, como
+  hacen los servicios de «scrobbling»; en pausa no cuenta. Si la misma
+  canción vuelve a empezar (repetir), puede contar otra vez. Se guardan 90
+  días y como mucho 1.000 escuchas.
+- **Quién anota**: el service worker, en el mismo camino donde ya guarda el
+  último estado. Así solo cuenta la pestaña recordada, y dos pestañas
+  sonando no cuentan doble. La marca de la canción en curso vive en
+  `storage.session`, como la pestaña recordada, porque el service worker se
+  duerme. El interruptor se lee una vez por despertar y lo mantiene al día un
+  oyente de storage, igual que la etiqueta del icono.
+- **Dos claves nuevas**: `historyPreference` (`off` de serie) es una
+  preferencia, así que se exporta y Preferencias la enseña. `listeningHistory`
+  es una anotación de este equipo, **fuera de «lo que se aplica»**: si no,
+  cada escucha anotada haría releer las preferencias a todas las pestañas. El
+  censo de `settings-recargas.test.js` clasifica las dos.
+- **Dónde se ve**: `src/historial/` («Lo que escuchaste»), con las más
+  escuchadas, los artistas y lo último en 7 días, 30 días o todo, y botones
+  para apagar y borrar. Desde Preferencias (una fila con su interruptor y un
+  enlace) y desde la pestaña «Ajustes» del menú. Los títulos vienen de las
+  páginas de música y se pintan **siempre con `textContent`**: hay una prueba
+  con un título que es una etiqueta `<img onerror>`. El menú pasa a medir
+  573 px, todavía bajo el tope de 600.
+- **La política de privacidad** lo cuenta en los dos idiomas: «una cuarta
+  cosa, solo si la enciendes».
+
+Visto en el panel con datos de prueba (página de usar y tirar, borrada).
+`tests/unit/historial.test.js`: 12 pruebas. Mutación
+(`tools/mutar/mutar-tanda-at.js`): 7 de 7 muertas. En la primera pasada un mutante
+estaba **mal hecho**: quitaba una coma y rompía la sintaxis de
+`settings.js`, así que caía todo. Se rehízo para quitar la clave, que era el
+olvido que se quería probar, y salió exacto.
+
+## Direcciones dinámicas y `tools/` ordenado (la tanda AU)
+
+La mejora 10 de la lista. Son dos cosas sin relación entre sí, las dos de
+mantenimiento.
+
+**`use_dynamic_url`** (la R12 que en su día se dejó fuera). La ventana
+flotante usa tres recursos de la extensión desde la página de música
+(`pip.html`, `pip.css` y la portada de reserva), y por eso están en
+`web_accessible_resources`. Sin más, cualquier web podía pedir
+`chrome-extension://<id>/src/pip/pip.html` y saber que tienes Music PiP: una
+huella para seguirte. Con `use_dynamic_url`, el id de esa dirección es
+aleatorio en cada sesión. Según el [PSA de
+Chrome 130](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/Nr3QNKFv74c/m/PYLvA7dOAAAJ),
+Chrome lo respeta desde la 130 y `chrome.runtime.getURL` devuelve esa
+dirección dinámica; las versiones anteriores lo ignoran. El riesgo era real:
+una dirección escrita a mano o una ruta relativa dentro de la ventana
+dejarían de cargar, y la ventana no abriría. Por eso antes se comprobó que
+todo pasa por `getURL`, y `tests/unit/recursos-dinamicos.test.js` lo vigila
+desde ahora: la opción está puesta, no hay ningún `chrome-extension://`
+escrito en `src/`, y `pip.html` y `pip.css` no cargan nada por ruta.
+**Medido en vivo** después, con la prueba de humo de la tanda AX: en el
+Chromium de Playwright (1.64, muy por encima de la 130), la ventana flotante
+real se abre con su HTML y con su hoja de estilos.
+
+**`tools/` ordenado.** Tenía 74 archivos sueltos. Ahora están así:
+`tools/diagnostico/` (los guiones de consola), `tools/mutar/` (los scripts
+de mutación con su arnés) y, en la raíz, lo de construir (`empaquetar.ps1`,
+`revisar-zip.js`, los generadores, el servidor de vista previa y sus
+páginas).
+- Se movieron con `git mv` (la historia sigue a cada archivo) y se
+  **mantuvieron los nombres**. Así, cambiar las rutas fue reescribir
+  `tools/diagnostico-` y `tools/mutar-` en todos los archivos de texto del
+  repo, 80 en total, y todas las referencias de este README, de la ficha y de
+  los comentarios del código siguen siendo válidas.
+- Los scripts de mutación bajan un nivel (su raíz es `../..`), y las dos
+  pruebas que montaban la ruta en código se ajustaron a mano.
+- Al revisar los anclajes de todos los scripts aparecieron **dos rotos por
+  cambios de hoy**, no por la mudanza. El de `mutar-manifiesto` se rompió con
+  `use_dynamic_url`: la línea de `matches` de los recursos también acaba en
+  coma y quedó idéntica a la de los content scripts. Los de `mutar-recargas`
+  se rompieron porque la lista de exclusiones acaba ahora en el historial
+  (tanda AT). Se reapuntaron y todas sus mutaciones siguen muriendo. Es
+  justo lo que la guarda de la tanda AG existe para cazar.
+
+## SoundCloud, con permiso opcional (la tanda AV)
+
+La mejora 6 de la lista, con la forma que eligió el autor: **permiso opcional
+por sitio**. Añadir un sitio a `host_permissions` desactiva la extensión a
+todos los usuarios al actualizar, hasta que aceptan el permiso nuevo. Con
+`optional_host_permissions` nadie ve ningún aviso: cada uno lo activa cuando
+quiere.
+
+**El adaptador, medido en vivo** (2026-10-08, en el navegador integrado, sobre
+una pista pública y sin cuenta; las cookies se rechazaron):
+
+- **Ni `<audio>` ni `<video>` en el DOM**, como en Spotify. Sin elemento de
+  audio no hay ecualizador ni barras (`audioGrafo: false`), y si suena o no
+  se lee de la clase `playing` del botón.
+- El enlace del título lleva delante una frase para lectores de pantalla
+  («Pista actual: …»); el título limpio está en su `span[aria-hidden]`.
+- La carátula es un `background-image` de 50×50, y SoundCloud sirve la misma
+  a 500×500 cambiando `-t50x50`. Se devuelve un objeto con `src` y no un
+  `<img>`, que la descargaría otra vez.
+- El tiempo está en la barra de progreso, en segundos
+  (`aria-valuenow`/`aria-valuemax`). **Saltar funciona** escribiendo un clic
+  en la barra: se midió del segundo 35 al 107 de 213.
+- Repetir sin clase es «apagado» y luego `m-one`/`m-all`/`m-none`.
+  Aleatorio usa `m-shuffling`.
+- «Me gusta» exige cuenta y la cola solo existe con su panel abierto, así que
+  esos mandos no se ofrecen. Tampoco hay letra ni volumen (el deslizador solo
+  existe con el ratón encima).
+- `tests/fixtures/soundcloud-sonando.html` reproduce lo medido.
+
+**El permiso en marcha**:
+
+- `SITIOS_OPCIONALES` en `constants.js`.
+- El service worker registra el content script del sitio con
+  `chrome.scripting.registerContentScripts` cuando el permiso está, y lo
+  quita cuando no. Usa los mismos archivos que el bloque fijo del
+  manifiesto, sin una segunda lista, y `persistAcrossSessions`.
+- Se repasa al instalar, al arrancar y con `permissions.onAdded`/`onRemoved`.
+  Al concederlo, además lleva el script a las pestañas de SoundCloud ya
+  abiertas.
+- Buscar la pestaña musical cuenta los sitios opcionales **solo con el
+  permiso concedido**.
+- Los recursos de la ventana (`web_accessible_resources`) se exponen también
+  en SoundCloud. La prueba del manifiesto pide ahora que sean la unión de los
+  permisos fijos y los opcionales.
+
+**En Preferencias**, la tarjeta «Más sitios» tiene una fila por sitio,
+construida desde la constante: Deezer no tocará el HTML. Pinta lo que Chrome
+dice del permiso en ese momento (no se guarda nada en storage, porque el
+usuario puede retirarlo también desde `chrome://extensions`). «Activar» lo
+pide en el clic y «Desactivar» lo retira. La política de privacidad y la
+justificación de la ficha cuentan el permiso opcional.
+
+Pruebas:
+- `adaptador-soundcloud.test.js`: 7.
+- `opciones-sitios.test.js`: 5.
+- `service-worker.test.js`: 5 nuevas. Su doble de `tabs.query` respeta ahora
+  el filtro de URL, porque sin eso no se podía ver lo del permiso.
+
+La prueba de saltar se movió a un cuarto de la pista: en la mitad, un salto
+que siempre cayera en medio la habría pasado. Mutación
+(`tools/mutar/mutar-tanda-av.js`): 11 de 11, exactas.
+
+**No medido en vivo**: la extensión de verdad en SoundCloud. Falta activar
+desde Preferencias, abrir la ventana con el botón PiP y comprobar mandos,
+saltos y que la pestaña ya abierta reciba el script sin recargar.
+
+## La prueba de humo contra el sitio real (la tanda AX)
+
+La mejora 9 de la lista, **solo en local y a mano**, por decisión del autor:
+los sitios reales fallan por anuncios, regiones y avisos de cookies, y
+harían inestable el CI. `npm run humo` (o `npm run humo -- --ver` para ver
+la ventana) carga la extensión **de verdad** con Playwright, en un Chromium
+limpio con perfil temporal y sin cuentas, y la pasea por un vídeo público de
+YouTube. Comprueba esto:
+
+1. El service worker arranca.
+2. Al instalar se abre la bienvenida (AR).
+3. Aparece el botón PiP en la página.
+4. Con el vídeo sonando, el estado que guarda el service worker trae título
+   y «conectado», y **ninguna pieza vital falta** (la salud de la tanda AK,
+   contra el sitio de hoy).
+5. **La ventana flotante se abre de verdad** con su HTML y su hoja de
+   estilos. El clic de Playwright es un gesto real; es la prueba en vivo de
+   `use_dynamic_url` (AU).
+6. El menú dice «Conectado a YouTube».
+
+**Primera pasada (2026-10-08): las ocho comprobaciones en orden.** No toca
+Spotify, Deezer ni SoundCloud: los dos primeros piden cuenta, y el permiso
+opcional de SoundCloud se concede en un diálogo nativo de Chrome que la
+automatización no puede aceptar. Playwright va en `devDependencies`; su
+Chromium (~150 MB) se instala aparte con `npx playwright install chromium`
+y no viaja en el CI, que no lo usa. La ficha (sección 10) lo añade a la
+receta de publicar, junto al guion de consola de la tanda AL.
+
+## Deezer: el guion para medirlo (preparación de la tanda AW)
+
+Deezer pide sesión iniciada, así que el adaptador no se puede escribir sin
+medir en la cuenta del autor. `tools/diagnostico/diagnostico-deezer.js` se
+pega en la consola de su pestaña con una canción sonando y mide dos veces,
+sonando y en pausa. Recoge si hay `<audio>`/`<video>` en el documento y,
+de la barra del reproductor, todo lo que lleva `data-testid`, `aria-label`
+o es un deslizador, con sus atributos. Lo deja en el portapapeles. No pulsa
+nada ni lee nada de la cuenta. Con ese resultado se escribe el adaptador
+como el de SoundCloud: un sitio opcional más en `SITIOS_OPCIONALES`.
 
 ## Pendiente (ver documento de arquitectura completo)
 

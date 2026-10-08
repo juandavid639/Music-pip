@@ -1990,7 +1990,7 @@
    * El `||` no es un "por si acaso" decorativo: si el exterior no
    * estuviera expuesto o saliera 0, el interior es la mejor medida que hay
    * y una ventana un poco pequeña es mejor que no recordar nada. Cual de
-   * los dos casos es el real lo mide tools/diagnostico-tamano-ventana.js.
+   * los dos casos es el real lo mide tools/diagnostico/diagnostico-tamano-ventana.js.
    */
   function tamanoAnotable() {
     if (!pipWindow || pipWindow.closed) return null;
@@ -2262,7 +2262,7 @@
    * baja la opacidad del CONTENIDO, asi que por debajo se ve el fondo de la
    * propia ventana, no el escritorio. Una ventana de navegador de verdad
    * traslucida no depende de esta extension y esta sin comprobar; hay un
-   * `tools/diagnostico-transparencia.js` para salir de dudas.
+   * `tools/diagnostico/diagnostico-transparencia.js` para salir de dudas.
    * ------------------------------------------------------------------ */
 
   /**
@@ -2691,7 +2691,14 @@
      * clave— si no hay etiqueta: es la misma red que pone options.js en el
      * desplegable, y por lo mismo —una opción muda es peor que una fea—.
      */
-    return preset ? etiquetaPreset(preset) : t("eq_ajuste_propio");
+    if (preset) return etiquetaPreset(preset);
+    /*
+     * Cinco numeros que coinciden con un ajuste guardado con nombre (tanda
+     * AS): se dice su nombre. Si no, «ajuste propio», como siempre. La lista
+     * sale de Settings, ya saneada; mover un deslizador deja de coincidir y
+     * el nombre se va solo, que es lo honesto.
+     */
+    return Eq.propioDe(valor, YTMPip.Settings.get().equalizerCustom) || t("eq_ajuste_propio");
   }
 
   /**

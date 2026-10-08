@@ -799,5 +799,161 @@
   },
   "ajustes_nota": {
     "message": "El ecualizador, los colores, los atajos y todo lo demás, en Avanzada."
+  },
+  "bienvenida_titulo_pestana": {
+    "message": "Bienvenido a Music PiP"
+  },
+  "bienvenida_titulo": {
+    "message": "Music PiP está listo"
+  },
+  "bienvenida_intro": {
+    "message": "Tu música en una ventana que se queda encima de todo mientras trabajas. Así se abre:"
+  },
+  "bienvenida_paso1_titulo": {
+    "message": "Abre tu música"
+  },
+  "bienvenida_paso1": {
+    "message": "YouTube Music, YouTube o Spotify, en una pestaña normal del navegador."
+  },
+  "bienvenida_paso2_titulo": {
+    "message": "Pon una canción"
+  },
+  "bienvenida_paso2": {
+    "message": "La ventana enseña lo que suena: la carátula, la letra y los mandos."
+  },
+  "bienvenida_paso3_titulo": {
+    "message": "Pulsa el botón PiP de la página"
+  },
+  "bienvenida_paso3": {
+    "message": "Aparece abajo a la derecha de la página de música. Chrome solo deja abrir la ventana con un clic dentro de la propia página, y por eso el botón está ahí."
+  },
+  "bienvenida_paso3_nota": {
+    "message": "Si la pestaña ya estaba abierta y no lo ves, recárgala (F5)."
+  },
+  "bienvenida_icono": {
+    "message": "El icono de Music PiP en la barra de Chrome abre el menú: la canción que suena, ajustes rápidos y todas las preferencias."
+  },
+  "bienvenida_fijar": {
+    "message": "¿No ves el icono? Pulsa la pieza de puzle de la barra y fija Music PiP con la chincheta."
+  },
+  "bienvenida_mas": {
+    "message": "Más"
+  },
+  "bienvenida_preferencias": {
+    "message": "Ver todas las preferencias"
+  },
+  "bienvenida_privacidad": {
+    "message": "Privacidad"
+  },
+  "bienvenida_aviso": {
+    "message": "No oficial. No afiliado a Google ni a Spotify."
+  },
+  "propios_titulo": {
+    "message": "Mis ajustes"
+  },
+  "propios_ayuda": {
+    "message": "Guarda los números de las bandas con un nombre para volver a ellos con un clic."
+  },
+  "propios_nombre": {
+    "message": "Nombre del ajuste"
+  },
+  "propios_guardar": {
+    "message": "Guardar"
+  },
+  "propios_vacio": {
+    "message": "Todavía no has guardado ninguno."
+  },
+  "propios_lleno": {
+    "message": "Ya tienes 8: borra uno para guardar otro."
+  },
+  "propios_borrar": {
+    "message": "Borrar «$1»"
+  },
+  "historial_titulo": {
+    "message": "Lo que escuchaste"
+  },
+  "historial_apagado_titulo": {
+    "message": "El historial está apagado"
+  },
+  "historial_apagado": {
+    "message": "Si lo enciendes, Music PiP anota en tu equipo cada canción que escuches más de 30 segundos. No sale nunca de aquí y lo puedes borrar cuando quieras."
+  },
+  "historial_encender": {
+    "message": "Encender el historial"
+  },
+  "historial_periodo": {
+    "message": "Periodo"
+  },
+  "historial_7_dias": {
+    "message": "7 días"
+  },
+  "historial_30_dias": {
+    "message": "30 días"
+  },
+  "historial_todo": {
+    "message": "Todo"
+  },
+  "historial_vacio": {
+    "message": "Todavía no hay nada aquí: pon música y vuelve en un rato."
+  },
+  "historial_mas_escuchadas": {
+    "message": "Las más escuchadas"
+  },
+  "historial_artistas": {
+    "message": "Artistas"
+  },
+  "historial_recientes": {
+    "message": "Lo último"
+  },
+  "historial_apagar": {
+    "message": "Apagar el historial"
+  },
+  "historial_borrar": {
+    "message": "Borrar el historial"
+  },
+  "historial_total": {
+    "message": "$1 escuchas"
+  },
+  "historial_confirmar_borrar": {
+    "message": "¿Borrar todo el historial? No se puede deshacer."
+  },
+  "fila_historial": {
+    "message": "Lo que escuchaste"
+  },
+  "fila_historial_ayuda": {
+    "message": "Anota en tu equipo las canciones que escuchas más de 30 segundos. No sale de aquí."
+  },
+  "ver_historial": {
+    "message": "Ver lo que escuchaste"
+  },
+  "opcion_historial_no": {
+    "message": "No anotarlo"
+  },
+  "opcion_historial_si": {
+    "message": "Anotarlo"
+  },
+  "tarjeta_sitios": {
+    "message": "Más sitios"
+  },
+  "tarjeta_sitios_intro": {
+    "message": "De serie, Music PiP funciona en YouTube Music, YouTube y Spotify. Estos se activan aparte: Chrome te pide permiso para ese sitio, y solo para él."
+  },
+  "sitio_activado": {
+    "message": "Activado"
+  },
+  "sitio_sin_activar": {
+    "message": "Sin activar"
+  },
+  "sitio_activar": {
+    "message": "Activar"
+  },
+  "sitio_desactivar": {
+    "message": "Desactivar"
+  },
+  "sitio_no_concedido": {
+    "message": "Chrome no dio el permiso: no ha cambiado nada."
+  },
+  "sitio_nota_soundcloud": {
+    "message": "Carátula, título, mandos y saltos; sin letra, ecualizador ni barras, porque su sonido no pasa por la página."
   }
 }

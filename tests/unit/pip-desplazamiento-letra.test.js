@@ -4,7 +4,7 @@
  * Existen por un fallo reportado con dos caras que parecian no tener nada
  * que ver: "al cambiar la ventana de tamaño aparece el error visual en la
  * parte inferior" y "se oculta la opcion de poner video". El diagnostico de
- * la ventana real (tools/diagnostico-ventana.js) las junto en un solo dato:
+ * la ventana real (tools/diagnostico/diagnostico-ventana.js) las junto en un solo dato:
  *
  *     body.scrollTop: 43.63
  *     cabecera  y=-36..-10  → FUERA de la ventana

@@ -57,7 +57,7 @@ module.exports = [
     // `copy` es de la consola de DevTools; `chrome` y `YTMPip` existen en el
     // contexto «Music PiP» de la consola, que es donde se pegan los de la
     // tanda AL y el de rendimiento.
-    files: ["tools/diagnostico-*.js"],
+    files: ["tools/diagnostico/diagnostico-*.js"],
     languageOptions: {
       sourceType: "script",
       globals: {

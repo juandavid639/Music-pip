@@ -372,6 +372,101 @@
         gap: 8px;
       }
 
+      /* ---------- Mis ajustes del ecualizador (tanda AS) ---------- */
+      .ytmpip-propios {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 14px;
+        margin-top: 6px;
+        border-top: 1px solid var(--border);
+      }
+
+      .ytmpip-propios-guardar {
+        display: flex;
+        gap: 8px;
+      }
+
+      .ytmpip-propios-guardar input {
+        flex: 1;
+        min-width: 0;
+        font: inherit;
+        font-size: 13px;
+        padding: 7px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--hueco);
+        color: var(--text);
+      }
+
+      .ytmpip-propios-guardar input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .ytmpip-propios-lista {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .ytmpip-propios-lista li {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .ytmpip-propios-lista button,
+      .ytmpip-propios-guardar button {
+        font: inherit;
+        font-size: 12px;
+        border: 0;
+        background: var(--hueco);
+        color: var(--text);
+        cursor: pointer;
+        padding: 6px 10px;
+      }
+
+      .ytmpip-propios-guardar button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+
+      .ytmpip-propios-lista button[aria-pressed="true"] {
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .ytmpip-propios-lista .ytmpip-borrar {
+        color: var(--text-dim);
+        border-left: 1px solid var(--border);
+      }
+
+      .ytmpip-propios-lista .ytmpip-borrar:hover {
+        color: var(--text);
+      }
+
+      .ytmpip-propios button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* El enlace de la fila del historial (tanda AT). */
+      .ytmpip-enlace {
+        color: var(--text);
+        font-size: 13px;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .ytmpip-enlace:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .ytmpip-acciones button {
         font: inherit;
         font-size: 12px;
@@ -1445,6 +1540,27 @@
             <span class="ytmpip-marcas" aria-hidden="true"><span></span><span></span><span></span></span>
           </span>
         </div>
+      <!--
+          LO QUE ESCUCHASTE (tanda AT). Apagado de serie, por decisión del
+          autor: nadie empieza a tener su escucha anotada por una
+          actualización sin enterarse. La lista la anota el service worker y
+          la enseña src/historial/historial.html.
+        -->
+        <div class="ytmpip-fila">
+          <div class="ytmpip-fila-texto">
+            <label class="ytmpip-fila-titulo" for="historyPreference" data-t="fila_historial">Lo que escuchaste</label>
+            <span class="ytmpip-ayuda" data-t="fila_historial_ayuda">Anota en tu equipo las canciones que escuchas más de 30 segundos. No sale de aquí.</span>
+            <a class="ytmpip-enlace" href="../historial/historial.html" target="_blank" data-t="ver_historial">Ver lo que escuchaste</a>
+          </div>
+          <div class="ytmpip-pildoras" role="group" data-para="historyPreference" aria-label="Lo que escuchaste" data-t-aria="fila_historial">
+            <button type="button" data-valor="off" aria-pressed="true" data-t="opcion_historial_no">No anotarlo</button>
+            <button type="button" data-valor="on" aria-pressed="false" data-t="opcion_historial_si">Anotarlo</button>
+          </div>
+          <select id="historyPreference" class="ytmpip-select-real">
+            <option value="off" data-t="opcion_historial_no">No anotarlo</option>
+            <option value="on" data-t="opcion_historial_si">Anotarlo</option>
+          </select>
+        </div>
       </section>
 
       <!-- ================= EL ECUALIZADOR ================= -->
@@ -1510,7 +1626,7 @@
           que cambia (el del precio, abajo del todo).
 
           El segundo párrafo es la consecuencia audible de una medición, no una
-          advertencia de manual: tools/diagnostico-limitador.js encontró que la
+          advertencia de manual: tools/diagnostico/diagnostico-limitador.js encontró que la
           música de esta plataforma llega sin ninguna holgura, y de ahí sale que
           subir una banda tenga que bajar el resto. Sin decirlo en algún sitio, lo
           primero que pasa al elegir «Más graves» es que suena más flojo y parece
@@ -1662,6 +1778,30 @@
           -->
           <p id="equalizerPreamp"></p>
         </fieldset>
+
+        <!--
+          MIS AJUSTES (tanda AS): los números de las bandas guardados con un
+          nombre. Fuera del fieldset de las bandas a propósito: ese se esconde
+          con el ecualizador apagado, y la lista tiene que seguir a mano para
+          ENCENDERLO con uno guardado. Guardar sí necesita algo encendido, y el
+          botón lo dice apagándose.
+
+          Usar uno escribe sus números en la clave de siempre, como «A mi
+          gusto» (el formato no cambia; ver normalizarPropios en
+          shared/ecualizador.js). La lista la pinta options.js.
+        -->
+        <div id="ajustesPropios" class="ytmpip-propios">
+          <h3 class="ytmpip-fila-titulo" data-t="propios_titulo">Mis ajustes</h3>
+          <span class="ytmpip-ayuda" data-t="propios_ayuda">Guarda los números de las bandas con un nombre para volver a ellos con un clic.</span>
+          <div class="ytmpip-propios-guardar">
+            <label for="nombrePropio" class="ytmpip-oculto" data-t="propios_nombre">Nombre del ajuste</label>
+            <input id="nombrePropio" type="text" maxlength="24" autocomplete="off" />
+            <button type="button" id="guardarPropio" data-t="propios_guardar">Guardar</button>
+          </div>
+          <ul id="listaPropios" class="ytmpip-propios-lista"></ul>
+          <p id="propiosVacio" class="ytmpip-ayuda" data-t="propios_vacio">Todavía no has guardado ninguno.</p>
+          <p id="propiosLleno" class="ytmpip-ayuda" data-t="propios_lleno" hidden>Ya tienes 8: borra uno para guardar otro.</p>
+        </div>
       </section>
 
       <!-- ================= EL ESPECTRO ================= -->
@@ -1992,6 +2132,24 @@
           botón 🎬 lo abre en el vídeo flotante del propio navegador, al que
           el cifrado no le afecta.
         </p>
+      </section>
+
+      <!-- ================= MÁS SITIOS (tanda AV) ================= -->
+      <!--
+        Los sitios que no vienen de serie, cada uno con su permiso aparte
+        (optional_host_permissions). Las filas las construye options.js desde
+        SITIOS_OPCIONALES de constants.js: un sitio nuevo no toca este HTML.
+        Activar pide el permiso a Chrome en el momento (hace falta el clic: la
+        API no deja pedirlo sin gesto) y el service worker registra el
+        script del sitio en cuanto se concede.
+      -->
+      <section id="seccion-sitios" class="ytmpip-tarjeta">
+        <h2 data-t="tarjeta_sitios">Más sitios</h2>
+        <p class="ytmpip-intro" data-t="tarjeta_sitios_intro">
+          De serie, Music PiP funciona en YouTube Music, YouTube y Spotify. Estos
+          se activan aparte: Chrome te pide permiso para ese sitio, y solo para él.
+        </p>
+        <div id="sitiosOpcionales"></div>
       </section>
 
       <!-- ================= TUS PREFERENCIAS (tanda AJ) ================= -->

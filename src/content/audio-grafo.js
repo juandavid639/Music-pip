@@ -59,7 +59,7 @@
  * El <video> viaja al documento de la ventana flotante cuando se abre el PiP.
  * La fuente de Web Audio esta atada al ELEMENTO, no al documento, asi que
  * *deberia* dar igual. NO ESTA COMPROBADO en la pagina real. Hasta que
- * tools/diagnostico-ecualizador.js lo mida con el PiP abierto, esto es una
+ * tools/diagnostico/diagnostico-ecualizador.js lo mida con el PiP abierto, esto es una
  * suposicion y se escribe como suposicion.
  */
 (function (root) {

@@ -13,7 +13,7 @@
  *   - que apagar puentee en vez de intentar deshacer lo indeshacible.
  *
  * Lo que este doble NO puede decir es como suena nada. Eso se mide en el
- * navegador con tools/diagnostico-ecualizador.js y no hay atajo.
+ * navegador con tools/diagnostico/diagnostico-ecualizador.js y no hay atajo.
  *
  * DOS COMPORTAMIENTOS DEL NAVEGADOR SE IMITAN A PROPOSITO, porque son
  * justamente los que el codigo tiene que respetar:

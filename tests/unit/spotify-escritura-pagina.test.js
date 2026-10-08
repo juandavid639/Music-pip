@@ -5,7 +5,7 @@
  * pagina despues) y el destape de los mandos en la ventana.
  *
  * Todo lo raro esta MEDIDO en vivo (2026-09-16, la pestaña real del
- * usuario, tools/diagnostico-seek-volumen.js):
+ * usuario, tools/diagnostico/diagnostico-seek-volumen.js):
  *  - el range de progreso habla en MILISEGUNDOS (max=161983 para 2:41)
  *    y va cuantizado a step=5000; el de volumen es 0..1 con step=0.1;
  *  - la escritura sintetica FUNCIONA: setter nativo del prototipo +

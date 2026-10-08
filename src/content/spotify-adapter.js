@@ -6,7 +6,7 @@
  *
  * NINGUN selector de este archivo es una conjetura. Todos salen de CUATRO
  * diagnosticos sobre paginas reales de open.spotify.com (2026-09-14,
- * tools/diagnostico-spotify.js a -4.js), mas dos experimentos de clic del
+ * tools/diagnostico/diagnostico-spotify.js a -4.js), mas dos experimentos de clic del
  * usuario (los tres estados de repetir, los dos del aleatorio).
  *
  * EL HALLAZGO QUE DEFINE ESTE ADAPTADOR: el audio NO ESTA en la pagina.

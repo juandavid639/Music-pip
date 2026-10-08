@@ -499,7 +499,7 @@ button:has(.ytmpip-ico) {
  * ---------- POR QUÉ EL NÚMERO SE MULTIPLICA POR SÍ MISMO ----------
  *
  * Esto no es adorno, es la diferencia entre un latido y un temblor, y lo
- * dijo una medición en la página real (`tools/diagnostico-pulso.js`, una
+ * dijo una medición en la página real (`tools/diagnostico/diagnostico-pulso.js`, una
  * salsa con el bombo marcado):
  *
  *     0,0-0,2: 30,5 %   0,2-0,4: 20,6 %   0,4-0,6: 22,7 %
@@ -541,7 +541,7 @@ button:has(.ytmpip-ico) {
  * cara, letra sobreimpresa o créditos —cosas que sí se estaban mirando—.
  *
  * ESTO ES UN JUICIO, NO UNA MEDICIÓN, y conviene decirlo: el 0,1 de la
- * portada salió del reparto que midió `tools/diagnostico-pulso.js`, pero
+ * portada salió del reparto que midió `tools/diagnostico/diagnostico-pulso.js`, pero
  * eso midió la SEÑAL, que es la misma para los dos. Cuánto recorte tolera
  * un vídeo no lo mide esa herramienta ni ninguna otra de aquí. Si al usarlo
  * se queda corto o largo, el número a mover es éste y sólo éste.

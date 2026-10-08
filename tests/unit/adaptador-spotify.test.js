@@ -3,7 +3,7 @@
  * la tanda 3 de "podemos adaptar la extensión a youtube normal y a spotify".
  *
  * Todos los numeros raros de estas pruebas son MEDIDOS, no imaginados:
- * salen de cuatro diagnosticos (tools/diagnostico-spotify.js a -4.js)
+ * salen de cuatro diagnosticos (tools/diagnostico/diagnostico-spotify.js a -4.js)
  * sobre paginas reales de open.spotify.com mas dos experimentos de clic
  * del usuario (los tres estados de repetir, los dos del aleatorio). El
  * fixture (spotify-sonando.html) los calca y las pruebas ademas los

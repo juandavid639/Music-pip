@@ -438,7 +438,7 @@ test("timeupdate NO zarandea el contexto (llega cuatro veces por segundo)", asyn
    * (`state === "suspended"`). La cuenta de resumes se quedaba quieta tanto
    * si la llamada colgaba de `play` como si colgaba de TODOS los eventos:
    * la prueba estaba en verde sin distinguir las dos versiones. Lo dijo una
-   * mutacion de tools/mutar-mandos.js, no la suite.
+   * mutacion de tools/mutar/mutar-mandos.js, no la suite.
    *
    * Dormido, las dos versiones se separan: la buena deja la cuenta quieta
    * porque `timeupdate` no despierta a nadie; la que zarandea el contexto

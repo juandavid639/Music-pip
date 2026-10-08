@@ -51,7 +51,7 @@ test("valores validos: se respetan tal cual", async () => {
     spectrumFall: 30,
     spectrumHeight: 60,
     spectrumColor: "#00ff88",
-    // "ring" y no "bars" (el de serie), por lo mismo que los de arriba.
+    // "ring" y no "wave" (el de serie desde la 1.2.1), por lo mismo que los de arriba.
     spectrumStyle: "ring",
     coverStyle: "vinyl",
     badgePreference: "hidden",
@@ -81,7 +81,15 @@ test("valores validos: se respetan tal cual", async () => {
     // No es una preferencia que nadie escriba en la pagina de opciones:
     // la anota la propia ventana al soltarle el borde. Pero pasa por la
     // misma normalizacion y tiene que salir igual que entro.
-    pipLastSize: { width: 500, height: 400 }
+    pipLastSize: { width: 500, height: 400 },
+    // Dos ajustes con nombre (tanda AS), ya en su forma normalizada: tienen
+    // que salir exactamente como entraron, en su orden.
+    equalizerCustom: [
+      { nombre: "Coche", valor: "6,3,0,-2,0" },
+      { nombre: "Podcast", valor: "-3,0,4,2,0" }
+    ],
+    // "on" y no "off" (el de serie, tanda AT), por lo mismo que los de arriba.
+    historyPreference: "on"
   };
   const Settings = await preferencias(guardado);
 

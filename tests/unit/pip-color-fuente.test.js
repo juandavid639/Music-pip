@@ -15,7 +15,7 @@
  * Lo que si se puede clavar es la REGLA —de estos pixeles sale este color— y
  * el CABLE —que ese color llegue al `fillStyle` y se olvide al apagar—. Que
  * el resultado sea bonito es cosa de mirar la ventana, y para eso estan
- * tools/diagnostico-color-video.js y tools/diagnostico-color-portada.js, que
+ * tools/diagnostico/diagnostico-color-video.js y tools/diagnostico/diagnostico-color-portada.js, que
  * son los que dieron todos los numeros que se comprueban aqui abajo.
  *
  * ------------------------------------------------------------------

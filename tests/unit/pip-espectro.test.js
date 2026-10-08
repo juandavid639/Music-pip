@@ -50,7 +50,7 @@ function conAudio(video) {
   /*
    * Una fuente, porque el <video> de YouTube Music SIEMPRE tiene una: un
    * blob de MSE. Medido en la pagina real con
-   * tools/diagnostico-espectro-bucle.js:
+   * tools/diagnostico/diagnostico-espectro-bucle.js:
    *
    *     fuente=blob:https://music.youtube.com/9c92c774-2a82-44d0-82ac-
    *

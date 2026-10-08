@@ -167,6 +167,7 @@ function entornoContenido(fixture, opciones) {
     // cargan en todos los sitios y es el registro quien elige por hostname.
     "src/content/youtube-adapter.js",
     "src/content/spotify-adapter.js",
+    "src/content/soundcloud-adapter.js",
     "src/content/track-timeline.js",
     "src/content/metadata-reader.js",
     "src/content/lyrics-reader.js"
@@ -226,6 +227,7 @@ function entornoPagina(fixture, opciones = {}) {
     // cargan en todos los sitios y es el registro quien elige por hostname.
     "src/content/youtube-adapter.js",
     "src/content/spotify-adapter.js",
+    "src/content/soundcloud-adapter.js",
     "src/content/track-timeline.js",
     "src/content/metadata-reader.js",
     "src/content/lyrics-reader.js",

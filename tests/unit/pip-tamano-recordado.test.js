@@ -15,7 +15,7 @@
  * NO se prueba que el navegador respete el tamaño que se le pide, ni si lo
  * que se pide es el hueco interior o la ventana entera. Eso no lo puede
  * contestar jsdom, que no tiene ventanas flotantes: lo mide
- * tools/diagnostico-tamano-ventana.js.
+ * tools/diagnostico/diagnostico-tamano-ventana.js.
  */
 const test = require("node:test");
 const assert = require("node:assert");

@@ -349,6 +349,17 @@ test("ninguna regla del <style> apunta a una clase que no existe", () => {
   if (lateral) lateral.dataset.tamano = "grande";
 
   /*
+   * Y con un ajuste propio guardado y en uso (tanda AS): la fila la construye
+   * options.js (pintarPropios) y en frio la lista nace vacia. Misma forma que
+   * alli: el boton de usar, pulsado, y el de borrar con su clase.
+   */
+  const lista = doc.getElementById("listaPropios");
+  if (lista) {
+    lista.innerHTML =
+      '<li><button type="button" aria-pressed="true">Coche</button><button type="button" class="ytmpip-borrar">×</button></li>';
+  }
+
+  /*
    * LAS LARGAS PRIMERO, que es lo unico delicado de esta linea y ya se ha
    * pagado una vez: con `focus` antes que `focus-visible`, `:focus-visible`
    * se quedaba en `-visible` —hay frontera de palabra entre la `s` y el

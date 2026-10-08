@@ -120,7 +120,7 @@
        * facil y seria inventarse una politica —"la velocidad es pegajosa"—
        * que nadie ha pedido y que ademas no se puede comprobar desde aqui
        * si es lo que quiere el usuario. Primero hay que saber si YouTube
-       * Music la resetea de verdad: ver tools/diagnostico-velocidad.js.
+       * Music la resetea de verdad: ver tools/diagnostico/diagnostico-velocidad.js.
        *
        * El cero no es "parado", es un valor que no deberia existir: con
        * playbackRate 0 el elemento no avanza y el boton no tendria ninguna

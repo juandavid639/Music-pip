@@ -262,7 +262,7 @@
      * porque se pregunta a traves del contrato, no de los selectores.
      *
      * Devuelve { comprobable, faltan }: faltan son nombres internos, para
-     * la consola y para tools/diagnostico-publicacion.js.
+     * la consola y para tools/diagnostico/diagnostico-publicacion.js.
      */
     salud() {
       const A = YTMPip.Adapter;

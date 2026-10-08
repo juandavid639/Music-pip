@@ -30,6 +30,24 @@
       { id: "spotify", patron: "https://open.spotify.com/*", prefijo: "https://open.spotify.com/" }
     ],
     /* Donde se abre pestaña nueva si no hay ninguna: el sitio DE MUSICA. */
+    /*
+     * LOS SITIOS OPCIONALES (tanda AV): van en optional_host_permissions, no
+     * en host_permissions. Añadir un sitio a los permisos fijos desactiva la
+     * extension a todos los usuarios al actualizar hasta que acepten el
+     * permiso nuevo; opcional, cada uno lo activa desde Preferencias cuando
+     * quiere, y el service worker registra su content script en ese momento.
+     */
+    SITIOS_OPCIONALES: [
+      {
+        id: "soundcloud",
+        nombre: "SoundCloud",
+        patron: "https://soundcloud.com/*",
+        prefijo: "https://soundcloud.com/",
+        // Lo que funciona y lo que no, en Preferencias (clave del catalogo).
+        nota: "sitio_nota_soundcloud"
+      }
+    ],
+
     URL_POR_DEFECTO: "https://music.youtube.com/",
     SELECTOR_SCHEMA_VERSION: 1,
 
@@ -136,6 +154,12 @@
        * recorriera confiando en el.
        */
       EQUALIZER_BY_SONG: "equalizerBySong",
+      // Los ajustes del ecualizador con nombre que guarda el usuario (tanda AS).
+      EQUALIZER_CUSTOM: "equalizerCustom",
+      // Lo que escuchaste (tanda AT): el interruptor (una preferencia) y la
+      // lista (una anotacion de este equipo, que no se aplica ni se exporta).
+      HISTORY_PREFERENCE: "historyPreference",
+      LISTENING_HISTORY: "listeningHistory",
       /*
        * Esta NO es una preferencia: es una anotacion. Las demas claves las
        * escribe el usuario en la pagina de opciones; esta la escribe la
@@ -261,6 +285,15 @@
        */
       equalizerLast: "graves",
 
+      // Ninguno de serie: son del usuario (tanda AS).
+      equalizerCustom: [],
+
+      /*
+       * APAGADO de serie, por decision del autor (tanda AT): nadie empieza a
+       * tener su escucha anotada por una actualizacion sin enterarse.
+       */
+      historyPreference: "off",
+
       /*
        * El ultimo tamaño con el que se vio la ventana. `null` significa "no
        * consta ninguno todavia", que es distinto de un tamaño concreto: la
@@ -341,8 +374,8 @@
        *
        * El cuarto modo del espectro: en vez de un color elegido, el que manda
        * en lo que se esta viendo. TODOS estos numeros salen de medir, no de
-       * elegir, y las medidas estan en tools/diagnostico-color-video.js y
-       * tools/diagnostico-color-portada.js. Quien los cambie deberia volver a
+       * elegir, y las medidas estan en tools/diagnostico/diagnostico-color-video.js y
+       * tools/diagnostico/diagnostico-color-portada.js. Quien los cambie deberia volver a
        * pasarlos.
        */
       SOURCE_COLOR: {
@@ -669,10 +702,21 @@
       nocturno: "Nocturno"
     },
 
+    /*
+     * Los ajustes propios con nombre (tanda AS). Ocho caben en una fila de
+     * Preferencias sin desplazar nada, y un nombre de 24 letras cabe en el
+     * boton del ecualizador de la ventana sin cortarse. Son topes de
+     * espacio, no de capacidad: storage aguantaria miles.
+     */
+    EQUALIZER_CUSTOM_LIMITS: {
+      MAX: 8,
+      NOMBRE_MAX: 24
+    },
+
     EQUALIZER_LIMITS: {
       /*
        * Doce decibelios arriba y abajo. El techo no es redondo por casualidad:
-       * es lo que tools/diagnostico-ecualizador.js midio de verdad entregando
+       * es lo que tools/diagnostico/diagnostico-ecualizador.js midio de verdad entregando
        * un lowshelf sobre el audio real de YouTube Music (+12,0 dB medidos en
        * 20-120 Hz, con 8,5 dB de separacion frente a la banda de control de
        * 2-6 kHz). Por encima de ahi no se gana volumen, se gana distorsion:
@@ -720,7 +764,7 @@
        * UMBRAL_DB ESTUVO EN −1 Y ERA UN ERROR MEDIBLE. La idea era «un
        * decibelio de margen para que el aplastado tenga donde empezar», y
        * suena razonable hasta que se mide sobre el material real:
-       * tools/diagnostico-limitador.js encontro que con el umbral ahi el
+       * tools/diagnostico/diagnostico-limitador.js encontro que con el umbral ahi el
        * limitador trabajaba entre el 85 % y el 100 % del tiempo en seis
        * pasadas de tres canciones y tres generos, recortando de 2 a 3 dB de
        * forma continua. Eso no es una red: es un control de volumen puesto

@@ -196,7 +196,7 @@
      * AVISO HONESTO: estos selectores estan SIN VERIFICAR contra HTML real,
      * igual que estuvieron los de repetir/aleatorio (y los de letras, que
      * eran conjeturas y costaron un panel que siempre decia "no
-     * disponible"). Hay un tools/diagnostico-cola.js para comprobarlos en
+     * disponible"). Hay un tools/diagnostico/diagnostico-cola.js para comprobarlos en
      * la pagina de verdad antes de fiarse.
      *
      * El elemento con la cancion que SUENA lleva el atributo `selected`:
@@ -654,7 +654,7 @@
     /**
      * El modo de repeticion: "NONE", "ALL", "ONE", o undefined si no se sabe.
      *
-     * VERIFICADO EN LA PAGINA REAL con tools/diagnostico-relevo.js, pulsando
+     * VERIFICADO EN LA PAGINA REAL con tools/diagnostico/diagnostico-relevo.js, pulsando
      * el boton tres veces:
      *
      *     en el BOTON: {title: '"Repetir una" -> "No repetir"'}

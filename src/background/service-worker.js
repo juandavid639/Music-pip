@@ -6,11 +6,18 @@
  * - Gestionar instalacion/actualizacion y preferencias por defecto.
  * - Manejar la perdida o cierre de la pestaña musical.
  */
-importScripts("../shared/constants.js", "../shared/messages.js");
+importScripts("../shared/constants.js", "../shared/messages.js", "../shared/historial.js");
 
 const { MESSAGE_TYPES, COMMAND_TYPES, createMessage, createCommand } = self.YTMPip;
-const { STORAGE_KEYS, DEFAULT_SETTINGS, PIP_DIMENSIONS, SITIOS_SOPORTADOS, URL_POR_DEFECTO, SPECTRUM_LIMITS } =
-  self.YTMPip.CONSTANTS;
+const {
+  STORAGE_KEYS,
+  DEFAULT_SETTINGS,
+  PIP_DIMENSIONS,
+  SITIOS_SOPORTADOS,
+  SITIOS_OPCIONALES,
+  URL_POR_DEFECTO,
+  SPECTRUM_LIMITS
+} = self.YTMPip.CONSTANTS;
 
 /*
  * Desde la tanda multi-sitio, los patrones y prefijos salen de la lista de
@@ -20,8 +27,32 @@ const { STORAGE_KEYS, DEFAULT_SETTINGS, PIP_DIMENSIONS, SITIOS_SOPORTADOS, URL_P
  */
 const PATRONES_DE_SITIO = SITIOS_SOPORTADOS.map((s) => s.patron);
 
+/*
+ * Los opcionales cuentan como «de musica» por la URL (tanda AV): si el
+ * usuario no dio el permiso no hay script en esa pestaña, y los caminos que
+ * la usan ya saben contestar «sin script» sin romperse. Lo que SI depende
+ * del permiso es buscar pestañas (patronesActivos): una pestaña sin permiso
+ * no puede ser la musical.
+ */
 function esUrlSoportada(url) {
-  return !!url && SITIOS_SOPORTADOS.some((s) => url.startsWith(s.prefijo));
+  return !!url && SITIOS_SOPORTADOS.concat(SITIOS_OPCIONALES || []).some((s) => url.startsWith(s.prefijo));
+}
+
+async function sitiosOpcionalesConcedidos() {
+  if (!chrome.permissions || !chrome.permissions.contains) return [];
+  const concedidos = [];
+  for (const sitio of SITIOS_OPCIONALES || []) {
+    try {
+      if (await chrome.permissions.contains({ origins: [sitio.patron] })) concedidos.push(sitio);
+    } catch (err) {
+      // Sin respuesta: como si no estuviera concedido.
+    }
+  }
+  return concedidos;
+}
+
+async function patronesActivos() {
+  return PATRONES_DE_SITIO.concat((await sitiosOpcionalesConcedidos()).map((s) => s.patron));
 }
 
 /*
@@ -91,7 +122,7 @@ async function rehydrateMusicTab() {
 }
 
 async function findMusicTab() {
-  const tabs = await chrome.tabs.query({ url: PATRONES_DE_SITIO });
+  const tabs = await chrome.tabs.query({ url: await patronesActivos() });
   if (tabs.length === 0) return null;
   const recordada = await pestanaRecordada();
   const audible = tabs.find((t) => t.audible);
@@ -138,6 +169,49 @@ const ARCHIVOS_DE_CONTENIDO = (() => {
   }
 })();
 
+/*
+ * EL CONTENT SCRIPT DE LOS SITIOS OPCIONALES (tanda AV). No puede ir en el
+ * manifiesto (eso pediria el permiso a todos), asi que se registra en
+ * marcha cuando el permiso esta y se quita cuando no: los MISMOS archivos que
+ * el bloque fijo del manifiesto, para que no haya dos listas que mantener.
+ * Se repasa al instalar, al arrancar y cada vez que cambian los permisos;
+ * persistAcrossSessions hace que el registro sobreviva a cerrar Chrome.
+ */
+const PREFIJO_DE_REGISTRO = "sitio-";
+
+async function sincronizarSitiosOpcionales() {
+  if (!chrome.permissions || !chrome.scripting || !chrome.scripting.registerContentScripts) return;
+  for (const sitio of SITIOS_OPCIONALES || []) {
+    const id = PREFIJO_DE_REGISTRO + sitio.id;
+    try {
+      const concedido = await chrome.permissions.contains({ origins: [sitio.patron] });
+      const registrados = await chrome.scripting.getRegisteredContentScripts({ ids: [id] });
+      if (concedido && registrados.length === 0 && ARCHIVOS_DE_CONTENIDO.length) {
+        await chrome.scripting.registerContentScripts([
+          { id, matches: [sitio.patron], js: ARCHIVOS_DE_CONTENIDO, runAt: "document_idle", persistAcrossSessions: true }
+        ]);
+      } else if (!concedido && registrados.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: [id] });
+      }
+    } catch (err) {
+      console.info("[YTMPip] No se pudo poner al dia el sitio opcional", sitio.id, err);
+    }
+  }
+}
+
+try {
+  if (chrome.permissions && chrome.permissions.onAdded) {
+    // Recien concedido: se registra y se lleva el script a las pestañas que
+    // ya estaban abiertas, sin pedir que se recarguen.
+    chrome.permissions.onAdded.addListener(() =>
+      sincronizarSitiosOpcionales().then(() => inyectarEnPestanasAbiertas())
+    );
+    chrome.permissions.onRemoved.addListener(() => sincronizarSitiosOpcionales());
+  }
+} catch (err) {
+  // Sin la API de permisos: los sitios opcionales no existen aqui.
+}
+
 async function tieneScriptVivo(tabId) {
   const [{ result } = {}] = await chrome.scripting.executeScript({
     target: { tabId },
@@ -170,7 +244,7 @@ async function inyectarSiFalta(tab) {
 
 async function inyectarEnPestanasAbiertas() {
   try {
-    const tabs = await chrome.tabs.query({ url: PATRONES_DE_SITIO });
+    const tabs = await chrome.tabs.query({ url: await patronesActivos() });
     return await Promise.all(tabs.map(inyectarSiFalta));
   } catch (err) {
     console.info("[YTMPip] No se pudieron repasar las pestañas abiertas", err);
@@ -236,6 +310,61 @@ function acentoDe(valor) {
   return typeof valor === "string" && /^#[0-9a-f]{6}$/i.test(valor) ? valor : null;
 }
 
+/*
+ * LO QUE ESCUCHASTE (tanda AT). Se anota aqui porque es el unico sitio que
+ * ve el estado de la pestaña recordada, y solo de esa: dos pestañas sonando
+ * no cuentan doble. Las reglas (que es una escucha) estan en
+ * shared/historial.js; aqui solo se lee, se decide con Historial.paso y se
+ * guarda. Nada si el usuario no lo encendio (apagado de serie).
+ *
+ * La marca de la cancion en curso vive en storage.session, como la pestaña
+ * recordada y por lo mismo: el service worker se duerme entre estados.
+ */
+const MARCA_DE_ESCUCHA = "escuchaEnCurso";
+// null = aun sin leer en este despertar; lo mantiene al dia el oyente de
+// storage de abajo, como iconoPermitido.
+let historialPermitido = null;
+
+async function historialEncendido() {
+  if (historialPermitido === null) {
+    try {
+      const guardado = await chrome.storage.local.get(STORAGE_KEYS.HISTORY_PREFERENCE);
+      historialPermitido = guardado[STORAGE_KEYS.HISTORY_PREFERENCE] === "on";
+    } catch (err) {
+      historialPermitido = false;
+    }
+  }
+  return historialPermitido;
+}
+
+async function anotarEscucha(estado) {
+  if (!(await historialEncendido())) return;
+  const sesion = await chrome.storage.session.get(MARCA_DE_ESCUCHA);
+  const antes = sesion[MARCA_DE_ESCUCHA] || null;
+  const { marca, contar } = self.YTMPip.Historial.paso(antes, estado);
+  if (JSON.stringify(marca) !== JSON.stringify(antes)) {
+    await chrome.storage.session.set({ [MARCA_DE_ESCUCHA]: marca });
+  }
+  if (!contar) return;
+  const guardado = await chrome.storage.local.get(STORAGE_KEYS.LISTENING_HISTORY);
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.LISTENING_HISTORY]: self.YTMPip.Historial.anotar(
+      guardado[STORAGE_KEYS.LISTENING_HISTORY],
+      estado,
+      Date.now()
+    )
+  });
+}
+
+try {
+  chrome.storage.onChanged.addListener((cambios, zona) => {
+    if (zona !== "local" || !cambios[STORAGE_KEYS.HISTORY_PREFERENCE]) return;
+    historialPermitido = cambios[STORAGE_KEYS.HISTORY_PREFERENCE].newValue === "on";
+  });
+} catch (err) {
+  // Sin storage.onChanged: se leera en el proximo despertar.
+}
+
 // null = aun sin leer en este despertar; se lee una vez y lo mantiene al
 // dia el oyente de storage de abajo.
 let iconoPermitido = null;
@@ -294,16 +423,30 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       [STORAGE_KEYS.LYRICS_PREFERENCE]: DEFAULT_SETTINGS.lyricsPreference,
       [STORAGE_KEYS.SELECTOR_SCHEMA_VERSION]: self.YTMPip.CONSTANTS.SELECTOR_SCHEMA_VERSION
     });
+    /*
+     * La bienvenida (tanda AR), SOLO al instalar: al actualizar, quien ya
+     * la usa no necesita que le expliquen nada, y abrirle una pestaña en
+     * cada version seria una molestia. Lo primero que hace quien instala es
+     * pulsar el icono, y el icono no puede abrir la ventana: la pagina le
+     * enseña el boton PiP de la pagina antes de que se frustre.
+     */
+    try {
+      await chrome.tabs.create({ url: chrome.runtime.getURL("src/bienvenida/bienvenida.html") });
+    } catch (err) {
+      // Sin pestaña de bienvenida la extension funciona igual.
+      console.warn("[YTMPip] No se pudo abrir la bienvenida", err);
+    }
   }
   // Primero el content script y despues la pestaña: rehidratar no lo
   // necesita, pero asi la pestaña recordada ya tiene a quien hablarle.
+  await sincronizarSitiosOpcionales();
   if (details.reason === "install" || details.reason === "update") {
     await inyectarEnPestanasAbiertas();
   }
   await rehydrateMusicTab();
 });
 
-chrome.runtime.onStartup.addListener(rehydrateMusicTab);
+chrome.runtime.onStartup.addListener(() => sincronizarSitiosOpcionales().then(rehydrateMusicTab));
 
 /*
  * Cerrar la pestaña recordada deja constancia de que ya no hay musica. La
@@ -643,7 +786,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           // El icono se pinta con el MISMO estado que se guarda (tanda AC).
           pintarIcono(message.state);
-          return chrome.storage.local.set({ [STORAGE_KEYS.LAST_KNOWN_STATE]: message.state });
+          return chrome.storage.local
+            .set({ [STORAGE_KEYS.LAST_KNOWN_STATE]: message.state })
+            .then(() => anotarEscucha(message.state));
         })
         .catch(() => {})
         .then(() => sendResponse({ ok: true }));

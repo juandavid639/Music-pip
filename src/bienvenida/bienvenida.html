@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-t="bienvenida_titulo_pestana">Bienvenido a Music PiP</title>
+    <!--
+      LA PÁGINA DE BIENVENIDA (tanda AR). Se abre sola al instalar, y solo
+      al instalar (no al actualizar): service-worker.js, onInstalled.
+
+      Existe por una sospecha con fundamento. El clic en el icono de la
+      extensión NO puede abrir la ventana flotante (Chrome no le pasa la
+      activación a la pestaña; ver «Decisión técnica importante» en el
+      README), y quien instala lo primero que hace es pulsar el icono. Si no
+      sabe que la ventana se abre con el botón PiP de la propia página, ve
+      un menú, no ve ninguna ventana y desinstala. Esta página se lo enseña
+      antes de que lo intente.
+
+      Los estilos van aquí dentro, como en options.html: es una página sola
+      y no comparte hoja con nadie. Los colores son los del menú (popup.css)
+      para que parezcan del mismo programa.
+    -->
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f0f0f;
+        --surface: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #f1f1f1;
+        --text-dim: #b3b3b3;
+        --accent: #ff0000;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 48px 20px 40px;
+      }
+
+      .cabecera {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .cabecera img {
+        width: 56px;
+        height: 56px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.2;
+      }
+
+      .intro {
+        margin: 14px 0 32px;
+        color: var(--text-dim);
+        font-size: 17px;
+      }
+
+      ol.pasos {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 14px;
+      }
+
+      .paso {
+        display: grid;
+        grid-template-columns: 40px 1fr;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+      }
+
+      .numero {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .paso h2 {
+        margin: 6px 0 4px;
+        font-size: 18px;
+      }
+
+      .paso p {
+        margin: 0;
+        color: var(--text-dim);
+      }
+
+      .sitios {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .sitios a,
+      .pie a {
+        color: var(--text);
+        text-decoration: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .sitios a:hover,
+      .pie a:hover {
+        border-color: var(--accent);
+      }
+
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* La maqueta del botón PiP: las MISMAS medidas y colores que el
+         lanzador de verdad (ensureLauncherButton en pip.js), para que lo
+         reconozca al verlo en la página. Es un dibujo, no un botón: no
+         hace nada al pulsarlo, y por eso es un <span>. */
+      .maqueta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .lanzador {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 48px;
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 20px;
+        background: #ff0000;
+        color: #fff;
+        font: 600 13px/1 "Segoe UI", Roboto, Arial, sans-serif;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      .maqueta small {
+        color: var(--text-dim);
+        font-size: 13px;
+      }
+
+      .consejo {
+        margin-top: 24px;
+        padding: 16px 18px;
+        border-left: 3px solid var(--accent);
+        background: var(--surface);
+        border-radius: 0 12px 12px 0;
+      }
+
+      .consejo p {
+        margin: 0;
+      }
+
+      .consejo p + p {
+        margin-top: 8px;
+        color: var(--text-dim);
+      }
+
+      .pie {
+        margin-top: 32px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .aviso {
+        margin-top: 28px;
+        color: var(--text-dim);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="cabecera">
+        <img src="../../assets/icons/icon128.png" alt="" />
+        <h1 data-t="bienvenida_titulo">Music PiP está listo</h1>
+      </header>
+      <p class="intro" data-t="bienvenida_intro">Tu música en una ventana que se queda encima de todo mientras trabajas. Así se abre:</p>
+
+      <ol class="pasos">
+        <li class="paso">
+          <span class="numero" aria-hidden="true">1</span>
+          <div>
+            <h2 data-t="bienvenida_paso1_titulo">Abre tu música</h2>
+            <p data-t="bienvenida_paso1">YouTube Music, YouTube o Spotify, en una pestaña normal del navegador.</p>
+            <div class="sitios">
+              <a href="https://music.youtube.com/" target="_blank" rel="noopener">YouTube Music</a>
+              <a href="https://www.youtube.com/" target="_blank" rel="noopener">YouTube</a>
+              <a href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
+            </div>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">2</span>
+          <div>
+            <h2 data-t="bienvenida_paso2_titulo">Pon una canción</h2>
+            <p data-t="bienvenida_paso2">La ventana enseña lo que suena: la carátula, la letra y los mandos.</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">3</span>
+          <div>
+            <h2 data-t="bienvenida_paso3_titulo">Pulsa el botón PiP de la página</h2>
+            <p data-t="bienvenida_paso3">Aparece abajo a la derecha de la página de música. Chrome solo deja abrir la ventana con un clic dentro de la propia página, y por eso el botón está ahí.</p>
+            <div class="maqueta">
+              <span class="lanzador" aria-hidden="true">PiP</span>
+              <small data-t="bienvenida_paso3_nota">Si la pestaña ya estaba abierta y no lo ves, recárgala (F5).</small>
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="consejo">
+        <p data-t="bienvenida_icono">El icono de Music PiP en la barra de Chrome abre el menú: la canción que suena, ajustes rápidos y todas las preferencias.</p>
+        <p data-t="bienvenida_fijar">¿No ves el icono? Pulsa la pieza de puzle de la barra y fija Music PiP con la chincheta.</p>
+      </div>
+
+      <nav class="pie" aria-label="Más" data-t-aria="bienvenida_mas">
+        <a href="../options/options.html" data-t="bienvenida_preferencias">Ver todas las preferencias</a>
+        <a href="https://juandavid639.github.io/Music-pip/tienda/politica-de-privacidad.html" target="_blank" rel="noopener" data-t="bienvenida_privacidad">Privacidad</a>
+      </nav>
+
+      <p class="aviso" data-t="bienvenida_aviso">No oficial. No afiliado a Google ni a Spotify.</p>
+    </main>
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/textos.js"></script>
+    <script src="bienvenida.js"></script>
+  </body>
+</html>

@@ -267,8 +267,19 @@ test("EL DOMINIO AL QUE SE ENTRA ESTA ESCRITO IGUAL EN LOS TRES SITIOS", () => {
   for (const bloque of manifiesto.content_scripts) {
     assert.deepEqual(bloque.matches, deHost, "content_scripts entra en sitios que no son los del permiso de host.");
   }
+  /*
+   * Los recursos de la ventana se exponen ademas en los sitios OPCIONALES
+   * (tanda AV): con el permiso concedido, el content script de SoundCloud se
+   * registra en marcha (service-worker.js) y la ventana necesita pip.html
+   * alli tambien. La lista es la union, en el mismo orden.
+   */
+  const conOpcionales = deHost.concat(manifiesto.optional_host_permissions || []);
   for (const bloque of manifiesto.web_accessible_resources) {
-    assert.deepEqual(bloque.matches, deHost, "web_accessible_resources se expone en sitios que no son los del permiso de host.");
+    assert.deepEqual(
+      bloque.matches,
+      conOpcionales,
+      "web_accessible_resources se expone en sitios que no son los del permiso de host (fijo u opcional)."
+    );
   }
 });
 

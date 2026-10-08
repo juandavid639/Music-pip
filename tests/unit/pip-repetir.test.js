@@ -9,7 +9,7 @@
  * ventana hacia lo correcto con lo que le llegaba —abstenerse— y por eso
  * el boton no se encendia jamas.
  *
- * Verificado en la pagina real con tools/diagnostico-relevo.js: el modo
+ * Verificado en la pagina real con tools/diagnostico/diagnostico-relevo.js: el modo
  * vive en ytmusic-player-bar[repeat-mode] y son TRES posiciones,
  * NONE -> ALL -> ONE. De ahi que aqui no se pruebe un booleano: lo que hay
  * que fijar es que se distinga repetir la lista de repetir esta cancion,
