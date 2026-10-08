@@ -7948,6 +7948,17 @@ Una prueba fija la decisión con sus palabras (manifiesto, orden de la
 política y de la ficha). Mutación (`tools/mutar-tanda-aq.js`): 2 de 2,
 exactas.
 
+## La 1.2.2 (el inglés por defecto)
+
+Solo la tanda AQ. Tercer número porque no trae ninguna función nueva. Se
+avisó al autor de que Chrome no permite elegir idioma «solo para usuarios
+nuevos», porque manda el idioma del navegador. Con Chrome en español o en
+inglés no cambia nada, ni para nuevos ni para existentes; los existentes
+con el navegador en un tercer idioma pasan del español que veían sin
+haberlo elegido al inglés. Se ofreció un selector de idioma para
+conservarles el español, y el autor eligió dejarlo así. Suite entera:
+**1164/1164**. Sin permisos nuevos; zip de 41 archivos.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

@@ -4,7 +4,7 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
-## [Sin publicar]
+## [1.2.2] — 2026-10-08
 
 ### Changed / Cambiado
 
