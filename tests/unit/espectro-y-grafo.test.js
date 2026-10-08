@@ -177,6 +177,17 @@ test("con el ecualizador encendido se puede medir un elemento que no sabe captur
   assert.strictEqual(Espectro.usandoElGrafo(), true);
 });
 
+test("si el sitio declara que su audio no se puede medir, ni se intenta (tanda AY)", () => {
+  const { Espectro, win } = montaje();
+  const v = conCaptura(win.document.createElement("audio"));
+  assert.strictEqual(Espectro.puedeMedirse(v), true, "premisa: sin la declaracion, se mediria");
+  // Apple Music: el avance viene de otro origen sin CORS; medirlo daria
+  // silencio y el latido se quedaria quieto sin decir por que.
+  win.YTMPip.Capacidades = { audioGrafo: false };
+  assert.strictEqual(Espectro.puedeMedirse(v), false);
+  assert.strictEqual(Espectro.conectar(v), false);
+});
+
 /* ==================================================================
  * 3. Lo prestado no se cierra ni se suelta entero
  * ================================================================== */

@@ -305,6 +305,13 @@
    */
   function puedeMedirse(video) {
     if (!video) return false;
+    /*
+     * Un sitio que declara que su audio no admite Web Audio no se mide,
+     * aunque tenga elemento (tanda AY, Apple Music): su <audio> viene de otro
+     * origen sin CORS, y medirlo daria silencio. Hasta Apple Music ningun
+     * sitio sin grafo tenia elemento, y la pregunta no hacia falta.
+     */
+    if (YTMPip.Capacidades && YTMPip.Capacidades.audioGrafo === false) return false;
     // Con el ecualizador encendido da igual que el elemento sepa o no hacer
     // captureStream: el audio ya esta dentro de un grafo del que se puede
     // medir directamente.

@@ -8243,23 +8243,72 @@ label dice «todas». Se refijó por escrito.
 **No medido**: la extensión de verdad en Deezer (activar el permiso, abrir
 la ventana con el botón PiP de la página y usar sus mandos).
 
-## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud y Deezer)
+## Apple Music, medido sin cuenta (la tanda AY)
+
+Al autor no le funcionó Deezer y pidió probar Apple Music, sin quitar el
+código de Deezer. Se midió music.apple.com en el navegador integrado, **sin
+cuenta**: Apple Music deja oír avances de 90 segundos sin iniciar sesión.
+
+- **Hay un `<audio>` de verdad**: el avance, servido desde el CDN de iTunes.
+  También hay un `<video>`, pero es la **carátula animada** del álbum, no la
+  música. El adaptador toma siempre el `<audio>` y nunca presta el vídeo.
+- **Escribir en el `<audio>` funciona**: `currentTime` 65 → 10 (la barra
+  de la página lo siguió) y `volume` 0,5 → 0,3. Por eso `medioEscribible`:
+  saltos, volumen y velocidad van al elemento, como en YouTube, sin clics
+  sintéticos.
+- **Sin Web Audio**: el avance es de otro origen sin CORS, así que medirlo
+  daría silencio. Con cuenta, el audio entero lleva DRM. `audioGrafo: false`
+  apaga el ecualizador (la puerta de la tanda V ya lo hacía). El espectro y
+  el latido **no la miraban**: `puedeMedirse` de `audio-spectrum.js` ahora
+  también la consulta. Sin eso, el halo se quedaría quieto sin decir por qué.
+- El título y la línea «Artista — Álbum» van en marquesinas, y **cada texto
+  sale dos veces** para el desplazamiento. El adaptador toma el primero y
+  rehace «Artista • Álbum», que el lector de metadatos ya sabe partir.
+- La carátula llega a 80×80 («80x80bb-60.jpg»); se pide la de 600×600.
+- El progreso es un `input[role=slider]` **dentro de un shadow root**. Con
+  el `<audio>` a mano no hace falta leerlo.
+- **En avances la barra solo tiene reproducir/pausar** (y la insignia
+  «Avance»): no hay siguiente, anterior, repetir ni aleatorio. La salud de
+  la tanda AK echaría en falta «siguiente» y avisaría de «El sitio cambió»
+  cuando no ha cambiado nada. Por eso el registro acepta un método opcional
+  del adaptador, `piezasNoVitalesAhora()`. Apple Music devuelve
+  `["getNextButton"]` mientras esté la insignia de avance; fuera de un
+  avance, la falta sí se avisa. Quien no lo implementa exige todas las
+  piezas, como siempre.
+- Siguiente y anterior, con suscripción, **no se midieron**. Se buscan por
+  su etiqueta («next»/«siguiente», «previous»/«anterior») dentro de los
+  mandos. Repetir, aleatorio, me gusta, cola y letra no se ofrecen hasta
+  medirlos.
+
+Es un tercer sitio opcional en `SITIOS_OPCIONALES` (`music.apple.com`), con
+su nota en Preferencias. Política y ficha lo nombran.
+`tests/fixtures/applemusic-sonando.html` reproduce lo medido.
+`adaptador-apple-music.test.js`: 9 pruebas. Una más en
+`espectro-y-grafo.test.js` para la puerta. Mutación
+(`tools/mutar/mutar-tanda-ay.js`): 8 de 8, recuentos exactos. Uno de la
+tanda AV (recursos de la ventana en SoundCloud) se reancló en su vecino de
+delante, que ya no se mueve.
+
+**No medido**: la extensión de verdad en Apple Music, y cualquier cosa con
+suscripción (canción entera, siguiente/anterior, DRM).
+
+## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud, Deezer y Apple Music)
 
 Lleva las tandas AR a AX, elegidas por el autor de la lista de mejoras (AW,
-Deezer, entró después de etiquetarla: la versión no se había publicado y el
-autor eligió meterlo dentro).
+Deezer, y AY, Apple Music, entraron después de etiquetarla: la versión no se
+había publicado y el autor eligió meterlos dentro).
 Segundo número porque hay funciones nuevas. `manifest.json`, `package.json`
 y `package-lock.json` suben juntos, y el CHANGELOG pasa «Sin publicar» a
-«[1.3.0]». Suite entera: **1223/1223**. Prueba de humo contra YouTube real
-(`npm run humo`): 8/8. Zip de **48 archivos** (bienvenida, historial, su
-módulo compartido y los adaptadores de SoundCloud y Deezer).
+«[1.3.0]». Suite entera: **1234/1234**. Prueba de humo contra YouTube real
+(`npm run humo`): 8/8. Zip de **49 archivos** (bienvenida, historial, su
+módulo compartido y los adaptadores de SoundCloud, Deezer y Apple Music).
 
-**Permisos.** Ninguno obligatorio nuevo. Hay dos **permisos de host
-opcionales**, `soundcloud.com` y `www.deezer.com`: no se concede al instalar ni al actualizar, así que nadie
+**Permisos.** Ninguno obligatorio nuevo. Hay tres **permisos de host
+opcionales**, `soundcloud.com`, `www.deezer.com` y `music.apple.com`: no se concede al instalar ni al actualizar, así que nadie
 ve ningún aviso ni queda desactivado. La consola de la tienda pide su
 justificación, que está en la sección 5 de la ficha. **La política de
 privacidad cambió**: el historial (una cuarta cosa, solo si se enciende), los
-permisos opcionales de SoundCloud y Deezer, y la pestaña recordada del menú. Se publica en
+permisos opcionales de SoundCloud, Deezer y Apple Music, y la pestaña recordada del menú. Se publica en
 Pages con el push.
 
 Preparada **sin push**, a petición del autor, para probarla antes.

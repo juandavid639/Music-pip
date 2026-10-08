@@ -275,7 +275,15 @@
         suena = false;
       }
       if (!suena) return { comprobable: false, faltan: [] };
+      /*
+       * Un adaptador puede decir que pieza NO toca ahora (tanda AY): en los
+       * avances de Apple Music sin cuenta no existe «siguiente», y echarlo en
+       * falta seria avisar de un cambio del sitio que no ha ocurrido. Es
+       * opcional: quien no lo implementa exige todas, como siempre.
+       */
+      const exentas = typeof A.piezasNoVitalesAhora === "function" ? A.piezasNoVitalesAhora() || [] : [];
       const faltan = PIEZAS_VITALES.filter(([getter]) => {
+        if (exentas.indexOf(getter) !== -1) return false;
         try {
           return !A[getter]();
         } catch (err) {

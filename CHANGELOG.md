@@ -42,6 +42,15 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
   Preferencias («Más sitios»). Carátula, título, mandos, saltos y favoritos;
   sin letra, ecualizador ni barras. Sin Premium, Deezer solo deja oír 30
   segundos.
+- **Apple Music**, as an optional site like SoundCloud and Deezer: turn it
+  on in the options page ("More sites"). Artwork, title, play/pause, seeking
+  and volume; no lyrics, equalizer or bars. Without a subscription, Apple
+  Music only plays previews and has no next or previous.
+- **Apple Music**, como sitio opcional igual que SoundCloud y Deezer:
+  actívalo en Preferencias («Más sitios»). Carátula, título,
+  reproducir/pausar, saltos y volumen; sin letra, ecualizador ni barras. Sin
+  suscripción, Apple Music solo deja oír avances y no tiene siguiente ni
+  anterior.
 
 ### Privacy / Privacidad
 

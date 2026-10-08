@@ -52,6 +52,13 @@
         patron: "https://www.deezer.com/*",
         prefijo: "https://www.deezer.com/",
         nota: "sitio_nota_deezer"
+      },
+      {
+        id: "applemusic",
+        nombre: "Apple Music",
+        patron: "https://music.apple.com/*",
+        prefijo: "https://music.apple.com/",
+        nota: "sitio_nota_applemusic"
       }
     ],
 

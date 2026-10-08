@@ -958,5 +958,8 @@
   },
   "sitio_nota_deezer": {
     "message": "Carátula, título, mandos, saltos y favoritos; sin letra, ecualizador ni barras, porque su sonido no pasa por la página. Sin Premium, Deezer solo deja oír 30 segundos."
+  },
+  "sitio_nota_applemusic": {
+    "message": "Carátula, título, reproducir/pausar, saltos y volumen; sin letra, ecualizador ni barras. Sin suscripción, Apple Music solo deja oír avances y no tiene siguiente ni anterior."
   }
 }

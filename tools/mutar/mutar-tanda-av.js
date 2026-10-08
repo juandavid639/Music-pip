@@ -35,9 +35,9 @@ const MUTACIONES = [
   { etiqueta: "conceder no lleva el script a las pestañas abiertas", archivo: SW, de: "      sincronizarSitiosOpcionales().then(() => inyectarEnPestanasAbiertas())", a: "      sincronizarSitiosOpcionales()", esperadas: 1 },
   { etiqueta: "los sitios concedidos no cuentan al buscar pestañas", archivo: SW, de: "  return PATRONES_DE_SITIO.concat((await sitiosOpcionalesConcedidos()).map((s) => s.patron));", a: "  return PATRONES_DE_SITIO;", esperadas: 1 },
   { etiqueta: "el boton de Preferencias hace lo contrario", archivo: "src/options/options.js", de: "      if (activo) {\n        await chrome.permissions.remove", a: "      if (!activo) {\n        await chrome.permissions.remove", esperadas: 3 },
-  // Reapuntada en la tanda AW: desde que Deezer va detras, SoundCloud ya no
-  // es el ultimo de la lista.
-  { etiqueta: "la ventana no tiene sus recursos en SoundCloud", archivo: "manifest.json", de: '        "https://soundcloud.com/*",\n        "https://www.deezer.com/*"\n      ],\n      "use_dynamic_url"', a: '        "https://www.deezer.com/*"\n      ],\n      "use_dynamic_url"', esperadas: 1 }
+  // Reapuntada en la tanda AW (Deezer detras) y otra vez en la AY (Apple
+  // Music detras): se ancla en el vecino de delante, que no se mueve.
+  { etiqueta: "la ventana no tiene sus recursos en SoundCloud", archivo: "manifest.json", de: '        "https://open.spotify.com/*",\n        "https://soundcloud.com/*",\n', a: '        "https://open.spotify.com/*",\n', esperadas: 1 }
 ];
 
 require("./mutar-comun.js").mutar({ raiz: RAIZ, pruebas: PRUEBAS, mutaciones: MUTACIONES });

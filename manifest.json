@@ -15,7 +15,8 @@
   ],
   "optional_host_permissions": [
     "https://soundcloud.com/*",
-    "https://www.deezer.com/*"
+    "https://www.deezer.com/*",
+    "https://music.apple.com/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js"
@@ -40,6 +41,7 @@
         "src/content/spotify-adapter.js",
         "src/content/soundcloud-adapter.js",
         "src/content/deezer-adapter.js",
+        "src/content/apple-music-adapter.js",
         "src/content/track-timeline.js",
         "src/content/metadata-reader.js",
         "src/content/player-controller.js",
@@ -62,7 +64,8 @@
         "https://www.youtube.com/*",
         "https://open.spotify.com/*",
         "https://soundcloud.com/*",
-        "https://www.deezer.com/*"
+        "https://www.deezer.com/*",
+        "https://music.apple.com/*"
       ],
       "use_dynamic_url": true
     }
