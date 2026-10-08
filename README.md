@@ -8211,6 +8211,26 @@ o es un deslizador, con sus atributos. Lo deja en el portapapeles. No pulsa
 nada ni lee nada de la cuenta. Con ese resultado se escribe el adaptador
 como el de SoundCloud: un sitio opcional más en `SITIOS_OPCIONALES`.
 
+## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud)
+
+Lleva las tandas AR a AX, elegidas por el autor de la lista de mejoras.
+Segundo número porque hay funciones nuevas. `manifest.json`, `package.json`
+y `package-lock.json` suben juntos, y el CHANGELOG pasa «Sin publicar» a
+«[1.3.0]». Suite entera: **1216/1216**. Prueba de humo contra YouTube real
+(`npm run humo`): 8/8. Zip de **47 archivos** (bienvenida, historial, su
+módulo compartido y el adaptador de SoundCloud).
+
+**Permisos.** Ninguno obligatorio nuevo. Hay un **permiso de host opcional**,
+`soundcloud.com`: no se concede al instalar ni al actualizar, así que nadie
+ve ningún aviso ni queda desactivado. La consola de la tienda pide su
+justificación, que está en la sección 5 de la ficha. **La política de
+privacidad cambió**: el historial (una cuarta cosa, solo si se enciende), el
+permiso opcional de SoundCloud y la pestaña recordada del menú. Se publica en
+Pages con el push.
+
+Preparada **sin push**, a petición del autor, para probarla antes. Deezer
+(tanda AW) queda para la siguiente, con el guion de medición listo.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el
