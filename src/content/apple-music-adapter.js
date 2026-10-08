@@ -33,7 +33,17 @@
 
   const SELECTORS = {
     playerBar: ["[data-testid='player-bar']"],
-    playPauseButton: ["[data-testid='playback-controls'] .playback-play__play", ".playback-play__play"],
+    /*
+     * Reproducir y pausar son DOS botones que estan siempre en el DOM; el
+     * que no toca lleva aria-hidden="true" (medido con un avance sonando:
+     * __play oculto y __pause visible). Se toma el visible.
+     */
+    playPauseButton: [
+      "[data-testid='playback-controls'] .playback-play__pause:not([aria-hidden='true'])",
+      "[data-testid='playback-controls'] .playback-play__play:not([aria-hidden='true'])",
+      ".playback-play__pause:not([aria-hidden='true'])",
+      ".playback-play__play:not([aria-hidden='true'])"
+    ],
     title: ["[data-testid='player-lcd'] .marquee--primary [data-testid='marquee-text-item']"],
     artistLine: ["[data-testid='player-lcd'] .marquee--secondary [data-testid='marquee-text-item']"],
     artwork: ["[data-testid='player-lcd-artwork'] img"],
@@ -86,9 +96,19 @@
     return lineaLimpia;
   }
 
+  /*
+   * La caratula de verdad esta en el srcset del <source> del <picture>: el
+   * src del <img> se queda en «/assets/artwork/1x1.gif» (medido con
+   * Chromium real; currentSrc si la trae, pero solo despues de cargar). Se
+   * toma la primera URL del srcset y se pide a 600.
+   */
   function caratulaGrande(img) {
-    if (!img || !img.src) return null;
-    return { src: img.src.replace(/\/\d+x\d+bb(-\d+)?\.(jpg|webp|png)$/, "/600x600bb.$2") };
+    if (!img) return null;
+    const fuente = img.parentElement && img.parentElement.querySelector("source[srcset]");
+    const delSrcset = fuente ? (fuente.getAttribute("srcset").split(",")[0] || "").trim().split(/\s+/)[0] : "";
+    const url = delSrcset || img.currentSrc || (/\/1x1\.gif$/.test(img.src || "") ? "" : img.src);
+    if (!url) return null;
+    return { src: url.replace(/\/\d+x\d+bb(-\d+)?\.(jpg|webp|png)$/, "/600x600bb.$2") };
   }
 
   const adapter = {

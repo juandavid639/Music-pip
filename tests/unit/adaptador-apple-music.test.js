@@ -62,6 +62,22 @@ test("el estado sale entero: titulo sin repetir, artista y album, caratula grand
   assert.strictEqual(s.playing, true);
 });
 
+test("reproducir/pausar es el boton VISIBLE de los dos que hay siempre", () => {
+  const e = apple();
+  const d = e.win.document;
+  const A = e.YTMPip.Adapter;
+  assert.ok(A.getPlayPauseButton().classList.contains("playback-play__pause"), "sonando: el de pausa");
+  d.querySelector(".playback-play__pause").setAttribute("aria-hidden", "true");
+  d.querySelector(".playback-play__play").removeAttribute("aria-hidden");
+  assert.ok(A.getPlayPauseButton().classList.contains("playback-play__play"), "en pausa: el de reproducir");
+});
+
+test("la caratula sale del srcset, no del 1x1.gif del <img>", () => {
+  const e = apple();
+  e.win.document.querySelector("[data-testid='player-lcd-artwork'] source").remove();
+  assert.strictEqual(e.YTMPip.MetadataReader.read().artworkUrl || null, null, "sin srcset, el gif no es una caratula");
+});
+
 test("en pausa el <audio> manda: dice que no suena", () => {
   assert.strictEqual(apple({ sonando: false }).YTMPip.MetadataReader.read().playing, false);
 });

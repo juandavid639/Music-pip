@@ -8264,7 +8264,13 @@ cuenta**: Apple Music deja oír avances de 90 segundos sin iniciar sesión.
 - El título y la línea «Artista — Álbum» van en marquesinas, y **cada texto
   sale dos veces** para el desplazamiento. El adaptador toma el primero y
   rehace «Artista • Álbum», que el lector de metadatos ya sabe partir.
-- La carátula llega a 80×80 («80x80bb-60.jpg»); se pide la de 600×600.
+- La carátula va en el `srcset` del `<source>` de un `<picture>` (40 y 80
+  px); el `src` del `<img>` se queda en un gif de 1×1. Se toma la del
+  `srcset` y se pide a 600×600. (La primera versión leía el `<img>` y daba
+  el gif: lo destapó la prueba con Chromium real.)
+- **Reproducir y pausar son dos botones** que están siempre en el DOM; el
+  que no toca lleva `aria-hidden="true"`. El adaptador toma el visible (la
+  primera versión tomaba siempre el de reproducir, también sonando).
 - El progreso es un `input[role=slider]` **dentro de un shadow root**. Con
   el `<audio>` a mano no hace falta leerlo.
 - **En avances la barra solo tiene reproducir/pausar** (y la insignia
@@ -8283,14 +8289,25 @@ cuenta**: Apple Music deja oír avances de 90 segundos sin iniciar sesión.
 Es un tercer sitio opcional en `SITIOS_OPCIONALES` (`music.apple.com`), con
 su nota en Preferencias. Política y ficha lo nombran.
 `tests/fixtures/applemusic-sonando.html` reproduce lo medido.
-`adaptador-apple-music.test.js`: 9 pruebas. Una más en
+`adaptador-apple-music.test.js`: 11 pruebas. Una más en
 `espectro-y-grafo.test.js` para la puerta. Mutación
-(`tools/mutar/mutar-tanda-ay.js`): 8 de 8, recuentos exactos. Uno de la
+(`tools/mutar/mutar-tanda-ay.js`): 10 de 10, recuentos exactos. Uno de la
 tanda AV (recursos de la ventana en SoundCloud) se reancló en su vecino de
 delante, que ya no se mueve.
 
-**No medido**: la extensión de verdad en Apple Music, y cualquier cosa con
-suscripción (canción entera, siguiente/anterior, DRM).
+**Medido después con la extensión de verdad** (el autor dijo que no le
+aparecía). Chromium limpio de Playwright, con la extensión cargada y
+music.apple.com concedido. El script se registra y el botón PiP aparece.
+Con un avance sonando, el estado trae título, artista, álbum, tiempo,
+«sonando» y ninguna pieza en falta. Pausar y reanudar con el botón que
+elige el adaptador funciona, y la ventana flotante se abre con canción,
+carátula y estilos. Esa prueba destapó los dos fallos de arriba (el gif de
+1×1 y el botón oculto). Sin cuenta, Apple tapa la página con un aviso de
+suscripción que también tapa el botón PiP: hay que cerrarlo con la X. El
+«Play» grande del álbum no suena sin cuenta; las filas «Preview» sí.
+
+**No medido**: cualquier cosa con suscripción (canción entera,
+siguiente/anterior, DRM).
 
 ## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud, Deezer y Apple Music)
 
@@ -8299,7 +8316,7 @@ Deezer, y AY, Apple Music, entraron después de etiquetarla: la versión no se
 había publicado y el autor eligió meterlos dentro).
 Segundo número porque hay funciones nuevas. `manifest.json`, `package.json`
 y `package-lock.json` suben juntos, y el CHANGELOG pasa «Sin publicar» a
-«[1.3.0]». Suite entera: **1234/1234**. Prueba de humo contra YouTube real
+«[1.3.0]». Suite entera: **1236/1236**. Prueba de humo contra YouTube real
 (`npm run humo`): 8/8. Zip de **49 archivos** (bienvenida, historial, su
 módulo compartido y los adaptadores de SoundCloud, Deezer y Apple Music).
 

@@ -5,11 +5,14 @@
 
   - Un <audio> de verdad (el avance, del CDN de iTunes) y un <video> que es
     la caratula ANIMADA del album, no la musica.
+  - Reproducir y pausar son DOS botones siempre presentes; el que no toca
+    lleva aria-hidden="true" (sonando: __play oculto, __pause visible).
   - En avances la barra solo tiene reproducir/pausar y la insignia
     «Avance»: ni siguiente, ni anterior, ni repetir, ni aleatorio.
   - Titulo y artista en marquesinas; cada texto va repetido para el
     desplazamiento. La linea de abajo es «Artista — Album».
-  - La caratula, a 80x80 («80x80bb-60.jpg»).
+  - La caratula va en el srcset del <source> (40 y 80); el src del <img>
+    se queda en «/assets/artwork/1x1.gif».
   - El progreso vive en un shadow root (no se copia: se lee del <audio>).
 -->
 <html lang="es">
@@ -19,12 +22,16 @@
     </div>
     <div data-testid="player-bar" class="player-bar">
       <div data-testid="playback-controls" class="playback-controls">
-        <button type="button" class="playback-play__play" aria-label="Pausa"></button>
+        <button class="playback-play__play" aria-hidden="true" tabindex="-1"></button>
+        <button class="playback-play__pause" aria-label="Pausa"></button>
         <span data-testid="preview-badge" class="preview-badge">Avance</span>
       </div>
       <div data-testid="player-lcd" class="lcd">
         <div data-testid="player-lcd-artwork" class="lcd__artwork">
-          <img src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/aa/bb/cc/cancion.jpg/80x80bb-60.jpg" alt="" />
+          <picture>
+            <source sizes="40px" srcset="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/aa/bb/cc/cancion.jpg/40x40bb-60.jpg 40w,https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/aa/bb/cc/cancion.jpg/80x80bb-60.jpg 80w" type="image/jpeg" />
+            <img alt="" loading="lazy" src="/assets/artwork/1x1.gif" width="40" height="40" />
+          </picture>
         </div>
         <div class="marquee marquee--primary">
           <span data-testid="marquee-text-item">Luz de madrugada</span>

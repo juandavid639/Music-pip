@@ -3,11 +3,11 @@
  * puerta del espectro por capacidad y la exencion de salud en los avances.
  *
  * Prediccion fijada ANTES de correr, en el orden de la lista:
- *   4/1/1/1/1/1/2/1
+ *   4/1/2/1/1/1/1/1/2/1   (la 2.a y la 3.a, añadidas tras la prueba real)
  *
  * Primera: tomando el <video> de la caratula como medio caen «el medio es
  * el <audio>», el estado entero (la duracion es del <audio>) y las dos de
- * salud (el <video> esta en pausa: nada que comprobar). Septima: si
+ * salud (el <video> esta en pausa: nada que comprobar). Novena: si
  * cualquier boton vale como «siguiente», cae la de buscarlos por etiqueta y
  * la de «fuera de un avance la salud avisa» (el de pausa pasaria por
  * siguiente).
@@ -22,7 +22,11 @@ const AD = "src/content/apple-music-adapter.js";
 
 const MUTACIONES = [
   { etiqueta: "el medio es el <video> de la caratula animada", archivo: AD, de: '    media: ["audio"]', a: '    media: ["video"]', esperadas: 4 },
-  { etiqueta: "la caratula se queda en 80x80", archivo: AD, de: '    return { src: img.src.replace(/\\/\\d+x\\d+bb(-\\d+)?\\.(jpg|webp|png)$/, "/600x600bb.$2") };', a: "    return { src: img.src };", esperadas: 1 },
+  { etiqueta: "la caratula se queda en 40x40", archivo: AD, de: '    return { src: url.replace(/\\/\\d+x\\d+bb(-\\d+)?\\.(jpg|webp|png)$/, "/600x600bb.$2") };', a: "    return { src: url };", esperadas: 1 },
+  // Anadidas tras la prueba con Chromium real (el <img> trae un gif de 1x1
+  // y los dos botones estan siempre). Prediccion de estas dos: 2/1.
+  { etiqueta: "la caratula se lee del <img> (el gif de 1x1)", archivo: AD, de: '    const url = delSrcset || img.currentSrc || (/\\/1x1\\.gif$/.test(img.src || "") ? "" : img.src);', a: "    const url = img.currentSrc || img.src;", esperadas: 2 },
+  { etiqueta: "reproducir/pausar toma el boton oculto", archivo: AD, de: "      \"[data-testid='playback-controls'] .playback-play__pause:not([aria-hidden='true'])\",\n", a: "      \"[data-testid='playback-controls'] .playback-play__play\",\n", esperadas: 1 },
   { etiqueta: "el album se pierde", archivo: AD, de: '    const album = raya !== -1 ? trozos[raya + 1] : "";', a: '    const album = "";', esperadas: 1 },
   { etiqueta: "el adaptador no dice que en avances no hay siguiente", archivo: AD, de: '      return queryFirst(SELECTORS.previewBadge) ? ["getNextButton"] : [];', a: "      return [];", esperadas: 1 },
   { etiqueta: "la salud no hace caso de las piezas exentas", archivo: "src/content/adapter-registry.js", de: "        if (exentas.indexOf(getter) !== -1) return false;\n", a: "", esperadas: 1 },
