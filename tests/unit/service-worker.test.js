@@ -62,6 +62,8 @@ function trabajador({
     enviados: [],
     inyecciones: [],
     destacados: [],
+    // Las pestañas a las que se les pidio «el siguiente clic abre» (tanda AZ).
+    esperas: [],
     ventanas: [],
     creadas: [],
     avisos: [],
@@ -92,6 +94,10 @@ function trabajador({
           // "respaldo" (tanda AF): la pestaña no tiene Document PiP y lo dice.
           open: () =>
             abrir === "opened" ? Promise.resolve() : abrir === "respaldo" ? Promise.resolve("respaldo") : Promise.reject({ name: abrir }),
+          esperarClicParaAbrir: () => {
+            registro.esperas.push(tab.id);
+            return tab.clic !== false;
+          },
           destacarLanzador: () => {
             registro.destacados.push(tab.id);
             return tab.lanzador !== false;
@@ -418,16 +424,30 @@ test("el menu pide el estado a una pestaña huerfana y lo recibe igual", async (
  * 4. Abrir la ventana: decir lo que paso
  * ================================================================== */
 
-test("REGRESION TANDA T: si Chrome no deja abrir desde el menu, el menu recibe ok:false y el boton parpadea", async () => {
+test("REGRESION TANDA T: si Chrome no deja abrir desde el menu, el menu recibe ok:false", async () => {
   const w = trabajador({ pestanas: [pestana(7, YTM)], abrir: "NotAllowedError" });
   const r = await w.mensaje("OPEN_PIP_REQUEST");
   assert.strictEqual(r.ok, false, "el menu recibio «abierto» de una ventana que no se abrio");
+});
+
+test("TANDA AZ: sin permiso para abrir, se enfoca la pestaña y su siguiente clic la abre", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM, { windowId: 3 })], abrir: "NotAllowedError" });
+  const r = await w.mensaje("OPEN_PIP_REQUEST");
+  assert.strictEqual(r.result, "esperando-clic");
+  assert.deepStrictEqual(w.registro.esperas, [7]);
+  assert.deepStrictEqual(plano(w.registro.enfocadas), [[3, { focused: true }]], "la ventana de la pestaña pasa al frente");
+  assert.deepStrictEqual(w.registro.destacados, [], "con la pagina esperando el clic no hace falta el parpadeo");
+});
+
+test("si la pagina no puede esperar el clic, el boton PiP parpadea como antes", async () => {
+  const w = trabajador({ pestanas: [pestana(7, YTM, { clic: false })], abrir: "NotAllowedError" });
+  const r = await w.mensaje("OPEN_PIP_REQUEST");
   assert.strictEqual(r.result, "destacado");
   assert.deepStrictEqual(w.registro.destacados, [7]);
 });
 
 test("sin boton que destacar, el menu se entera tambien", async () => {
-  const w = trabajador({ pestanas: [pestana(7, YTM, { lanzador: false })], abrir: "NotAllowedError" });
+  const w = trabajador({ pestanas: [pestana(7, YTM, { lanzador: false, clic: false })], abrir: "NotAllowedError" });
   const r = await w.mensaje("OPEN_PIP_REQUEST");
   assert.deepStrictEqual([r.ok, r.result], [false, "sin-lanzador"]);
 });

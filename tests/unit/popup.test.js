@@ -512,6 +512,18 @@ test("REGRESION TANDA T: si Chrome no deja abrir desde el menu, el menu dice don
   assert.match(m.estado.textContent, /botón PiP/);
 });
 
+test("TANDA AZ: con la pagina esperando el clic, el menu lo dice y se cierra solo", async () => {
+  const m = menu(SONANDO, { respuestaAbrir: { ok: false, result: "esperando-clic" } });
+  await m.asentar();
+  let cerrado = false;
+  m.win.close = () => (cerrado = true);
+  m.abrir.click();
+  await m.asentar();
+  assert.match(m.estado.textContent, /página de música/);
+  await new Promise((r) => setTimeout(r, 800));
+  assert.equal(cerrado, true, "el menu no se queda delante de la pagina que espera el clic");
+});
+
 test("sin boton en la pagina, el menu pide recargar la pestaña", async () => {
   const m = menu(SONANDO, { respuestaAbrir: { ok: false, result: "sin-lanzador" } });
   await m.asentar();

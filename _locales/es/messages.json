@@ -961,5 +961,26 @@
   },
   "sitio_nota_applemusic": {
     "message": "Carátula, título, reproducir/pausar, saltos y volumen; sin letra, ecualizador ni barras. Sin suscripción, Apple Music solo deja oír avances y no tiene siguiente ni anterior."
+  },
+  "clic_para_abrir": {
+    "message": "Haz clic para abrir la ventana flotante"
+  },
+  "esc_para_cancelar": {
+    "message": "Esc para cancelar"
+  },
+  "abrir_con_un_clic": {
+    "message": "Haz clic en la página de música para abrirla"
+  },
+  "modo_cine": {
+    "message": "Modo cine"
+  },
+  "modo_cine_aria": {
+    "message": "Ver solo el vídeo, a ventana completa"
+  },
+  "salir_modo_cine": {
+    "message": "Salir del modo cine"
+  },
+  "salir_modo_cine_aria": {
+    "message": "Volver a ver el título y todos los mandos"
   }
 }

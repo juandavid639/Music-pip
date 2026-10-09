@@ -249,3 +249,24 @@ test("el nivel de detalle no cambia por llevar video", () => {
     );
   }
 });
+
+/* --------------------------------------------------------------------
+ * EL MODO CINE (tanda BA). Lo pidio el autor con una captura: con la
+ * ventana grande para ver el video, titulo, volumen y las filas de abajo
+ * se comian medio alto. Es el superpuesto, pedido a mano.
+ * -------------------------------------------------------------------- */
+
+test("TANDA BA: con video y el modo cine, se superpone a CUALQUIER tamaño", () => {
+  const PipView = vista();
+  for (const [ancho, alto] of [[1066, 772], [571, 318], [420, 480]]) {
+    assert.strictEqual(PipView.layoutFor(ancho, alto, true, false, false).overlay, false, `premisa ${ancho}x${alto}: sin cine no se superpone`);
+    assert.strictEqual(PipView.layoutFor(ancho, alto, true, false, true).overlay, true, `${ancho}x${alto} con cine`);
+  }
+});
+
+test("sin video el modo cine no cambia nada: no hay nada que ver en grande", () => {
+  const PipView = vista();
+  for (let alto = 120; alto <= 700; alto += 20) {
+    assert.deepStrictEqual(PipView.layoutFor(420, alto, false, false, true), PipView.layoutFor(420, alto, false, false, false));
+  }
+});

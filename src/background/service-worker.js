@@ -539,6 +539,33 @@ async function destacarLanzadorEnPestana(tabId) {
 }
 
 /*
+ * UN CLIC EN CUALQUIER SITIO DE LA PAGINA (tanda AZ). Lo que pidio el
+ * autor: que «Abrir ventana flotante» del menu la abra, en vez de mandarle a
+ * buscar el boton PiP. Abrirla desde el menu no se puede (el clic no ocurre
+ * en la pagina y Chrome exige ese gesto, ver abrirPipDesdeElNavegador); lo
+ * mas cerca que se puede llegar es esto: se lleva al usuario a la pestaña
+ * musical y la pagina entera se vuelve el boton durante unos segundos. El
+ * siguiente clic, donde caiga, abre la ventana.
+ */
+async function esperarClicEnPestana(tab) {
+  try {
+    await chrome.tabs.update(tab.id, { active: true });
+    if (typeof tab.windowId === "number") await chrome.windows.update(tab.windowId, { focused: true });
+  } catch (err) {
+    // Sin poder enfocarla, el aviso se pone igual: estara cuando la mire.
+  }
+  const [{ result } = {}] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    world: "ISOLATED",
+    func: () => {
+      const vista = self.YTMPip && self.YTMPip.PipView;
+      return Boolean(vista && vista.esperarClicParaAbrir && vista.esperarClicParaAbrir());
+    }
+  });
+  return Boolean(result);
+}
+
+/*
  * "Volver a YouTube Music": el content script no puede enfocar su propia
  * pestaña, solo el service worker. Se prioriza la pestaña que envio el
  * mensaje; si ya no existe (o el mensaje vino de una pagina de extension,
@@ -667,7 +694,9 @@ async function intentarAbrir(target, origen) {
 
   if (result === "NotAllowedError") {
     // No es un fallo que se pueda reintentar: la API exige un gesto en la
-    // propia pagina. Se destaca el boton que si lo es.
+    // propia pagina. Primero, que el siguiente clic en ella abra la ventana
+    // (tanda AZ); si eso no se puede poner, se destaca el boton PiP.
+    if (await esperarClicEnPestana(target)) return "esperando-clic";
     const destacado = await destacarLanzadorEnPestana(target.id);
     console.info(
       destacado

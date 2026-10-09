@@ -241,3 +241,101 @@ test("...y con la extension recargada, open() dice «sin-extension» en vez de f
   );
   assert.strictEqual(await win.YTMPip.PipView.open(), "sin-extension");
 });
+
+/* ==================================================================
+ * TANDA AZ: la pagina entera como boton, unos segundos
+ *
+ * El menu del icono no puede abrir la ventana (su clic no es de la
+ * pagina). El service worker trae la pestaña al frente y pide esto: el
+ * siguiente clic en cualquier sitio abre la ventana.
+ * ================================================================== */
+
+const CAPA = "ytmpip-clic-para-abrir";
+
+// Un requestWindow que solo cuenta: la apertura de verdad se prueba en
+// pip-apertura; aqui importa QUIEN la pide y CUANDO.
+function conVentanaFalsa(p) {
+  const pedidas = [];
+  p.win.documentPictureInPicture = {
+    requestWindow: (o) => {
+      pedidas.push(o);
+      return Promise.reject(Object.assign(new Error("de prueba"), { name: "AbortError" }));
+    }
+  };
+  return pedidas;
+}
+
+function paginaConVentana() {
+  const { win } = crearEntorno(leerFixture("controles-completos.html"));
+  cargar(
+    win,
+    "src/shared/constants.js",
+    "src/shared/textos.js",
+    "src/shared/messages.js",
+    "src/shared/ecualizador.js",
+    "src/shared/settings.js",
+    "src/content/adapter-registry.js",
+    "src/content/youtube-music-adapter.js",
+    "src/content/track-timeline.js",
+    "src/content/player-controller.js",
+    "src/content/audio-spectrum.js",
+    "src/shared/iconos.js",
+    "src/pip/pip.js"
+  );
+  win.console.error = () => {};
+  return { win, doc: win.document, PipView: win.YTMPip.PipView };
+}
+
+test("TANDA AZ: el siguiente clic en la pagina abre la ventana, y la capa se va", async () => {
+  const p = paginaConVentana();
+  const pedidas = conVentanaFalsa(p);
+  assert.equal(p.PipView.esperarClicParaAbrir(), true);
+  const capa = p.doc.getElementById(CAPA);
+  assert.ok(capa, "la capa tapa la pagina");
+  assert.equal(capa.style.position, "fixed");
+
+  let llegoALaPagina = false;
+  p.doc.body.addEventListener("click", () => (llegoALaPagina = true));
+  capa.click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(pedidas.length, 1, "el clic pidio la ventana");
+  assert.equal(p.doc.getElementById(CAPA), null, "la capa se quita al usarla");
+  assert.equal(llegoALaPagina, false, "el clic no le llega a la pagina: nada de pausar sin querer");
+});
+
+test("Esc quita la capa sin abrir nada", async () => {
+  const p = paginaConVentana();
+  const pedidas = conVentanaFalsa(p);
+  p.PipView.esperarClicParaAbrir();
+  p.doc.dispatchEvent(new p.win.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(p.doc.getElementById(CAPA), null);
+  assert.equal(pedidas.length, 0);
+});
+
+test("con el teclado: Intro sobre la capa abre la ventana", async () => {
+  const p = paginaConVentana();
+  const pedidas = conVentanaFalsa(p);
+  p.PipView.esperarClicParaAbrir();
+  const capa = p.doc.getElementById(CAPA);
+  assert.equal(p.doc.activeElement, capa, "la capa recibe el foco");
+  capa.dispatchEvent(new p.win.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(pedidas.length, 1);
+});
+
+test("pedirla dos veces deja UNA capa", () => {
+  const p = paginaConVentana();
+  p.PipView.esperarClicParaAbrir();
+  p.PipView.esperarClicParaAbrir();
+  assert.equal(p.doc.querySelectorAll(`#${CAPA}`).length, 1);
+});
+
+test("la capa se va sola: no se queda tapando la pagina", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const p = paginaConVentana();
+  p.PipView.esperarClicParaAbrir();
+  t.mock.timers.tick(15000);
+  assert.equal(p.doc.getElementById(CAPA), null);
+});

@@ -450,8 +450,9 @@ const MUTACIONES = [
   {
     etiqueta: "la letra en grande deja de superponer (el sintoma reportado, tal cual)",
     archivo: "src/pip/pip.js",
-    de: "const overlay = Boolean(letraEnGrande) || (mini && hasVideo);",
-    a: "const overlay = mini && hasVideo;"
+    // Reanclada en la tanda BA: la linea gano el modo cine.
+    de: "const overlay = Boolean(letraEnGrande) || (hasVideo && (mini || Boolean(cine)));",
+    a: "const overlay = hasVideo && (mini || Boolean(cine));"
   },
   {
     etiqueta: "superponer la letra no apaga la fila compacta: dos familias de CSS a la vez",
@@ -468,8 +469,8 @@ const MUTACIONES = [
   {
     etiqueta: "el argumento nuevo se ignora: layoutFor vuelve a decidir sin la letra",
     archivo: "src/pip/pip.js",
-    de: "const overlay = Boolean(letraEnGrande) || (mini && hasVideo);",
-    a: "const overlay = Boolean(undefined) || (mini && hasVideo);"
+    de: "const overlay = Boolean(letraEnGrande) || (hasVideo && (mini || Boolean(cine)));",
+    a: "const overlay = Boolean(undefined) || (hasVideo && (mini || Boolean(cine)));"
   },
   {
     /*

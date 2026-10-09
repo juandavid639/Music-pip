@@ -52,6 +52,24 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
   suscripción, Apple Music solo deja oír avances y no tiene siguiente ni
   anterior.
 
+- **Cinema mode** for videos: a new button in the window's header shows
+  only the video, filling the window, with the controls floating on top and
+  hiding by themselves.
+- **Modo cine** para los vídeos: un botón nuevo en la cabecera de la ventana
+  deja solo el vídeo, a ventana completa, con los mandos flotando encima y
+  apartándose solos.
+
+### Changed / Cambiado
+
+- **"Open floating window" in the menu takes you there**: Chrome only lets
+  the window open from a click on the music page, so the button now brings
+  that tab to the front and your next click anywhere on it opens the
+  window (Esc cancels). No more hunting for the PiP button.
+- **«Abrir ventana flotante» del menú te lleva**: Chrome solo deja abrir la
+  ventana con un clic en la página de música, así que el botón trae esa
+  pestaña al frente y tu siguiente clic en cualquier sitio de ella la abre
+  (Esc cancela). Ya no hay que buscar el botón PiP.
+
 ### Privacy / Privacidad
 
 - Websites can no longer tell whether you have Music PiP installed by

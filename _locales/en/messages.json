@@ -961,5 +961,26 @@
   },
   "sitio_nota_applemusic": {
     "message": "Artwork, title, play/pause, seeking and volume; no lyrics, equalizer or bars. Without a subscription, Apple Music only plays previews and has no next or previous."
+  },
+  "clic_para_abrir": {
+    "message": "Click to open the floating window"
+  },
+  "esc_para_cancelar": {
+    "message": "Esc to cancel"
+  },
+  "abrir_con_un_clic": {
+    "message": "Click the music page to open it"
+  },
+  "modo_cine": {
+    "message": "Cinema mode"
+  },
+  "modo_cine_aria": {
+    "message": "Show only the video, filling the window"
+  },
+  "salir_modo_cine": {
+    "message": "Exit cinema mode"
+  },
+  "salir_modo_cine_aria": {
+    "message": "Show the title and all the controls again"
   }
 }

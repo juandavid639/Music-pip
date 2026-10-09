@@ -8309,14 +8309,66 @@ suscripción que también tapa el botón PiP: hay que cerrarlo con la X. El
 **No medido**: cualquier cosa con suscripción (canción entera,
 siguiente/anterior, DRM).
 
-## La 1.3.0 (bienvenida, ajustes propios, historial, SoundCloud, Deezer y Apple Music)
+## Abrir desde el menú con un clic en la página (la tanda AZ)
+
+El autor, con una captura del menú: al pulsar «Abrir ventana flotante» le
+mandaba a abrirla en la página («Pulsa el botón PiP de la página de
+música»). Abrirla desde el menú **no se puede**:
+`documentPictureInPicture.requestWindow()` exige un gesto en la propia
+página, y el clic del menú ocurre en la extensión (lo demostró en su día el
+error del usuario, ver el comentario de `abrirPipDesdeElNavegador`).
+
+Lo más cerca que se llega: el service worker trae la pestaña musical al
+frente (pestaña activa y su ventana enfocada) y le pide
+`PipView.esperarClicParaAbrir()`. La página entera se vuelve el botón: una
+capa oscura con la tarjeta roja «Haz clic para abrir la ventana flotante».
+El siguiente clic, caiga donde caiga, abre la ventana. La capa se lo traga,
+así que no pausa el vídeo ni abre un enlace. También con Intro o Espacio,
+Esc la quita, y se va sola a los 15 segundos. El menú dice «Haz clic en la
+página de música para abrirla» y se cierra solo. Si la capa no se puede
+poner, el botón PiP parpadea como antes.
+
+**Medido con Playwright** contra YouTube real: la capa aparece y un clic en
+la página abre la ventana. Una sorpresa: en el Chromium de Playwright el
+menú abre la ventana **directamente** (`"opened"`), porque el Chromium
+automatizado no exige el gesto. El camino bloqueado que vio el autor no se
+puede reproducir ahí; la capa se probó llamando a la función del service
+worker. **No medido**: el recorrido entero en el Chrome del autor.
+
+## Modo cine (la tanda BA)
+
+La otra mitad del mismo mensaje, con captura: con la ventana agrandada para
+ver el vídeo, título, volumen y las filas de abajo se comían medio alto.
+
+Ya existía el superpuesto (vídeo a ventana entera, mandos flotando encima y
+apartándose solos), pero solo con la ventana pequeña o la letra en grande.
+El modo cine es ese mismo superpuesto pedido a mano: un botón nuevo en la
+cabecera (`#ytmpip-cinema-toggle`, esquinas de pantalla completa). Solo
+existe con vídeo, a cualquier tamaño. `layoutFor` recibe un quinto
+argumento, y el superpuesto pasa a ser `letra || (vídeo && (mini || cine))`.
+La clase `ytmpip-cine` además quita volumen, Letras, Siguientes y Volver.
+Dura lo que la ventana, como «solo carátula». Si la canción deja de traer
+vídeo, se apaga sin quedarse a medias.
+
+**Visto en una ventana flotante real** (Playwright, Big Buck Bunny,
+1000×640): sin cine el vídeo usa unos 700×395 en el centro; con cine ocupa
+el ancho entero, con la barra y el transporte encima.
+
+Pruebas: `pip-lanzador` (+5), `service-worker` (+2), `popup` (+1),
+`pip-density` (+2) y `pip-cine.test.js` (5). Mutación
+(`tools/mutar/mutar-tanda-az-ba.js`): 13 de 13, recuentos exactos. Dos
+mutaciones del espectro que apuntaban a la línea del superpuesto se
+reanclaron y se verificaron.
+
+## La 1.3.0 (bienvenida, ajustes propios, historial, sitios opcionales, abrir con un clic y modo cine)
 
 Lleva las tandas AR a AX, elegidas por el autor de la lista de mejoras (AW,
-Deezer, y AY, Apple Music, entraron después de etiquetarla: la versión no se
-había publicado y el autor eligió meterlos dentro).
+Deezer; AY, Apple Music; AZ, abrir con un clic en la página, y BA, modo
+cine, entraron después de etiquetarla: la versión no se había publicado y el
+autor eligió meterlos dentro).
 Segundo número porque hay funciones nuevas. `manifest.json`, `package.json`
 y `package-lock.json` suben juntos, y el CHANGELOG pasa «Sin publicar» a
-«[1.3.0]». Suite entera: **1236/1236**. Prueba de humo contra YouTube real
+«[1.3.0]». Suite entera: **1252/1252**. Prueba de humo contra YouTube real
 (`npm run humo`): 8/8. Zip de **49 archivos** (bienvenida, historial, su
 módulo compartido y los adaptadores de SoundCloud, Deezer y Apple Music).
 

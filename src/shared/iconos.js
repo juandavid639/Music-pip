@@ -227,6 +227,14 @@
     chincheta: [
       "M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"
     ],
+    /*
+     * El modo cine (tanda BA): las cuatro esquinas de «pantalla completa»
+     * hacia fuera para entrar y hacia dentro para salir, que es como lo
+     * dibujan todos los reproductores. No se reusa «tamano» (⤢): ese
+     * cambia el tamaño de la VENTANA, y este no la toca.
+     */
+    cine: ["M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"],
+    cineSalir: ["M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"],
     tamano: ["M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10z"],
     cerrar: [
       "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"

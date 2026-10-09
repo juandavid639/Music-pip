@@ -190,7 +190,15 @@
          * una pestaña que el usuario no esta mirando.
          */
         const que = respuesta && respuesta.ok === false ? respuesta.result : null;
-        if (que === "destacado") els.status.textContent = t("abrir_desde_la_pagina");
+        /*
+         * La pagina espera el clic (tanda AZ): el service worker ya trajo
+         * la pestaña al frente y su siguiente clic abre la ventana. El menu
+         * lo dice y se cierra solo, para no quedarse delante de esa pagina.
+         */
+        if (que === "esperando-clic") {
+          els.status.textContent = t("abrir_con_un_clic");
+          setTimeout(() => window.close(), 700);
+        } else if (que === "destacado") els.status.textContent = t("abrir_desde_la_pagina");
         else if (que === "sin-lanzador") els.status.textContent = t("recargar_pestana_musical");
         // Sin Document PiP (tanda AF): esta ventana ES la de respaldo.
         else if (que === "respaldo") els.status.textContent = t("sin_ventana_flotante");

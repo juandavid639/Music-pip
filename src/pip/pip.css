@@ -1894,6 +1894,16 @@ button:has(.ytmpip-ico) {
   display: none;
 }
 
+/*
+ * El modo cine (tanda BA) se queda con cabecera, barra y transporte: lo
+ * demas (volumen, Letras, Siguientes, Volver) es justo lo que se comia el
+ * alto del video. Se vuelve a todo con el mismo boton.
+ */
+#ytmpip-root.ytmpip-cine .ytmpip-extras,
+#ytmpip-root.ytmpip-cine .ytmpip-secondary-actions {
+  display: none;
+}
+
 #ytmpip-root.ytmpip-overlay .ytmpip-header,
 #ytmpip-root.ytmpip-overlay .ytmpip-progress-row,
 #ytmpip-root.ytmpip-overlay .ytmpip-controls {

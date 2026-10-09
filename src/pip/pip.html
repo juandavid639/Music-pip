@@ -72,6 +72,12 @@
         -->
         <button id="ytmpip-video-toggle" type="button" hidden aria-pressed="false" aria-label="Mostrar la carátula en vez del vídeo" data-t-aria="mostrar_caratula_video" title="Ver carátula" data-t-title="ver_caratula" data-ico="caratula">🖼</button>
         <!--
+          El modo cine (tanda BA): el vídeo a ventana entera, sin título ni
+          filas de abajo; los mandos flotan encima y se apartan solos. Nace
+          oculto: sin vídeo no hay nada que ver en grande.
+        -->
+        <button id="ytmpip-cinema-toggle" type="button" hidden aria-pressed="false" aria-label="Ver solo el vídeo, a ventana completa" data-t-aria="modo_cine_aria" title="Modo cine" data-t-title="modo_cine" data-ico="cine">⛶</button>
+        <!--
           El vídeo flotante DEL NAVEGADOR (PiP nativo). Convive con el de
           arriba sin pisarlo: aquél presta el vídeo a ESTA ventana —imposible
           con DRM, la sesión de claves se rompe—; éste le pide al navegador

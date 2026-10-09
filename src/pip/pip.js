@@ -145,6 +145,9 @@
    * coverPorPeticion y letraOcupaEscenario.
    */
   let soloCaratula = false;
+  // El modo cine (tanda BA): con video, el video a ventana entera y nada
+  // mas. Dura lo que la ventana, como «solo caratula».
+  let modoCine = false;
 
   /*
    * El fondo Canvas. `canvasStream` es el chorro capturado del bucle
@@ -401,6 +404,7 @@
       status: doc.getElementById("ytmpip-status"),
       anuncio: doc.getElementById("ytmpip-anuncio"),
       videoToggle: doc.getElementById("ytmpip-video-toggle"),
+      cinemaToggle: doc.getElementById("ytmpip-cinema-toggle"),
       nativePip: doc.getElementById("ytmpip-native-pip"),
       spectrumToggle: doc.getElementById("ytmpip-spectrum-toggle"),
       spectrum: doc.getElementById("ytmpip-spectrum"),
@@ -734,6 +738,26 @@
         pulsado ? t("mostrar_caratula_letra") : t("mostrar_letra")
       );
     }
+  }
+
+  /*
+   * El boton del modo cine (tanda BA): solo existe con video en la
+   * ventana, que es lo unico que se puede ver en grande.
+   */
+  function pintarBotonCine() {
+    if (!els.cinemaToggle) return;
+    els.cinemaToggle.hidden = !videoMode;
+    const activo = modoCine && videoMode;
+    els.cinemaToggle.setAttribute("aria-pressed", String(activo));
+    Iconos.poner(els.cinemaToggle, activo ? "cineSalir" : "cine");
+    els.cinemaToggle.title = activo ? t("salir_modo_cine") : t("modo_cine");
+    els.cinemaToggle.setAttribute("aria-label", activo ? t("salir_modo_cine_aria") : t("modo_cine_aria"));
+  }
+
+  function alternarModoCine() {
+    modoCine = !modoCine;
+    applyDensity();
+    pintarBotonCine();
   }
 
   /*
@@ -1823,13 +1847,13 @@
    * formas son excluyentes entre si y eso conviene tenerlo clavado por una
    * prueba, porque si dos coincidieran las reglas CSS se solaparian.
    */
-  function layoutFor(width, height, hasVideo, letraEnGrande) {
+  function layoutFor(width, height, hasVideo, letraEnGrande, cine) {
     const { mini, tight, narrow } = densityFor(width, height);
 
     /*
      * Superpuesto: el contenido ocupa la ventana entera y los mandos flotan
      * encima translucidos, como en cualquier reproductor a pantalla
-     * completa. Dos situaciones distintas acaban pidiendo lo mismo.
+     * completa. Tres situaciones distintas acaban pidiendo lo mismo.
      *
      * 1. Ventana pequeña Y con video. En un videoclip el titulo es
      *    informacion que la propia imagen ya esta dando; repartir el poco
@@ -1841,8 +1865,14 @@
      *    letra"). Ponerle un umbral de alto lo arreglaria en las ventanas
      *    pequeñas y lo dejaria igual de tapado en las grandes, que son
      *    justo en las que uno se pone a leer la letra.
+     *
+     * 3. El modo cine (tanda BA), A CUALQUIER TAMAÑO y solo con video. Lo
+     *    pidio el autor: al agrandar la ventana para ver el video, la
+     *    informacion y los mandos se comian medio alto. Es el mismo
+     *    superpuesto del punto 1, pedido a mano en vez de por falta de
+     *    sitio; sin video no hay nada que ver en grande.
      */
-    const overlay = Boolean(letraEnGrande) || (mini && hasVideo);
+    const overlay = Boolean(letraEnGrande) || (hasVideo && (mini || Boolean(cine)));
 
     return {
       mini,
@@ -1884,7 +1914,8 @@
       size.width,
       size.height,
       videoMode,
-      els.root.classList.contains("ytmpip-lyrics-stage")
+      els.root.classList.contains("ytmpip-lyrics-stage"),
+      modoCine
     );
     els.root.classList.toggle("ytmpip-mini", l.mini);
     els.root.classList.toggle("ytmpip-tight", l.tight);
@@ -1892,6 +1923,9 @@
     els.root.classList.toggle("compact", l.compact);
     els.root.classList.toggle("expanded", l.expanded);
     els.root.classList.toggle("ytmpip-overlay", l.overlay);
+    // En cine el superpuesto se queda con lo minimo: fuera las filas de
+    // extras y de acciones (volumen, Letras, Siguientes, Volver).
+    els.root.classList.toggle("ytmpip-cine", l.overlay && modoCine && videoMode);
     // Despues de las clases a proposito: la banda depende de que filas
     // deja visibles la densidad recien puesta.
     ajustarBandasDeMandos();
@@ -3387,6 +3421,7 @@
     if (els.eqPin) els.eqPin.addEventListener("click", alternarMemoriaEcualizador);
 
     if (els.videoToggle) els.videoToggle.addEventListener("click", alternarEscenario);
+    if (els.cinemaToggle) els.cinemaToggle.addEventListener("click", alternarModoCine);
     if (els.nativePip) els.nativePip.addEventListener("click", alternarPipNativo);
     if (els.canvasToggle) els.canvasToggle.addEventListener("click", alternarFondoCanvas);
     if (els.cleanToggle) els.cleanToggle.addEventListener("click", alternarSoloCaratula);
@@ -3566,6 +3601,7 @@
     letraOcupaEscenario = false;
     rolDelEscenario = null;
     soloCaratula = false;
+    modoCine = false;
     espectroPedido = false;
     espectroDisponible = false;
     pulsoPedido = false;
@@ -4463,6 +4499,7 @@
     // recalculandolas.
     aislado("boton de escenario", () => pintarBotonDeEscenario(hayVideoQueAlternar, karaoke));
     aislado("boton del PiP nativo", () => pintarBotonPipNativo(state));
+    aislado("boton de cine", pintarBotonCine);
     aislado("fondo Canvas", () => sincronizarFondoCanvas(state));
 
     /*
@@ -4553,6 +4590,7 @@
     onStateUpdate: render,
     ensureLauncher: ensureLauncherButton,
     destacarLanzador: destacarLanzador,
+    esperarClicParaAbrir: esperarClicParaAbrir,
     setDegraded: setDegraded,
     // Para el relevo del content script huerfano (tanda AI): con su ventana
     // abierta no se retira, porque nadie mas puede servirla.
@@ -4641,6 +4679,8 @@
        */
       pintarEscenario: pintarBotonDeEscenario,
       pulsarSoloCaratula: alternarSoloCaratula,
+      pulsarCine: alternarModoCine,
+      pideCine: () => modoCine,
       pulsarEspectro: alternarEspectro,
       pulsarPulso: alternarPulso,
       // El mismo manejador al que se suscribe la ventana de verdad, no una
@@ -4802,6 +4842,102 @@
       ],
       { duration: 600, iterations: 3 }
     );
+    return true;
+  }
+
+  /*
+   * LA PAGINA ENTERA COMO BOTON, unos segundos (tanda AZ).
+   *
+   * El menu del icono no puede abrir la ventana: su clic no ocurre en esta
+   * pagina y requestWindow() exige que si. El service worker trae la
+   * pestaña al frente y llama aqui: se tiende una capa sobre toda la pagina
+   * y el siguiente clic, caiga donde caiga, ES el gesto que hace falta. La
+   * capa se lo traga (no le llega a la pagina: nada de pausar un video o
+   * abrir un enlace sin querer), se quita y abre la ventana.
+   *
+   * Con el teclado tambien: la capa recibe el foco y Intro o Espacio abren
+   * (una tecla es activacion de usuario igual que un clic). Esc la quita. Y
+   * se va sola a los 15 segundos: una capa que se queda tapando la pagina
+   * seria peor que el problema que arregla.
+   *
+   * Estilos en linea y sin @keyframes por lo mismo que el lanzador: la
+   * pagina no es nuestra.
+   *
+   * Devuelve si se pudo poner.
+   */
+  const CAPA_ID = "ytmpip-clic-para-abrir";
+  const PLAZO_CAPA_MS = 15000;
+
+  function esperarClicParaAbrir() {
+    if (!document.body || !YTMPip.isContextValid()) return false;
+    const previa = document.getElementById(CAPA_ID);
+    if (previa) previa.remove();
+
+    const capa = document.createElement("div");
+    capa.id = CAPA_ID;
+    capa.tabIndex = 0;
+    capa.setAttribute("role", "button");
+    capa.setAttribute("aria-label", t("clic_para_abrir"));
+    capa.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "z-index:2147483646",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "background:rgba(0,0,0,.45)",
+      "cursor:pointer",
+      "outline:none"
+    ].join(";");
+
+    const tarjeta = document.createElement("div");
+    tarjeta.style.cssText = [
+      "padding:18px 26px",
+      "border-radius:14px",
+      "background:#ff0000",
+      "color:#fff",
+      "text-align:center",
+      "font:600 18px/1.3 'Segoe UI',Roboto,Arial,sans-serif",
+      "box-shadow:0 6px 24px rgba(0,0,0,.5)"
+    ].join(";");
+    const frase = document.createElement("div");
+    frase.textContent = t("clic_para_abrir");
+    const pista = document.createElement("div");
+    pista.textContent = t("esc_para_cancelar");
+    pista.style.cssText = "margin-top:6px;font-weight:400;font-size:13px;opacity:.85";
+    tarjeta.append(frase, pista);
+    capa.appendChild(tarjeta);
+
+    let plazo = null;
+    function quitar() {
+      if (plazo) clearTimeout(plazo);
+      document.removeEventListener("keydown", alTeclado, true);
+      capa.remove();
+    }
+    function abrir(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      quitar();
+      openPip().catch((err) => console.error("[YTMPip] No se pudo abrir el PiP", err));
+    }
+    function alTeclado(event) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        quitar();
+      } else if ((event.key === "Enter" || event.key === " ") && document.activeElement === capa) {
+        abrir(event);
+      }
+    }
+
+    capa.addEventListener("click", abrir);
+    document.addEventListener("keydown", alTeclado, true);
+    plazo = setTimeout(quitar, PLAZO_CAPA_MS);
+    document.body.appendChild(capa);
+    try {
+      capa.focus({ preventScroll: true });
+    } catch (err) {
+      // Sin foco la capa funciona igual con el raton.
+    }
     return true;
   }
 
