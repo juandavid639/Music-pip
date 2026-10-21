@@ -8448,6 +8448,18 @@ Pages con el push.
 
 Preparada **sin push**, a petición del autor, para probarla antes.
 
+## La 1.4.0 (la letra a la par, su recorrido y la persiana)
+
+Lleva las tandas BB, BC y BD, pedidas por el autor con una captura al lado
+de Better Lyrics. Segundo número porque hay funciones nuevas (el recorrido y
+la persiana). `manifest.json`, `package.json` y `package-lock.json` suben
+juntos, y el CHANGELOG pasa «Sin publicar» a «[1.4.0]». Suite entera:
+**1271/1271**.
+
+**Permisos.** Ninguno nuevo. **La política de privacidad cambió** en una
+línea: el alto de la letra entra en la lista de preferencias guardadas en el
+equipo (fecha 21 de octubre). Se publica en Pages con el push.
+
 ## Pendiente (ver documento de arquitectura completo)
 
 - Fase 0: **validada sobre `music.youtube.com` real** (ver «La fase 0: el

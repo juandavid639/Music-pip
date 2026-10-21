@@ -4,7 +4,7 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
-## [Sin publicar]
+## [1.4.0] — 2026-10-21
 
 ### Changed / Cambiado
 
@@ -29,6 +29,13 @@ a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachan
 - **Zona de la letra ajustable**: arrastra la raya de arriba de la letra
   para darle más sitio; la carátula se encoge para dejárselo. Doble clic
   para volver. La ventana recuerda dónde la dejaste.
+
+### Privacy / Privacidad
+
+- The privacy policy now names the lyrics height among the preferences
+  saved on your computer.
+- La política de privacidad nombra ahora el alto de la letra entre las
+  preferencias que se guardan en tu equipo.
 
 ## [1.3.0] — 2026-10-08
 
