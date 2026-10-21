@@ -89,6 +89,47 @@ test("el contador avanza suave aunque la pagina vaya a saltos de un segundo", ()
     `se fue lejos de la verdad: ${lecturas[lecturas.length - 1]}`);
 });
 
+test("TANDA BB: el desplazamiento se afina con la lectura mas pequeña (la letra iba una linea tarde)", () => {
+  /*
+   * Lo medido en music.youtube.com (2026-10-21): el deslizador da segundos
+   * enteros y llega tarde. Paso a 1 con el <video> en 1,267, a 2 en 2,088 y
+   * a 5 en 5,307. Si la primera lectura cae justo antes de un cambio, el
+   * desplazamiento sale casi un segundo de mas y el tiempo se queda por
+   * detras toda la cancion. Aqui la primera lectura es la peor posible.
+   */
+  const entorno = segundaCancion(0.95);
+  const video = entorno.win.document.querySelector("video");
+  const TrackTimeline = entorno.YTMPip.TrackTimeline;
+  assert.ok(TrackTimeline.read().elapsed < 0.05, "premisa: la primera lectura deja el tiempo casi un segundo atras");
+
+  // Las lecturas del deslizador tal y como llegaron (con su retraso).
+  for (const [enLaPista, pagina] of [[1.267, 1], [2.088, 2], [3.139, 3], [4.213, 4], [5.307, 5]]) {
+    video.currentTime = PISTA_ANTERIOR + enLaPista;
+    conTiempoDePagina(entorno.win, pagina, PISTA_ACTUAL);
+    TrackTimeline.read();
+  }
+  video.currentTime = PISTA_ANTERIOR + 5.6;
+  const { elapsed } = TrackTimeline.read();
+  assert.ok(Math.abs(elapsed - 5.6) < 0.1, `el tiempo sigue atrasado: ${elapsed} con la cancion en 5,6`);
+});
+
+test("mientras el medio salta, una lectura de la pagina por delante no afina nada", () => {
+  const entorno = segundaCancion(10.1);
+  const video = entorno.win.document.querySelector("video");
+  const TrackTimeline = entorno.YTMPip.TrackTimeline;
+  TrackTimeline.read();
+  // El deslizador ya dice 11 y el <video> sigue en 10,2 buscando.
+  Object.defineProperty(video, "seeking", { value: true, configurable: true });
+  video.currentTime = PISTA_ANTERIOR + 10.2;
+  conTiempoDePagina(entorno.win, 11, PISTA_ACTUAL);
+  TrackTimeline.read();
+  Object.defineProperty(video, "seeking", { value: false, configurable: true });
+  video.currentTime = PISTA_ANTERIOR + 10.3;
+  conTiempoDePagina(entorno.win, 10, PISTA_ACTUAL);
+  const { elapsed } = TrackTimeline.read();
+  assert.ok(elapsed <= 10.3 + 1e-9, `el tiempo se adelanto a la cancion: ${elapsed}`);
+});
+
 test("al encadenar, el tiempo vuelve a empezar aunque el <video> siga subiendo", () => {
   // El instante exacto que el usuario ve mal. El <video> no se reinicia
   // NUNCA: pasa de 414 a 415. Quien dice que hay cancion nueva es la

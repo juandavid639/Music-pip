@@ -89,7 +89,9 @@ test("valores validos: se respetan tal cual", async () => {
       { nombre: "Podcast", valor: "-3,0,4,2,0" }
     ],
     // "on" y no "off" (el de serie, tanda AT), por lo mismo que los de arriba.
-    historyPreference: "on"
+    historyPreference: "on",
+    // La persiana de la letra (tanda BD), anotada por la ventana como el tamaño.
+    lyricsPanelShare: 0.6
   };
   const Settings = await preferencias(guardado);
 

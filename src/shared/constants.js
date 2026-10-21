@@ -184,6 +184,12 @@
        * unico sitio de donde se puede leer asi.
        */
       PIP_LAST_SIZE: "pipLastSize",
+      /*
+       * Cuanto alto de la ventana se queda la letra (tanda BD, «la
+       * persiana»). Anotacion como PIP_LAST_SIZE: la escribe la propia
+       * ventana al soltar el tirador y solo se lee al abrirla.
+       */
+      LYRICS_PANEL_SHARE: "lyricsPanelShare",
       SELECTOR_SCHEMA_VERSION: "selectorSchemaVersion",
       LAST_KNOWN_STATE: "lastKnownState"
     },
@@ -314,7 +320,10 @@
        * primera vez hay que caer al tamaño compacto de siempre, no a un
        * numero inventado aqui.
        */
-      pipLastSize: null
+      pipLastSize: null,
+
+      // Sin persiana movida: la letra con el alto de siempre (tanda BD).
+      lyricsPanelShare: null
     },
 
     /*
@@ -561,7 +570,14 @@
       WIDTH_MIN: 240,
       WIDTH_MAX: 1600,
       HEIGHT_MIN: 160,
-      HEIGHT_MAX: 1200
+      HEIGHT_MAX: 1200,
+      /*
+       * La persiana de la letra (tanda BD), en fraccion del alto de la
+       * ventana. Por debajo de un quinto la letra son dos renglones; por
+       * encima del 85 % no queda sitio para la barra y los mandos.
+       */
+      LYRICS_SHARE_MIN: 0.2,
+      LYRICS_SHARE_MAX: 0.85
     },
 
     /*

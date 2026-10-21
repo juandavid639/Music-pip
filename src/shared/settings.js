@@ -182,6 +182,16 @@
    *
    * Pura.
    */
+  /*
+   * La persiana (tanda BD): una fraccion entre los dos topes, o null si no
+   * se ha movido nunca. Lo que no es un numero no se acota: se olvida.
+   */
+  function normalizarAltoLetra(value) {
+    const n = Number(value);
+    if (value === null || value === undefined || !Number.isFinite(n) || n <= 0) return null;
+    return Math.min(PIP_LIMITS.LYRICS_SHARE_MAX, Math.max(PIP_LIMITS.LYRICS_SHARE_MIN, Math.round(n * 1000) / 1000));
+  }
+
   function normalizarTamano(value) {
     if (!value || typeof value !== "object") return null;
     const w = Number(value.width);
@@ -451,6 +461,7 @@
        */
       pipSize: pick(stored[STORAGE_KEYS.PIP_SIZE], ["compact", "expanded", "last"], DEFAULT_SETTINGS.pipSize),
       pipLastSize: normalizarTamano(stored[STORAGE_KEYS.PIP_LAST_SIZE]),
+      lyricsPanelShare: normalizarAltoLetra(stored[STORAGE_KEYS.LYRICS_PANEL_SHARE]),
       defaultSection: pick(
         stored[STORAGE_KEYS.DEFAULT_SECTION],
         ["player", "lyrics"],
@@ -512,6 +523,23 @@
     } catch (err) {
       return Promise.resolve(cache);
     }
+  }
+
+  /**
+   * Anota donde se ha dejado la persiana de la letra (tanda BD); null la
+   * devuelve al alto de siempre. Cache y storage a la vez, por lo mismo que
+   * anotarTamano (justo debajo).
+   */
+  function anotarAltoLetra(fraccion) {
+    const limpio = normalizarAltoLetra(fraccion);
+    cache = Object.assign({}, cache, { lyricsPanelShare: limpio });
+    if (!YTMPip.isContextValid || !YTMPip.isContextValid()) return limpio;
+    try {
+      chrome.storage.local.set({ [STORAGE_KEYS.LYRICS_PANEL_SHARE]: limpio });
+    } catch (err) {
+      // Contexto invalidado: la ventana abierta sigue con su persiana.
+    }
+    return limpio;
   }
 
   /**
@@ -678,6 +706,8 @@
    */
   const CLAVES_QUE_NO_SE_APLICAN = [
     STORAGE_KEYS.PIP_LAST_SIZE,
+    // La persiana de la letra (tanda BD): anotacion de la ventana, como el tamaño.
+    STORAGE_KEYS.LYRICS_PANEL_SHARE,
     STORAGE_KEYS.EQUALIZER_LAST,
     STORAGE_KEYS.EQUALIZER_BY_SONG,
     STORAGE_KEYS.SELECTOR_SCHEMA_VERSION,
@@ -727,6 +757,7 @@
       };
     },
     anotarTamano,
+    anotarAltoLetra,
     guardarEcualizador,
     guardarPreferenciaCanvas,
     guardarPreferenciaHalo,

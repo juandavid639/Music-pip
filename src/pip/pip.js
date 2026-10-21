@@ -15,7 +15,7 @@
 (function (root) {
   const YTMPip = root.YTMPip;
   const { MESSAGE_TYPES, COMMAND_TYPES, createCommand, createMessage, sendMessageSafe, getURLSafe } = YTMPip;
-  const { PIP_DIMENSIONS, PIP_BREAKPOINTS, LYRICS_STATUS, LIKE_STATUS, SPECTRUM_LIMITS, PLAYBACK_RATES, PLAYBACK_RATE_NORMAL, SLEEP_TIMER_MINUTES } =
+  const { PIP_DIMENSIONS, PIP_BREAKPOINTS, LYRICS_STATUS, LIKE_STATUS, SPECTRUM_LIMITS, PLAYBACK_RATES, PLAYBACK_RATE_NORMAL, SLEEP_TIMER_MINUTES, PIP_LIMITS } =
     YTMPip.CONSTANTS;
 
   /*
@@ -325,7 +325,14 @@
    * (activeLyricIndex). El temporizador vive en pipWindow a proposito:
    * muere solo cuando la ventana se cierra.
    */
-  let lyricLineEls = []; // [{ el, time }]
+  let lyricLineEls = []; // [{ el, texto, time, duration, palabras }]
+  /*
+   * EL ADELANTO DE LA LETRA (tanda BB): Better Lyrics enciende cada linea
+   * 0,115 s antes de su data-time (su --blyrics-timing-offset, leido en su
+   * codigo 3.0.0). La ventana usa el mismo, para que las dos vayan a la par
+   * y no una por detras de la otra.
+   */
+  const ADELANTO_LETRA = 0.115;
   let lyricsSignature = "";
   let activeLyricIndex = -1;
   /*
@@ -405,6 +412,7 @@
       anuncio: doc.getElementById("ytmpip-anuncio"),
       videoToggle: doc.getElementById("ytmpip-video-toggle"),
       cinemaToggle: doc.getElementById("ytmpip-cinema-toggle"),
+      persiana: doc.getElementById("ytmpip-persiana"),
       nativePip: doc.getElementById("ytmpip-native-pip"),
       spectrumToggle: doc.getElementById("ytmpip-spectrum-toggle"),
       spectrum: doc.getElementById("ytmpip-spectrum"),
@@ -738,6 +746,93 @@
         pulsado ? t("mostrar_caratula_letra") : t("mostrar_letra")
       );
     }
+  }
+
+  /* ------------------------------------------------------------------
+   * LA PERSIANA DE LA LETRA (tanda BD)
+   *
+   * Lo pidio el autor con una captura: con la letra abierta el panel se
+   * quedaba en una franja abajo y arriba sobraba sitio. El tirador del borde
+   * de arriba del panel fija cuanto alto de la ventana es letra; la caratula
+   * (o el video) se encoge para dejarle sitio, y los mandos se compactan.
+   *
+   * La fraccion vive en la variable --ytmpip-alto-letra (en vh: sigue sola
+   * al alto de la ventana) y la clase ytmpip-letra-a-medida. Se anota al
+   * soltar, como el tamaño de la ventana; null es «el alto de siempre».
+   * ------------------------------------------------------------------ */
+  function aplicarAltoLetra(fraccion) {
+    if (!els.root) return;
+    const medida = Number.isFinite(fraccion);
+    els.root.classList.toggle("ytmpip-letra-a-medida", medida);
+    if (medida) els.root.style.setProperty("--ytmpip-alto-letra", (fraccion * 100).toFixed(1) + "vh");
+    else els.root.style.removeProperty("--ytmpip-alto-letra");
+    if (els.persiana) {
+      els.persiana.setAttribute("aria-valuemin", String(Math.round(PIP_LIMITS.LYRICS_SHARE_MIN * 100)));
+      els.persiana.setAttribute("aria-valuemax", String(Math.round(PIP_LIMITS.LYRICS_SHARE_MAX * 100)));
+      if (medida) els.persiana.setAttribute("aria-valuenow", String(Math.round(fraccion * 100)));
+      else els.persiana.removeAttribute("aria-valuenow");
+    }
+  }
+
+  function acotarAltoLetra(fraccion) {
+    return Math.min(PIP_LIMITS.LYRICS_SHARE_MAX, Math.max(PIP_LIMITS.LYRICS_SHARE_MIN, fraccion));
+  }
+
+  /*
+   * La fraccion que hay ahora, medida si la persiana nunca se movio: el
+   * primer paso con el teclado parte de lo que se ve, no de un numero
+   * inventado.
+   */
+  function altoLetraActual() {
+    const guardada = YTMPip.Settings.get().lyricsPanelShare;
+    if (Number.isFinite(guardada)) return guardada;
+    const alto = pipWindow && pipWindow.innerHeight;
+    const panel = els.lyricsPanel && els.lyricsPanel.getBoundingClientRect();
+    return alto && panel && panel.height ? acotarAltoLetra(panel.height / alto) : 0.4;
+  }
+
+  function cablearPersiana() {
+    const tirador = els.persiana;
+    if (!tirador) return;
+    let arrastrando = false;
+    let fraccion = null;
+
+    tirador.addEventListener("pointerdown", (event) => {
+      arrastrando = true;
+      try {
+        tirador.setPointerCapture(event.pointerId);
+      } catch (err) {
+        // Sin captura el arrastre funciona mientras el puntero no se salga.
+      }
+      event.preventDefault();
+    });
+    tirador.addEventListener("pointermove", (event) => {
+      if (!arrastrando || !pipWindow) return;
+      // Lo que queda por debajo del puntero es la letra.
+      fraccion = acotarAltoLetra((pipWindow.innerHeight - event.clientY) / pipWindow.innerHeight);
+      aplicarAltoLetra(fraccion);
+    });
+    const soltar = () => {
+      if (!arrastrando) return;
+      arrastrando = false;
+      if (fraccion !== null) YTMPip.Settings.anotarAltoLetra(fraccion);
+      fraccion = null;
+    };
+    tirador.addEventListener("pointerup", soltar);
+    tirador.addEventListener("pointercancel", soltar);
+    tirador.addEventListener("dblclick", () => {
+      YTMPip.Settings.anotarAltoLetra(null);
+      aplicarAltoLetra(null);
+    });
+    // Con el teclado, de 5 en 5 puntos: flecha arriba, mas letra.
+    tirador.addEventListener("keydown", (event) => {
+      const paso = event.key === "ArrowUp" ? 0.05 : event.key === "ArrowDown" ? -0.05 : 0;
+      if (!paso) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const nueva = acotarAltoLetra(altoLetraActual() + paso);
+      aplicarAltoLetra(YTMPip.Settings.anotarAltoLetra(nueva));
+    });
   }
 
   /*
@@ -1127,6 +1222,8 @@
       }
       quedaTrabajo = true;
     }
+
+    if (aislado("recorrido de la letra", fotogramaDeLetra, false)) quedaTrabajo = true;
 
     if (quedaTrabajo) arrancarAnimacion();
   }
@@ -3422,6 +3519,7 @@
 
     if (els.videoToggle) els.videoToggle.addEventListener("click", alternarEscenario);
     if (els.cinemaToggle) els.cinemaToggle.addEventListener("click", alternarModoCine);
+    cablearPersiana();
     if (els.nativePip) els.nativePip.addEventListener("click", alternarPipNativo);
     if (els.canvasToggle) els.canvasToggle.addEventListener("click", alternarFondoCanvas);
     if (els.cleanToggle) els.cleanToggle.addEventListener("click", alternarSoloCaratula);
@@ -3602,6 +3700,7 @@
     rolDelEscenario = null;
     soloCaratula = false;
     modoCine = false;
+    aplicarAltoLetra(YTMPip.Settings.get().lyricsPanelShare);
     espectroPedido = false;
     espectroDisponible = false;
     pulsoPedido = false;
@@ -3822,7 +3921,82 @@
     return mejor;
   }
 
+  /**
+   * Cuanto de la linea va cantado en el segundo `t`, de 0 a 1 (tanda BC).
+   * Pura y expuesta, como activeLyricAt.
+   *
+   * Con palabras con tiempo (Better Lyrics), por LETRAS: lo que ocupan las
+   * palabras ya cantadas mas la parte de la que suena. Es lo que hace que
+   * el recorrido se pare en una palabra larga y corra en las cortas, como
+   * en la pagina. Sin palabras, la linea se reparte entera por su
+   * duracion, y sin duracion hasta donde empieza la siguiente.
+   */
+  function avanceDeLinea(linea, t, siguienteTime) {
+    if (!linea || !Number.isFinite(linea.time) || !Number.isFinite(t)) return 0;
+    if (t <= linea.time) return 0;
+    const palabras = linea.palabras;
+    if (Array.isArray(palabras) && palabras.length) {
+      let total = 0;
+      for (const p of palabras) total += p[0];
+      let cantadas = 0;
+      for (const [letras, inicio, duracion] of palabras) {
+        if (t >= inicio + duracion) cantadas += letras;
+        else if (t > inicio) cantadas += letras * ((t - inicio) / duracion);
+        else break;
+      }
+      return total > 0 ? Math.min(1, cantadas / total) : 0;
+    }
+    const fin = Number.isFinite(linea.duration)
+      ? linea.time + linea.duration
+      : Number.isFinite(siguienteTime) && siguienteTime > linea.time
+        ? siguienteTime
+        : null;
+    if (fin === null) return 1;
+    return Math.min(1, (t - linea.time) / (fin - linea.time));
+  }
+
+  /*
+   * El recorrido de la linea que suena: la parte cantada en el color del
+   * texto y lo que falta apagado, con el borde moviendose. Lo pinta el CSS
+   * con la variable --ytmpip-avance; aqui solo se calcula el porcentaje.
+   * Las lineas que no suenan llevan la variable quitada.
+   */
+  let lineaRecorrida = null;
+
+  function pintarRecorrido(t) {
+    const item = activeLyricIndex >= 0 ? lyricLineEls[activeLyricIndex] : null;
+    if (lineaRecorrida && lineaRecorrida !== item) {
+      lineaRecorrida.el.classList.remove("ytmpip-lyric-recorrido");
+      lineaRecorrida.texto.style.removeProperty("--ytmpip-avance");
+      lineaRecorrida = null;
+    }
+    if (!item || item.time === null) return;
+    const siguiente = lyricLineEls[activeLyricIndex + 1];
+    const avance = avanceDeLinea(item, t, siguiente ? siguiente.time : null);
+    item.el.classList.add("ytmpip-lyric-recorrido");
+    item.texto.style.setProperty("--ytmpip-avance", (avance * 100).toFixed(1) + "%");
+    lineaRecorrida = item;
+  }
+
+  /*
+   * Fotograma a fotograma mientras la letra con tiempos este a la vista y
+   * sonando: el recorrido necesita moverse suave, y de paso la linea cambia
+   * en el fotograma justo en vez de esperar al latido de 300 ms (que se
+   * queda de red cuando no hay fotogramas). Dice si quiere el siguiente.
+   */
+  function fotogramaDeLetra() {
+    if (!letraConTiempos || !lyricLineEls.length || !lyricsPanelDisplayed()) return false;
+    const media = YTMPip.Adapter.getMediaElement();
+    if (!media) return false;
+    const t = YTMPip.TrackTimeline.read().elapsed + ADELANTO_LETRA;
+    const idx = activeLyricAt(lyricLineEls, t);
+    if (idx !== activeLyricIndex) setActiveLyric(idx);
+    pintarRecorrido(t);
+    return !media.paused;
+  }
+
   function clearLyricLines() {
+    lineaRecorrida = null;
     lyricLineEls = [];
     lyricsSignature = "";
     activeLyricIndex = -1;
@@ -3858,8 +4032,18 @@
     lyricLineEls = lines.map((linea) => {
       const p = doc.createElement("p");
       p.className = "ytmpip-lyric-line";
+      /*
+       * El texto va en un <span> en linea (tanda BC): es el que lleva el
+       * degradado del recorrido, y un elemento en linea lo reparte entre
+       * los renglones como si fueran uno seguido (box-decoration-break
+       * slice, el de serie). Con el degradado en el <p> los dos renglones
+       * se llenarian a la vez.
+       */
+      const texto = doc.createElement("span");
+      texto.className = "ytmpip-lyric-texto";
       // Una linea en blanco es un separador de estrofa: ocupa su hueco.
-      p.textContent = linea.text || "\u00A0";
+      texto.textContent = linea.text || "\u00A0";
+      p.appendChild(texto);
       const time = Number.isFinite(linea.time) ? linea.time : null;
       if (time !== null) {
         p.classList.add("ytmpip-lyric-clickable");
@@ -3870,7 +4054,13 @@
         p.setAttribute("aria-label", t("ir_a", [formatTime(time), linea.text]));
       }
       els.lyricsLines.appendChild(p);
-      return { el: p, time };
+      return {
+        el: p,
+        texto,
+        time,
+        duration: Number.isFinite(linea.duration) && linea.duration > 0 ? linea.duration : null,
+        palabras: Array.isArray(linea.palabras) ? linea.palabras : null
+      };
     });
   }
 
@@ -4031,8 +4221,16 @@
     if (letraConTiempos) {
       // El reloj manda. Sin medio que leer no se decide nada: apagar el
       // resalte porque el <video> desaparecio un instante seria mentir.
-      if (!YTMPip.Adapter.getMediaElement()) return;
-      idx = activeLyricAt(lyricLineEls, YTMPip.TrackTimeline.read().elapsed);
+      const media = YTMPip.Adapter.getMediaElement();
+      if (!media) return;
+      const t = YTMPip.TrackTimeline.read().elapsed + ADELANTO_LETRA;
+      idx = activeLyricAt(lyricLineEls, t);
+      if (idx !== activeLyricIndex) setActiveLyric(idx);
+      pintarRecorrido(t);
+      // Sonando y a la vista: que lo lleven los fotogramas (tanda BC).
+      if (!media.paused && lyricsPanelDisplayed()) arrancarAnimacion();
+      updateNowLine();
+      return;
     } else {
       /*
        * Sin tiempos manda la PAGINA, y para eso no hace falta medio
@@ -4606,6 +4804,7 @@
     layoutFor: layoutFor,
     timelineFor: timelineFor,
     activeLyricAt: activeLyricAt,
+    avanceDeLinea: avanceDeLinea,
     opacidadDelPip: opacidadDelPip,
 
     /*

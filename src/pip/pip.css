@@ -1355,6 +1355,60 @@ button:has(.ytmpip-ico) {
   min-height: 0;
 }
 
+/*
+ * LA PERSIANA (tanda BD): el tirador del borde de arriba del panel. Pegado
+ * arriba aunque la letra se desplace (sticky, con el mismo margen negativo
+ * que el relleno del panel para tapar justo su borde). La raya del centro
+ * es lo unico que se ve; el resto es zona de agarre.
+ */
+.ytmpip-persiana {
+  position: sticky;
+  top: -8px;
+  z-index: 2;
+  height: 14px;
+  margin: -8px 0 2px;
+  cursor: ns-resize;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.ytmpip-persiana::before {
+  content: "";
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ytmpip-text-dim);
+  opacity: 0.45;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+
+.ytmpip-persiana:is(:hover, :focus-visible)::before {
+  opacity: 1;
+  background: var(--ytmpip-accent);
+}
+
+/* En el escenario la letra ya es la ventana entera: no hay nada que mover. */
+#ytmpip-root.ytmpip-lyrics-stage .ytmpip-persiana {
+  display: none;
+}
+
+/*
+ * Con la persiana movida, el panel tiene el alto pedido y la caratula se
+ * encoge (el cuerpo ya puede: min-height 0). Los mandos se compactan para
+ * que la letra gane lo que ellos ocupaban: fuera la fila de extras
+ * (volumen, aleatorio...), que vuelve con doble clic en la persiana.
+ */
+#ytmpip-root.ytmpip-letra-a-medida .ytmpip-lyrics-panel:not([hidden]) {
+  flex: 0 0 var(--ytmpip-alto-letra);
+}
+
+#ytmpip-root.ytmpip-letra-a-medida:not(.ytmpip-lyrics-stage) .ytmpip-extras {
+  display: none;
+}
+
 .ytmpip-lyrics-text {
   margin: 0;
   white-space: pre-line;
@@ -1393,7 +1447,7 @@ button:has(.ytmpip-ico) {
   color: var(--ytmpip-text-dim);
   border-radius: 6px;
   padding: 2px 6px;
-  transition: color 200ms ease, background 140ms ease;
+  transition: color 200ms ease, background 140ms ease, opacity 200ms ease;
 }
 
 .ytmpip-lyric-clickable {
@@ -1415,6 +1469,40 @@ button:has(.ytmpip-ico) {
    seccion). */
 .ytmpip-lyric-line.ytmpip-lyric-active {
   color: var(--ytmpip-text);
+}
+
+/*
+ * LO QUE VIENE, MAS APAGADO (tanda BC). Lo pidio el autor: «el blanco
+ * sobre el negro se nota bien, pero pondria un poco mas oscuro la letra
+ * que sigue». Por opacidad y no por color, por lo mismo que el escenario
+ * (ver su bloque): el gris de serie ya resolvio el contraste sobre
+ * cualquier portada. Al pasar el raton vuelve entera, que es cuando se va a
+ * pulsar.
+ */
+.ytmpip-lyric-active ~ .ytmpip-lyric-line {
+  opacity: 0.6;
+}
+
+.ytmpip-lyric-active ~ .ytmpip-lyric-clickable:is(:hover, :focus-visible) {
+  opacity: 1;
+}
+
+/*
+ * EL RECORRIDO DE LA LINEA (tanda BC), como en Better Lyrics: lo cantado en
+ * el color del texto y lo que falta apagado, con un borde suave que avanza.
+ * El porcentaje lo pone pip.js en --ytmpip-avance (por letras de las
+ * palabras ya cantadas). El degradado va en el <span> en linea: asi recorre
+ * los renglones uno tras otro en vez de llenarlos a la vez.
+ */
+.ytmpip-lyric-recorrido .ytmpip-lyric-texto {
+  background-image: linear-gradient(
+    90deg,
+    var(--ytmpip-text) calc(var(--ytmpip-avance, 0%) - 0.25em),
+    var(--ytmpip-text-dim) calc(var(--ytmpip-avance, 0%) + 0.25em)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* ---------- Linea actual bajo el titulo (ventana compacta) ----------
@@ -2296,6 +2384,12 @@ button:has(.ytmpip-ico) {
 #ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyric-line.ytmpip-lyric-active {
   font-size: 19px;
   opacity: 1;
+}
+
+/* Y en el escenario, lo que viene un escalon por debajo de lo ya cantado
+   (tanda BC). */
+#ytmpip-root.ytmpip-overlay.ytmpip-lyrics-stage .ytmpip-lyric-active ~ .ytmpip-lyric-line {
+  opacity: 0.35;
 }
 
 /* ---------- Sólo carátula ----------

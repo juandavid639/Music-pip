@@ -54,6 +54,8 @@ const SE_APLICA = {
   lastKnownState: false, // la de esta tanda: la escribe el SW cada segundo
   selectorSchemaVersion: false, // la escribe el SW al instalar, nada que aplicar
   pipLastSize: false,
+  // Tanda BD: la persiana de la letra, anotacion de la ventana.
+  lyricsPanelShare: false,
   equalizerLast: false,
   equalizerBySong: false,
   // Tanda AS: cambia el nombre que dice el boton del ecualizador de la ventana.

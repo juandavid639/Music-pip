@@ -46,6 +46,10 @@ const conLetra = parametros.has("letra");
 // el panel completo se queda con la ventana entera, sea cual sea su
 // tamaño. Es el estado que pinta la clase ytmpip-lyrics-stage.
 const letraEnGrande = conLetra && parametros.has("escenario");
+// El panel de letra abierto en la ventana grande, y la persiana donde la
+// deje el parametro (tanda BD): ?letra=1&panel=1&altoLetra=0.6
+const conPanel = conLetra && !letraEnGrande && parametros.has("panel");
+const altoLetra = Number(parametros.get("altoLetra"));
 // Solo caratula: el boton "Aa" quita el titulo y el artista y la
 // imagen se queda con el hueco que dejan.
 const sinTexto = parametros.has("limpio");
@@ -82,6 +86,8 @@ function aplicarDensidad(root) {
   root.classList.toggle("compact", mini && !conVideo && !superpuesto);
   root.classList.toggle("expanded", !mini && !conVideo && !superpuesto);
   root.classList.toggle("ytmpip-overlay", superpuesto);
+  root.classList.toggle("ytmpip-letra-a-medida", conPanel && altoLetra > 0);
+  if (conPanel && altoLetra > 0) root.style.setProperty("--ytmpip-alto-letra", altoLetra * 100 + "vh");
 }
 
 /*
@@ -325,12 +331,17 @@ fetch("../pip/pip.html")
      * esconde updateNowLine por la misma razon (seria la misma letra
      * dos veces). Por eso las dos ramas son excluyentes.
      */
-    if (letraEnGrande) {
+    if (letraEnGrande || conPanel) {
       const lineas = document.getElementById("ytmpip-lyrics-lines");
-      VERSOS.forEach((texto, i) => {
+      // Con el panel, la letra entera dos veces: que haya que desplazarla.
+      (conPanel ? VERSOS.concat(VERSOS) : VERSOS).forEach((texto, i) => {
         const p = document.createElement("p");
-        p.className = "ytmpip-lyric-line" + (i === 1 ? " ytmpip-lyric-active" : "");
-        p.textContent = texto;
+        p.className = "ytmpip-lyric-line" + (i === 1 ? " ytmpip-lyric-active ytmpip-lyric-recorrido" : "");
+        const span = document.createElement("span");
+        span.className = "ytmpip-lyric-texto";
+        span.textContent = texto;
+        if (i === 1) span.style.setProperty("--ytmpip-avance", "45%");
+        p.appendChild(span);
         lineas.appendChild(p);
       });
       lineas.hidden = false;

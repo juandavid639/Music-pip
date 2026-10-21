@@ -31,7 +31,8 @@
  *   - El desplazamiento se guarda y solo se recalcula cuando cambia de
  *     verdad (cambio de pista o salto del usuario). Si se recalculara en
  *     cada lectura, el redondeo de la pagina lo haria bailar y el contador
- *     temblaria.
+ *     temblaria. Entre medias solo se AFINA hacia abajo (tanda BB, ver
+ *     read()): la pagina siempre va por detras, nunca por delante.
  *
  * Y sirve para las dos direcciones: para saltar al minuto 2 de la cancion
  * hay que escribir `desplazamiento + 120` en el <video>, no 120.
@@ -54,6 +55,11 @@
     if (!media) return NaN;
     const t = Number(media.currentTime);
     return Number.isFinite(t) ? t : NaN;
+  }
+
+  function medioSaltando() {
+    const media = YTMPip.Adapter.getMediaElement();
+    return Boolean(media && media.seeking);
   }
 
   function duracionDelMedia() {
@@ -88,6 +94,22 @@
       if (!hayDesplazamiento || Math.abs(candidato - desplazamiento) > MARGEN) {
         desplazamiento = candidato;
         hayDesplazamiento = true;
+      } else if (candidato < desplazamiento && !medioSaltando()) {
+        /*
+         * EL MINIMO, NO EL PRIMERO (tanda BB). Medido en music.youtube.com
+         * (2026-10-21): el deslizador da segundos ENTEROS y llega tarde
+         * (paso a 1 con el <video> en 1,267; a 2 en 2,088; a 5 en 5,307).
+         * Asi que cada lectura da el desplazamiento de verdad MAS un error
+         * de 0,09 a 1,3 s, y nunca menos. Quedarse con la primera lectura
+         * dejaba la cancion entera hasta 1,3 s por detras: la letra iba
+         * «una linea tarde». La mas pequeña vista es la mejor estimacion, y
+         * a los pocos segundos ronda los 0,1 s.
+         *
+         * Solo baja, asi que el contador nunca retrocede. Mientras el medio
+         * esta saltando, el deslizador puede ir por delante del <video> y
+         * daria un minimo falso: esas lecturas no cuentan.
+         */
+        desplazamiento = candidato;
       }
 
       const elapsed = enElMedia - desplazamiento;

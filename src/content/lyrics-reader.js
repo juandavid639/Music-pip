@@ -154,6 +154,38 @@
     return unaLinea(texto);
   }
 
+  /*
+   * LOS TIEMPOS DE CADA PALABRA (tanda BC), para que la ventana pueda
+   * «recorrer» la linea como lo hace Better Lyrics. Medido en su codigo
+   * (3.0.0): cada linea y cada palabra llevan data-time y data-duration en
+   * segundos.
+   *
+   * Se manda lo justo: [letras, inicio, duracion] por palabra. La ventana
+   * no necesita el texto de cada una, solo cuanto de la linea ocupa y
+   * cuando suena; con eso calcula que parte va cantada. Los coros de fondo
+   * no cuentan (no estan en el texto de la linea). Sin tiempos en las
+   * palabras, null: la ventana reparte la linea por su duracion.
+   */
+  function numero(el, atributo) {
+    const n = parseFloat(el.getAttribute(atributo));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function palabrasConTiempo(line) {
+    const words = Array.from(line.querySelectorAll(".blyrics--word")).filter(
+      (w) => !w.closest(".blyrics-background-lyric, .blyrics-background-line")
+    );
+    const palabras = [];
+    for (const word of words) {
+      const t = numero(word, "data-time");
+      const d = numero(word, "data-duration");
+      if (t === null || d === null) return null;
+      const letras = (word.textContent || "").replace(/\s+/g, "").length;
+      if (letras) palabras.push([letras, t, d]);
+    }
+    return palabras.length ? palabras : null;
+  }
+
   /**
    * Letras inyectadas por Better Lyrics, o null si no hay nada que leer.
    *
@@ -184,7 +216,12 @@
     const lineas = lines
       .map((line) => {
         const t = parseFloat(line.getAttribute("data-time"));
-        return { text: betterLyricsLineText(line), time: Number.isFinite(t) ? t : null };
+        return {
+          text: betterLyricsLineText(line),
+          time: Number.isFinite(t) ? t : null,
+          duration: numero(line, "data-duration"),
+          palabras: palabrasConTiempo(line)
+        };
       })
       .filter((linea) => linea.text);
 

@@ -982,5 +982,11 @@
   },
   "salir_modo_cine_aria": {
     "message": "Show the title and all the controls again"
+  },
+  "persiana_letra": {
+    "message": "Lyrics height"
+  },
+  "persiana_letra_title": {
+    "message": "Drag to give the lyrics more or less room (double-click: back to default)"
   }
 }

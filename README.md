@@ -8309,6 +8309,72 @@ suscripción que también tapa el botón PiP: hay que cerrarlo con la X. El
 **No medido**: cualquier cosa con suscripción (canción entera,
 siguiente/anterior, DRM).
 
+## La letra a la par de Better Lyrics (la tanda BB)
+
+El autor, con una captura: «en vivo va una línea adelante y nosotros no
+hemos pasado a esa línea», como medio segundo. Dos causas, las dos medidas.
+
+**El reloj de la página.** `TrackTimeline` calcula el tiempo de la canción
+como `currentTime - desplazamiento`, y el desplazamiento sale de restar el
+deslizador de YouTube Music. Medido en music.youtube.com con Playwright
+(2026-10-21): el deslizador da **segundos enteros y llega tarde**. Pasó a 1
+con el `<video>` en 1,267, a 2 en 2,088, a 3 en 3,139, a 4 en 4,213 y a 5
+en 5,307. Cada lectura da el desplazamiento de verdad **más** un error de
+0,09 a 1,3 s, nunca menos. El código se quedaba con la **primera** lectura
+y la conservaba toda la canción: hasta 1,3 s de atraso fijo. Ahora se queda
+con la **más pequeña** vista, que a los pocos segundos ronda los 0,1 s. Solo
+baja, así que el contador nunca retrocede. Las lecturas con el medio
+saltando (`seeking`) no cuentan: ahí el deslizador puede ir por delante.
+
+**El adelanto de Better Lyrics.** En su código (3.0.0, leído del disco)
+Better Lyrics suma `--blyrics-timing-offset: 0.115s` al tiempo: enciende
+cada línea 0,115 s antes de su `data-time` (0,150 s con la letra por
+palabras). La ventana usa el mismo adelanto (`ADELANTO_LETRA`).
+
+## El recorrido de la línea y lo que viene (la tanda BC)
+
+Better Lyrics pone `data-time` y `data-duration` en cada línea **y en cada
+palabra**. El lector manda ahora, por línea, su duración y, si las palabras
+traen tiempos, `[letras, inicio, duración]` de cada una (los coros de fondo
+no cuentan). `avanceDeLinea` (pura, expuesta) da de 0 a 1 lo cantado:
+por letras de las palabras si las hay, por la duración de la línea si no, y
+hasta la línea siguiente si no hay ni eso. El texto de cada línea va ahora
+en un `<span>` en línea con un degradado recortado al texto
+(`background-clip: text`) que avanza con `--ytmpip-avance`. Un elemento en
+línea reparte el degradado entre los renglones como si fueran uno seguido,
+así que una línea partida en dos se llena en orden. Mientras la letra está
+a la vista y suena, lo mueve el único `requestAnimationFrame` de la
+ventana; de paso la línea cambia en el fotograma justo y no a los 300 ms del
+latido, que queda de red.
+
+Lo que viene va al 60 % de opacidad (al 35 % en la letra en grande),
+pedido por el autor: «pondría un poco más oscuro la letra que sigue».
+
+## La persiana de la letra (la tanda BD)
+
+«Con la interfaz donde iniciar la letra se queda muy pequeño y el espacio
+de arriba queda sobrando… un arrastrable de la línea para definir el campo
+de la letra». Un tirador (`#ytmpip-persiana`, `role=separator`) va pegado
+arriba del panel de la letra (sticky: no se va al desplazarla). Arrastrarlo
+fija la fracción de la ventana que es letra, entre 0,2 y 0,85. Va en
+`--ytmpip-alto-letra` (en vh, así sigue al alto de la ventana) con la clase
+`ytmpip-letra-a-medida`. La carátula o el vídeo se encogen, y la fila de
+extras (volumen, aleatorio…) se aparta para que la letra gane su sitio.
+Doble clic: el alto de siempre. Con el teclado, flechas de 5 en 5. Se
+anota al soltar, como el tamaño de la ventana: `lyricsPanelShare` es una
+anotación (no despierta a las pestañas ni se exporta).
+
+La vista previa de Preferencias acepta `?letra=1&panel=1&altoLetra=0.6`
+para mirar el panel abierto y la persiana movida.
+
+Pruebas: `track-timeline` (+2), `pip-letra-recorrido.test.js` (8),
+`pip-persiana.test.js` (8), el censo de claves y «valores válidos» con la
+clave nueva. Mutación (`tools/mutar/mutar-tanda-bb-bd.js`): 16 de 16,
+recuentos exactos.
+
+**No medido**: la ventana al lado de Better Lyrics en el Chrome del autor,
+que es donde se vio el atraso.
+
 ## Abrir desde el menú con un clic en la página (la tanda AZ)
 
 El autor, con una captura del menú: al pulsar «Abrir ventana flotante» le

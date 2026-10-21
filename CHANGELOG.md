@@ -4,6 +4,32 @@ Todas las novedades visibles de Music PiP, versión a versión. El número
 es el mismo `version` del `manifest.json` y el mismo del zip que se sube
 a la Chrome Web Store. Formato inspirado en [Keep a Changelog](https://keepachangelog.com/es/).
 
+## [Sin publicar]
+
+### Changed / Cambiado
+
+- **Lyrics in time with the page**: the window's lyrics could run up to a
+  second behind (one line late next to Better Lyrics). Now they keep pace,
+  with the same small lead Better Lyrics uses.
+- **La letra a la par de la página**: la letra de la ventana podía ir hasta
+  un segundo por detrás (una línea tarde al lado de Better Lyrics). Ahora va
+  a la par, con el mismo pequeño adelanto que usa Better Lyrics.
+- **Upcoming lyrics are dimmer**, so the line being sung stands out more.
+- **La letra que viene, más apagada**, para que la línea que suena destaque
+  más.
+
+### Added / Añadido
+
+- **The sung line fills up word by word**, like in Better Lyrics.
+- **La línea que suena se va llenando palabra a palabra**, como en Better
+  Lyrics.
+- **Adjustable lyrics area**: drag the bar at the top of the lyrics to give
+  them more room; the artwork shrinks to make space. Double-click it to go
+  back. The window remembers where you left it.
+- **Zona de la letra ajustable**: arrastra la raya de arriba de la letra
+  para darle más sitio; la carátula se encoge para dejárselo. Doble clic
+  para volver. La ventana recuerda dónde la dejaste.
+
 ## [1.3.0] — 2026-10-08
 
 ### Added / Añadido

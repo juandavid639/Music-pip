@@ -982,5 +982,11 @@
   },
   "salir_modo_cine_aria": {
     "message": "Volver a ver el título y todos los mandos"
+  },
+  "persiana_letra": {
+    "message": "Alto de la letra"
+  },
+  "persiana_letra_title": {
+    "message": "Arrastra para dar más o menos sitio a la letra (doble clic: como estaba)"
   }
 }
